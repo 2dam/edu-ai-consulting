@@ -1,4 +1,8 @@
+from pathlib import Path
+
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from app import ai_engine
@@ -9,6 +13,14 @@ from app.schemas import IngestPayload, ReportRequest, ReportResponse
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AI 빅데이터 교육 컨설팅 API")
+
+STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.get("/")
+def index():
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/health")
