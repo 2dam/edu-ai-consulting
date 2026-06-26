@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iChapterwise | AI 빅데이터 입시 컨설팅</title>
+<style>
+  :root {
+    --primary: #2952cc;
+    --primary-dark: #1d3a99;
+    --bg: #f7f8fb;
+    --text: #1d2230;
+    --muted: #5b6376;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    color: var(--text);
+    background: #fff;
+    line-height: 1.6;
+  }
+  .container { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+
+  header {
+    position: sticky; top: 0; background: #fff; border-bottom: 1px solid #eee; z-index: 10;
+  }
+  header .container { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .logo { font-weight: 800; font-size: 1.2rem; color: var(--primary); text-decoration: none; }
+  .nav-cta {
+    background: var(--primary); color: #fff; padding: 10px 20px; border-radius: 8px;
+    text-decoration: none; font-weight: 600; font-size: 0.95rem;
+  }
+  .nav-cta:hover { background: var(--primary-dark); }
+
+  .hero {
+    background: linear-gradient(135deg, #eef1fb 0%, var(--bg) 100%);
+    padding: 80px 0 90px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 2.4rem; margin: 0 0 16px; line-height: 1.35; }
+  .hero h1 span { color: var(--primary); }
+  .hero p { font-size: 1.1rem; color: var(--muted); max-width: 560px; margin: 0 auto 32px; }
+  .hero .cta {
+    display: inline-block; background: var(--primary); color: #fff; padding: 14px 32px;
+    border-radius: 10px; font-weight: 700; font-size: 1.05rem; text-decoration: none;
+    box-shadow: 0 8px 20px rgba(41,82,204,.25);
+  }
+  .hero .cta:hover { background: var(--primary-dark); }
+
+  section { padding: 72px 0; }
+  section h2 { font-size: 1.7rem; text-align: center; margin: 0 0 12px; }
+  section .sub { text-align: center; color: var(--muted); margin: 0 0 48px; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .card {
+    background: var(--bg); border-radius: 14px; padding: 28px; text-align: center;
+  }
+  .card .icon { font-size: 2rem; margin-bottom: 12px; }
+  .card h3 { font-size: 1.05rem; margin: 0 0 8px; }
+  .card p { color: var(--muted); font-size: 0.92rem; margin: 0; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .step { text-align: center; }
+  .step .num {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; margin: 0 auto 14px;
+  }
+  .step h3 { font-size: 1rem; margin: 0 0 6px; }
+  .step p { color: var(--muted); font-size: 0.9rem; margin: 0; }
+
+  .tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .tier {
+    border: 1px solid #e6e8ee; border-radius: 14px; padding: 32px 24px; text-align: center;
+  }
+  .tier.highlight { border-color: var(--primary); box-shadow: 0 12px 24px rgba(41,82,204,.12); transform: translateY(-6px); }
+  .tier .name { font-weight: 800; color: var(--primary); letter-spacing: .04em; margin-bottom: 8px; }
+  .tier ul { list-style: none; padding: 0; margin: 20px 0; color: var(--muted); font-size: 0.92rem; }
+  .tier li { padding: 6px 0; }
+
+  .cta-band {
+    background: var(--primary); color: #fff; text-align: center; padding: 64px 0;
+  }
+  .cta-band h2 { color: #fff; }
+  .cta-band p { color: #dbe3fb; margin: 0 0 28px; }
+  .cta-band .cta {
+    background: #fff; color: var(--primary); padding: 14px 32px; border-radius: 10px;
+    font-weight: 700; text-decoration: none; display: inline-block;
+  }
+
+  footer { padding: 32px 0; text-align: center; color: var(--muted); font-size: 0.85rem; }
+
+  @media (max-width: 720px) {
+    .grid3, .steps, .tiers { grid-template-columns: 1fr; }
+    .tier.highlight { transform: none; }
+    .hero h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a class="logo" href="/">iChapterwise</a>
+    <a class="nav-cta" href="/">무료로 시작하기</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>데이터로 설계하는<br><span>나만의 입시 전략</span></h1>
+    <p>입결 데이터와 학원 커리큘럼 정보를 AI가 분석해, 학생 한 명에게 맞춘 입시 컨설팅 리포트를 즉시 만들어 드립니다.</p>
+    <a class="cta" href="/">지금 리포트 받아보기 →</a>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>왜 iChapterwise인가요</h2>
+    <p class="sub">사람이 아니라 데이터와 AI가 만드는 입시 컨설팅입니다</p>
+    <div class="grid3">
+      <div class="card">
+        <div class="icon">📊</div>
+        <h3>실데이터 기반 분석</h3>
+        <p>대학 입학처 공시 자료와 학원 커리큘럼 데이터를 직접 수집해 분석에 활용합니다.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🤖</div>
+        <h3>AI 맞춤 리포트</h3>
+        <p>학생의 성적대와 지망 학과를 입력하면, AI가 학습 로드맵까지 포함한 리포트를 생성합니다.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <h3>몇 분 안에 완성</h3>
+        <p>상담 예약 없이, 지금 바로 입력하고 몇 분 안에 결과를 받아볼 수 있습니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background: var(--bg);">
+  <div class="container">
+    <h2>이용 방법</h2>
+    <p class="sub">3단계면 충분합니다</p>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>정보 입력</h3>
+        <p>성적대, 지망 학과, 관심 지역을 입력합니다.</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>AI 분석</h3>
+        <p>입시 데이터를 바탕으로 AI가 분석을 수행합니다.</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>리포트 확인</h3>
+        <p>맞춤형 학습 로드맵과 입시 전략을 확인합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>요금제</h2>
+    <p class="sub">필요한 만큼만 선택하세요</p>
+    <div class="tiers">
+      <div class="tier">
+        <div class="name">BASIC</div>
+        <ul>
+          <li>핵심 입시 분석</li>
+          <li>간단 학습 가이드</li>
+        </ul>
+      </div>
+      <div class="tier highlight">
+        <div class="name">STANDARD</div>
+        <ul>
+          <li>상세 입결 비교 분석</li>
+          <li>학기별 학습 로드맵</li>
+          <li>학원 커리큘럼 추천</li>
+        </ul>
+      </div>
+      <div class="tier">
+        <div class="name">PREMIUM</div>
+        <ul>
+          <li>STANDARD 전체 포함</li>
+          <li>심층 데이터 리포트</li>
+          <li>1:1 후속 질문 지원</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-band">
+  <div class="container">
+    <h2>지금 무료로 시작해보세요</h2>
+    <p>회원가입 없이, 바로 첫 리포트를 받아볼 수 있습니다.</p>
+    <a class="cta" href="/">무료 리포트 받기</a>
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    © 2026 iChapterwise. AI 빅데이터 입시 컨설팅.
+  </div>
+</footer>
+
+</body>
+</html>

@@ -23,6 +23,11 @@ def index():
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/landing")
+def landing():
+    return FileResponse(STATIC_DIR / "landing.html")
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
