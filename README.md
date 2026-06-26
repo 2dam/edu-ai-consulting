@@ -12,6 +12,11 @@
 - `api/` — FastAPI 백엔드 (2~4단계: 분석/가공/제공)
   - `/ingest`: 크롤러가 수집 결과를 적재
   - `/reports`: OpenAI 기반 AI 리포트 생성 (BASIC/STANDARD/PREMIUM 티어별 분량 차등)
+  - `/predict-missing-cutoffs`: 비공개·미수집된 대학×학과 컷오프(`cutoff_score`)를
+    관측된 데이터로부터 추정 (`app/imputation.py`). 관측치가 적으면 반복 SVD
+    행렬완성, 충분히 쌓이면(`VAE_MIN_OBSERVATIONS` 이상) 소형 VAE 인페인팅으로
+    자동 전환. 참고: [jasper-research/beyond-the-smile-paper](https://github.com/jasper-research/beyond-the-smile-paper)
+    (변동성 표면을 격자로 만들어 VAE로 인페인팅하는 아이디어를 응용)
 
 ## 실행 방법
 
@@ -42,6 +47,16 @@ curl -X POST http://localhost:8000/reports \
     "profile": {"성적대": "내신 2등급", "지망학과": "전기전자공학", "지역": "광주"}
   }'
 ```
+
+## 사용 예시 (결측 컷오프 예측)
+
+```bash
+curl http://localhost:8000/predict-missing-cutoffs
+```
+
+표본이 적을 때(`n_observed < 200`)는 SVD 결과에 "표본이 적어 신뢰도가 낮다"는
+경고가 함께 반환됩니다. 실제 서비스에 적용하려면 PREMIUM 리포트 등에서 이
+경고를 사용자에게 그대로 노출해야 함.
 
 ## 아직 안 한 것 / 다음 단계
 

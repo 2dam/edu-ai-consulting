@@ -1,7 +1,7 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
-from app import ai_engine
+from app import ai_engine, imputation
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, RawRecord
 from app.schemas import IngestPayload, ReportRequest, ReportResponse
@@ -39,6 +39,13 @@ def list_records(item_type: str | None = None, limit: int = 50, db: Session = De
         {"id": r.id, "item_type": r.item_type, "data": r.data, "created_at": r.created_at}
         for r in records
     ]
+
+
+@app.get("/predict-missing-cutoffs")
+def predict_missing_cutoffs(db: Session = Depends(get_db)):
+    """비공개·미수집된 대학x학과 컷오프(cutoff_score)를 관측된 데이터로부터 추정.
+    app/imputation.py 참고 — 관측치가 적으면 SVD, 충분히 쌓이면 VAE로 자동 전환."""
+    return imputation.predict_missing_cutoffs(db)
 
 
 @app.post("/reports", response_model=ReportResponse)
