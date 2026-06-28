@@ -26,5 +26,6 @@ class ConsultingReport(Base):
     student_label = Column(String(128))  # 비식별화된 학생 식별자 (실명 금지)
     tier = Column(String(16))  # BASIC / STANDARD / PREMIUM
     input_summary = Column(Text)
+    psych_scores = Column(JSON, nullable=True)  # app/psychology_engine.score_assessment() 결과
     report_text = Column(Text)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

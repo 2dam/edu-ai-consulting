@@ -5,10 +5,16 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from app import ai_engine, imputation
+from app import ai_engine, imputation, psychology_engine
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, RawRecord
-from app.schemas import IngestPayload, ReportRequest, ReportResponse
+from app.schemas import (
+    IngestPayload,
+    PsychAssessmentRequest,
+    PsychAssessmentResponse,
+    ReportRequest,
+    ReportResponse,
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -65,12 +71,26 @@ def predict_missing_cutoffs(db: Session = Depends(get_db)):
     return imputation.predict_missing_cutoffs(db)
 
 
+@app.post("/psych-assessment", response_model=PsychAssessmentResponse)
+def psych_assessment(req: PsychAssessmentRequest):
+    """SDT/SRL/긍정심리/생태학적 관점 설문을 채점만 해서 미리보기로 돌려주는 엔드포인트.
+    app/psychology_engine.py 참고."""
+    scores = psychology_engine.score_assessment(req.answers)
+    return PsychAssessmentResponse(scores=scores, narrative=psychology_engine.to_consulting_context(scores))
+
+
 @app.post("/reports", response_model=ReportResponse)
 def create_report(req: ReportRequest, db: Session = Depends(get_db)):
     """사업계획서 3.3항 4단계 파이프라인 중 분석~제공 단계."""
+    psych_scores = None
+    psych_context = ""
+    if req.psych_answers:
+        psych_scores = psychology_engine.score_assessment(req.psych_answers)
+        psych_context = psychology_engine.to_consulting_context(psych_scores)
+
     try:
         report_text = ai_engine.generate_report(
-            db, req.student_label, req.tier, req.profile, req.context_item_types
+            db, req.student_label, req.tier, req.profile, req.context_item_types, psych_context
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
@@ -79,6 +99,7 @@ def create_report(req: ReportRequest, db: Session = Depends(get_db)):
         student_label=req.student_label,
         tier=req.tier,
         input_summary=str(req.profile),
+        psych_scores=psych_scores,
         report_text=report_text,
     )
     db.add(record)

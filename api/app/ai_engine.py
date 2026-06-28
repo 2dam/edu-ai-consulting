@@ -44,7 +44,14 @@ def gather_context(db: Session, item_types: list[str] | None, limit: int = 30) -
     return "\n".join(lines) if lines else "(수집된 데이터 없음 — 일반 지식 기준으로 답변)"
 
 
-def generate_report(db: Session, student_label: str, tier: str, profile: dict, context_item_types: list[str] | None) -> str:
+def generate_report(
+    db: Session,
+    student_label: str,
+    tier: str,
+    profile: dict,
+    context_item_types: list[str] | None,
+    psych_context: str = "",
+) -> str:
     context = gather_context(db, context_item_types)
     depth_instruction = TIER_DEPTH.get(tier, TIER_DEPTH["BASIC"])
 
@@ -52,12 +59,17 @@ def generate_report(db: Session, student_label: str, tier: str, profile: dict, c
         "당신은 대한민국 대입 입시 컨설턴트 AI입니다. "
         "강남 지역에서 수집된 입시 데이터를 바탕으로 지방 학생에게도 동등한 수준의 "
         "입시 정보를 제공하는 것이 목표입니다. 확인되지 않은 사실을 단정하지 말고, "
-        "데이터가 부족하면 그 사실을 명시하세요."
+        "데이터가 부족하면 그 사실을 명시하세요. "
+        "심리 진단 데이터를 해석할 때는 자기결정성이론(SDT)·자기조절학습·긍정심리학·생태학적 관점에 따라, "
+        "학생 개인의 결함이 아니라 학생-환경 간 상호작용으로 설명하고, "
+        "컨설턴트가 지시하기보다 협력적 파트너로서 제안하는 어조를 유지하세요."
     )
     user_prompt = (
         f"[학생 프로필 (비식별)]\n{profile}\n\n"
+        f"[심리 진단 결과]\n{psych_context or '(없음)'}\n\n"
         f"[참고 데이터]\n{context}\n\n"
-        f"[요청]\n{depth_instruction} 형태로 입시 컨설팅 리포트를 작성하세요."
+        f"[요청]\n{depth_instruction} 형태로 입시 컨설팅 리포트를 작성하세요. "
+        f"심리 진단 결과가 있다면 동기/학습전략/정서 측면의 맞춤 제안에 반영하세요."
     )
 
     client = get_client()
