@@ -5,10 +5,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from app import ai_engine, imputation, psychology_engine
+from app import ai_engine, imputation, predictive_model, psychology_engine
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, RawRecord
 from app.schemas import (
+    DropoutRiskRequest,
+    DropoutRiskResponse,
     IngestPayload,
     PsychAssessmentRequest,
     PsychAssessmentResponse,
@@ -79,6 +81,14 @@ def psych_assessment(req: PsychAssessmentRequest):
     return PsychAssessmentResponse(scores=scores, narrative=psychology_engine.to_consulting_context(scores))
 
 
+@app.post("/predict-dropout-risk", response_model=DropoutRiskResponse)
+def predict_dropout_risk(req: DropoutRiskRequest, db: Session = Depends(get_db)):
+    """앙상블(스태킹) 모델 + XAI(SHAP/순열중요도 폴백)로 중도탈락 위험을 예측.
+    app/predictive_model.py 참고."""
+    result = predictive_model.predict_dropout_risk(db, req.student_features)
+    return DropoutRiskResponse(**result)
+
+
 @app.post("/reports", response_model=ReportResponse)
 def create_report(req: ReportRequest, db: Session = Depends(get_db)):
     """사업계획서 3.3항 4단계 파이프라인 중 분석~제공 단계."""
@@ -87,6 +97,13 @@ def create_report(req: ReportRequest, db: Session = Depends(get_db)):
     if req.psych_answers:
         psych_scores = psychology_engine.score_assessment(req.psych_answers)
         psych_context = psychology_engine.to_consulting_context(psych_scores)
+
+    risk_context = ""
+    if req.student_features:
+        risk_result = predictive_model.predict_dropout_risk(db, req.student_features)
+        risk_context = predictive_model.to_consulting_context(risk_result)
+
+    psych_context = "\n\n".join(filter(None, [psych_context, risk_context]))
 
     try:
         report_text = ai_engine.generate_report(

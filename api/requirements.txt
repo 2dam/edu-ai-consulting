@@ -5,6 +5,10 @@ pydantic>=2.10
 openai>=1.51
 python-dotenv>=1.0
 numpy>=2.1
+scikit-learn>=1.5
 # torch 는 선택적 의존성 — 관측치가 충분히 쌓이면(app/imputation.py 의
 # VAE_MIN_OBSERVATIONS 이상) 설치해서 VAE 인페인팅 경로를 활성화.
 # torch>=2.4
+# shap 도 선택적 의존성 — 미설치 시 app/predictive_model.py 는 자동으로
+# RandomForest 변수 중요도(permutation importance)로 폴백.
+# shap>=0.46

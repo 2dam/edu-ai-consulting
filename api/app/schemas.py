@@ -17,6 +17,8 @@ class ReportRequest(BaseModel):
     context_item_types: list[str] | None = None
     # SDT/SRL/긍정심리/생태학적 진단 설문 응답 (item_id -> 1~5점). app/psychology_engine.py 참고
     psych_answers: dict[str, int] | None = None
+    # 출결/성적 등 정량 피처 (app/predictive_model.FEATURE_NAMES). 앙상블 중도탈락 예측에 사용
+    student_features: dict[str, float] | None = None
 
 
 class PsychAssessmentRequest(BaseModel):
@@ -26,6 +28,21 @@ class PsychAssessmentRequest(BaseModel):
 class PsychAssessmentResponse(BaseModel):
     scores: dict[str, Any]
     narrative: str
+
+
+class DropoutRiskRequest(BaseModel):
+    # app/predictive_model.FEATURE_NAMES 키: attendance_rate, assignment_avg_score,
+    # midterm_score, study_hours_per_week, motivation_score
+    student_features: dict[str, float]
+
+
+class DropoutRiskResponse(BaseModel):
+    dropout_risk_probability: float
+    predicted_label: str
+    explanation_method: str
+    feature_contributions: list[dict[str, Any]]
+    is_synthetic_training_data: bool
+    warning: str | None = None
 
 
 class ReportResponse(BaseModel):
