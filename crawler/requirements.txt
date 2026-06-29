@@ -2,3 +2,22 @@ scrapy==2.11.2
 requests==2.32.3
 openpyxl==3.1.5
 pdfplumber==0.11.4
+
+# Scrapling: 스마트 셀렉터(Selector) + 봇 차단 우회(스텔스 HTTP / Playwright)
+# 설치 후: .venv\Scripts\python -m playwright install chromium
+#          .venv\Scripts\python -m patchright install chromium
+scrapling[playwright]>=0.4.9
+curl-cffi>=0.7.0
+browserforge>=1.0.0
+patchright>=1.60.0
+msgspec>=0.18.0
+
+# Twisted/cryptography 호환 버전 고정 (Scrapy 2.11.2 기준)
+twisted==24.11.0
+cryptography==43.0.3
+service-identity==24.2.0
+
+# Browser Use: LLM이 직접 브라우저를 조작하는 AI 에이전트
+# 필수 환경변수: ANTHROPIC_API_KEY
+browser-use>=0.13.0
+langchain-anthropic>=0.3.0

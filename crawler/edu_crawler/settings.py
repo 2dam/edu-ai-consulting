@@ -17,6 +17,13 @@ AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 
 USER_AGENT = "EduAIConsultingBot/0.1 (+contact: jincheondong9@gmail.com)"
 
+# --- Scrapling 봇 차단 우회 미들웨어 ---
+# 우선순위 543: Scrapy 기본 RetryMiddleware(550) 직전에 실행.
+# 403/503 응답 또는 요청 메타에 use_scrapling/use_scrapling_playwright가 있을 때만 개입.
+DOWNLOADER_MIDDLEWARES = {
+    "edu_crawler.middlewares.ScraplingFallbackMiddleware": 543,
+}
+
 ITEM_PIPELINES = {
     "edu_crawler.pipelines.AnonymizePipeline": 100,
     "edu_crawler.pipelines.ApiExportPipeline": 200,
