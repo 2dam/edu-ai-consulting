@@ -1,13 +1,19 @@
 'use client'
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
 import type { AcademyNode, GangnamAcademy, LayerId } from '@/lib/data'
 import { KOREA_CENTER } from '@/lib/data'
+
+export interface MapHandle {
+  flyTo: (lat: number, lng: number, zoom: number) => void
+}
 
 interface MapProps {
   regions: AcademyNode[]
   gangnamAcademies: GangnamAcademy[]
   activeLayers: Set<LayerId>
   onSelect: (item: AcademyNode | GangnamAcademy | null) => void
+  dropoutRisks?: Record<string, { risk_probability: number; predicted_label: string; top_factor: string | null }>
+  universities?: Array<{ id: string; name: string; short: string; lat: number; lng: number; rank: number; cutoff_avg: number; region: string }>
 }
 
 // 점수→색상 (낮음=파랑, 중간=노랑, 높음=빨강)
@@ -22,12 +28,110 @@ function tierColor(tier: 'S' | 'A' | 'B' | 'C'): string {
   return { S: '#f97316', A: '#eab308', B: '#3b82f6', C: '#64748b' }[tier]
 }
 
-export default function Map({ regions, gangnamAcademies, activeLayers, onSelect }: MapProps) {
+const Map = forwardRef<MapHandle, MapProps>(function Map(
+  { regions, gangnamAcademies, activeLayers, onSelect, dropoutRisks = {}, universities = [] },
+  ref
+) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const popupRef = useRef<any>(null)
 
+  useImperativeHandle(ref, () => ({
+    flyTo: (lat, lng, zoom) => {
+      mapRef.current?.flyTo({ center: [lng, lat], zoom, duration: 1200 })
+    },
+  }))
+
   const addLayers = useCallback((map: any, maplibre: any) => {
+    // ── 0. 중도탈락 위험도 레이어 ────────────────────────────────────────
+    if (!map.getSource('dropout') && Object.keys(dropoutRisks).length > 0) {
+      map.addSource('dropout', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: regions
+            .filter(r => dropoutRisks[r.id])
+            .map(r => ({
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [r.lng, r.lat] },
+              properties: {
+                risk: dropoutRisks[r.id]?.risk_probability ?? 0,
+                label: dropoutRisks[r.id]?.predicted_label ?? '',
+                factor: dropoutRisks[r.id]?.top_factor ?? '',
+                name: r.name,
+              },
+            })),
+        },
+      })
+      map.addLayer({
+        id: 'dropout-circles',
+        type: 'circle',
+        source: 'dropout',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['get', 'risk'], 0, 6, 1, 22],
+          'circle-color': ['interpolate', ['linear'], ['get', 'risk'], 0, '#22c55e', 0.4, '#eab308', 0.7, '#f97316', 1, '#ef4444'],
+          'circle-opacity': 0.7,
+          'circle-stroke-width': 1,
+          'circle-stroke-color': 'rgba(255,255,255,0.2)',
+        },
+        layout: { visibility: activeLayers.has('dropout-risk') ? 'visible' : 'none' },
+      })
+      map.on('click', 'dropout-circles', (e: any) => {
+        const p = e.features[0].properties
+        new maplibre.Popup({ closeButton: false })
+          .setLngLat(e.lngLat)
+          .setHTML(`<b>${p.name}</b><br>위험도: <b style="color:${p.risk > 0.5 ? '#ef4444' : '#22c55e'}">${(p.risk * 100).toFixed(0)}%</b><br>주요 요인: ${p.factor || '—'}`)
+          .addTo(map)
+      })
+    }
+
+    // ── 0b. 주요 대학 레이어 ─────────────────────────────────────────────
+    if (!map.getSource('universities') && universities.length > 0) {
+      map.addSource('universities', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: universities.map(u => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [u.lng, u.lat] },
+            properties: { ...u },
+          })),
+        },
+      })
+      map.addLayer({
+        id: 'university-circles',
+        type: 'circle',
+        source: 'universities',
+        paint: {
+          'circle-radius': 7,
+          'circle-color': '#3b82f6',
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#93c5fd',
+          'circle-opacity': 0.85,
+        },
+        layout: { visibility: activeLayers.has('universities') ? 'visible' : 'none' },
+      })
+      map.addLayer({
+        id: 'university-labels',
+        type: 'symbol',
+        source: 'universities',
+        layout: {
+          'text-field': ['get', 'short'],
+          'text-size': 9,
+          'text-offset': [0, 1.6],
+          'text-anchor': 'top',
+          visibility: activeLayers.has('universities') ? 'visible' : 'none',
+        },
+        paint: { 'text-color': '#93c5fd', 'text-halo-color': '#0a0c10', 'text-halo-width': 1 },
+      })
+      map.on('click', 'university-circles', (e: any) => {
+        const p = e.features[0].properties
+        new maplibre.Popup({ closeButton: false })
+          .setLngLat(e.lngLat)
+          .setHTML(`<b>${p.name}</b><br>정시 커트라인 평균: <b style="color:#3b82f6">${p.cutoff_avg}점</b><br>전국 ${p.rank}위`)
+          .addTo(map)
+      })
+    }
     // ── 1. 교육격차 히트맵 ───────────────────────────────────────────────
     if (!map.getSource('regions')) {
       map.addSource('regions', {
@@ -252,7 +356,12 @@ export default function Map({ regions, gangnamAcademies, activeLayers, onSelect 
     toggle('gangnam-academy-dots', activeLayers.has('gangnam-zone'))
     toggle('gangnam-zone-fill', activeLayers.has('gangnam-zone'))
     toggle('gangnam-zone-line', activeLayers.has('gangnam-zone'))
+    toggle('dropout-circles', activeLayers.has('dropout-risk'))
+    toggle('university-circles', activeLayers.has('universities'))
+    toggle('university-labels', activeLayers.has('universities'))
   }, [activeLayers])
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-}
+})
+
+export default Map
