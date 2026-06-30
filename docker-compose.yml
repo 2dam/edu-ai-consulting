@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+  # ── FastAPI 백엔드 (AI 컨설팅 엔진 + 피드백 루프) ────────────────────────
+  api:
+    build: ./api
+    container_name: eduintel-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api/data:/app/data          # SQLite DB 영속화
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DATABASE_URL=sqlite:///./data/edu.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Next.js 교육 인텔리전스 대시보드 ─────────────────────────────────────
+  dashboard:
+    build: ./dashboard
+    container_name: eduintel-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - BACKEND_URL=http://api:8000
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  default:
+    name: eduintel-network
