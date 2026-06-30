@@ -49,4 +49,32 @@ class ReportResponse(BaseModel):
     id: int
     student_label: str
     tier: str
+    prompt_variant: str | None = None
     report_text: str
+
+
+class FeedbackRequest(BaseModel):
+    report_id: int
+    student_label: str
+    rating: Literal[1, 2, 3, 4, 5]
+    comment: str | None = None
+    # 나중에 실제 결과가 확인됐을 때 추가 입력 가능
+    actual_outcome: Literal["improved", "no_change", "worsened"] | None = None
+
+
+class FeedbackResponse(BaseModel):
+    id: int
+    report_id: int
+    rating: int
+    message: str
+
+
+class LoopStatusResponse(BaseModel):
+    active_prompt_variant: str
+    total_feedbacks: int
+    unprocessed_feedbacks: int
+    retrain_threshold: int
+    feedbacks_until_retrain: int
+    total_loop_cycles: int
+    last_cycle: dict[str, Any] | None = None
+    model_accuracy_trend: list[dict[str, Any]]
