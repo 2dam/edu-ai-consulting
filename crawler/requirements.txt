@@ -1,4 +1,5 @@
 scrapy==2.11.2
+nodriver==0.47.0          # 비탐지 Chrome 자동화 (stealth_crawler.py)
 requests==2.32.3
 aliens-eye>=2.1.0          # 1단계 SNS 계정 탐색 (discover_and_crawl.py)
 openpyxl==3.1.5
