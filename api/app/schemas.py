@@ -69,6 +69,20 @@ class FeedbackResponse(BaseModel):
     message: str
 
 
+class CctvInfo(BaseModel):
+    name: str
+    lat: float
+    lng: float
+    stream_url: str
+    format: str
+
+
+class CctvResponse(BaseModel):
+    items: list[CctvInfo]
+    total: int
+    source: str = "국가교통정보센터(ITS) 공공 도로 CCTV"
+
+
 class LoopStatusResponse(BaseModel):
     active_prompt_variant: str
     total_feedbacks: int

@@ -1,18 +1,20 @@
 'use client'
 import { useState, useRef } from 'react'
-import type { AcademyNode } from '@/lib/data'
-import { REGION_NODES } from '@/lib/data'
+import type { AcademyNode, EducationFacility, FacilityType } from '@/lib/data'
+import { REGION_NODES, FACILITY_TYPE_LABEL } from '@/lib/data'
 
 interface OsintPanelProps {
   regions: AcademyNode[]
   onFlyTo?: (lat: number, lng: number, zoom: number) => void
+  educationFacilities?: EducationFacility[]
 }
 
-type Tool = 'search' | 'gap-calc' | 'score-dist' | 'report'
+type Tool = 'search' | 'gap-calc' | 'score-dist' | 'report' | 'facility-rating'
 
 const SUBJECTS = ['전체', '수학', '영어', '국어', '과학', '사회']
+const FACILITY_TYPE_FILTERS: Array<FacilityType | '전체'> = ['전체', 'daycare', 'kindergarten', 'elementary', 'academy']
 
-export default function OsintPanel({ regions, onFlyTo }: OsintPanelProps) {
+export default function OsintPanel({ regions, onFlyTo, educationFacilities = [] }: OsintPanelProps) {
   const [open, setOpen] = useState(false)
   const [activeTool, setActiveTool] = useState<Tool>('search')
   const [searchQuery, setSearchQuery] = useState('')
@@ -23,6 +25,8 @@ export default function OsintPanel({ regions, onFlyTo }: OsintPanelProps) {
   const [reportRegion, setReportRegion] = useState('gangnam')
   const [reportText, setReportText] = useState('')
   const [loading, setLoading] = useState(false)
+  const [facilityTypeFilter, setFacilityTypeFilter] = useState<FacilityType | '전체'>('전체')
+  const [facilityQuery, setFacilityQuery] = useState('')
 
   const handleSearch = () => {
     const q = searchQuery.trim().toLowerCase()
@@ -38,6 +42,18 @@ export default function OsintPanel({ regions, onFlyTo }: OsintPanelProps) {
   const gapDiff = regionA && regionB ? ((regionA.gap_index - regionB.gap_index) * 100).toFixed(1) : null
   const scoreDiff = regionA && regionB ? regionA.avg_score_rank - regionB.avg_score_rank : null
   const academyDiff = regionA && regionB ? regionA.academy_count - regionB.academy_count : null
+
+  const facilityCountByType = educationFacilities.reduce((acc, f) => {
+    acc[f.data.facility_type] = (acc[f.data.facility_type] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const filteredFacilities = educationFacilities.filter(f => {
+    if (facilityTypeFilter !== '전체' && f.data.facility_type !== facilityTypeFilter) return false
+    const q = facilityQuery.trim()
+    if (!q) return true
+    return f.data.name.includes(q) || f.data.region.includes(q) || f.data.address?.includes(q)
+  })
 
   const generateReport = async () => {
     const r = regions.find(x => x.id === reportRegion)
@@ -168,6 +184,7 @@ export default function OsintPanel({ regions, onFlyTo }: OsintPanelProps) {
               ['search', '🔍 학원·지역 검색'],
               ['gap-calc', '📊 격차 계산기'],
               ['score-dist', '📈 성적 분포'],
+              ['facility-rating', '🧸 시설 평가정보'],
               ['report', '🤖 AI 리포트'],
             ] as [Tool, string][]).map(([id, label]) => (
               <button key={id} onClick={() => setActiveTool(id)} style={s.tab(activeTool === id)}>{label}</button>
@@ -318,6 +335,93 @@ export default function OsintPanel({ regions, onFlyTo }: OsintPanelProps) {
                       </div>
                     )
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* ── 시설 평가정보 (어린이집·유치원·초등학교·학원) ───────── */}
+            {activeTool === 'facility-rating' && (
+              <div>
+                <div style={{ fontSize: 10, color: '#64748b', marginBottom: 10, lineHeight: 1.6 }}>
+                  네이버·카카오 등 민간 리뷰가 아닌, 어린이집평가제·정보공시·학원 등록현황 등
+                  <strong style={{ color: '#ec4899' }}> 공식 출처 기반 평가정보</strong>만 표시합니다.
+                </div>
+
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const, marginBottom: 10 }}>
+                  {FACILITY_TYPE_FILTERS.map(ft => (
+                    <button
+                      key={ft}
+                      onClick={() => setFacilityTypeFilter(ft)}
+                      style={{
+                        padding: '4px 10px', fontSize: 10, borderRadius: 12, cursor: 'pointer',
+                        background: facilityTypeFilter === ft ? '#ec4899' : 'rgba(255,255,255,0.06)',
+                        color: facilityTypeFilter === ft ? '#000' : '#94a3b8',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        fontWeight: facilityTypeFilter === ft ? 700 : 400,
+                      }}
+                    >
+                      {ft === '전체' ? '전체' : FACILITY_TYPE_LABEL[ft]}
+                      {ft !== '전체' && facilityCountByType[ft] ? ` (${facilityCountByType[ft]})` : ''}
+                    </button>
+                  ))}
+                </div>
+
+                <input
+                  style={{ ...s.input, marginBottom: 10 }}
+                  placeholder="시설명·지역·주소 검색"
+                  value={facilityQuery}
+                  onChange={e => setFacilityQuery(e.target.value)}
+                />
+
+                <div style={{ fontSize: 10, color: '#64748b', marginBottom: 10 }}>
+                  총 {educationFacilities.length.toLocaleString()}곳 수집됨 · 조회 결과 {filteredFacilities.length.toLocaleString()}곳
+                </div>
+
+                {educationFacilities.length === 0 && (
+                  <div style={{ color: '#64748b', fontSize: 11, lineHeight: 1.7 }}>
+                    아직 수집된 데이터가 없습니다.<br />
+                    crawler/edu_crawler/spiders/early_education_spider.py 를 실행하면
+                    (초등학교는 NEIS_API_KEY 발급만으로 바로 동작) 여기 표시됩니다.
+                  </div>
+                )}
+
+                {educationFacilities.length > 0 && filteredFacilities.length === 0 && (
+                  <div style={{ color: '#64748b', fontSize: 11 }}>조건에 맞는 시설이 없습니다.</div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 6 }}>
+                  {filteredFacilities.slice(0, 50).map(f => (
+                    <div
+                      key={f.id}
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.07)',
+                        borderRadius: 6,
+                        padding: '8px 10px',
+                        fontSize: 11,
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <div style={{ fontWeight: 600 }}>{f.data.name}</div>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, color: '#ec4899',
+                          background: 'rgba(236,72,153,0.12)', borderRadius: 3, padding: '1px 6px',
+                        }}>
+                          {FACILITY_TYPE_LABEL[f.data.facility_type]}
+                        </span>
+                      </div>
+                      <div style={{ color: '#64748b', fontSize: 10 }}>
+                        {f.data.region} · {f.data.address || '주소 미상'}
+                      </div>
+                      {(f.data.evaluation_grade || f.data.status_note) && (
+                        <div style={{ marginTop: 4, fontSize: 10, color: '#94a3b8' }}>
+                          {f.data.evaluation_grade && <span>평가등급: <strong style={{ color: '#22c55e' }}>{f.data.evaluation_grade}</strong></span>}
+                          {f.data.evaluation_grade && f.data.status_note && ' · '}
+                          {f.data.status_note && <span>등록상태: {f.data.status_note}</span>}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

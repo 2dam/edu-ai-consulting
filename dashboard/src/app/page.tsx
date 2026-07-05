@@ -1,7 +1,7 @@
 'use client'
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { AcademyNode, GangnamAcademy, LayerId } from '@/lib/data'
+import type { AcademyNode, GangnamAcademy, LayerId, CctvPoint, EducationFacility } from '@/lib/data'
 import { LAYERS } from '@/lib/data'
 import HUD from '@/components/HUD'
 import OsintPanel from '@/components/OsintPanel'
@@ -35,6 +35,8 @@ export default function Page() {
   const [news, setNews] = useState<any[]>([])
   const [dropoutRisks, setDropoutRisks] = useState<Record<string, any>>({})
   const [universities, setUniversities] = useState<any[]>([])
+  const [cctvPoints, setCctvPoints] = useState<CctvPoint[]>([])
+  const [educationFacilities, setEducationFacilities] = useState<EducationFacility[]>([])
   const [activeLayers, setActiveLayers] = useState<Set<LayerId>>(
     new Set(LAYERS.filter(l => l.default).map(l => l.id))
   )
@@ -51,6 +53,8 @@ export default function Page() {
     fetch('/api/news').then(r => r.json()).then(d => setNews(d.items)).catch(console.error)
     fetch('/api/dropout').then(r => r.json()).then(d => setDropoutRisks(d.dropout_risks)).catch(console.error)
     fetch('/api/universities').then(r => r.json()).then(d => setUniversities(d.universities)).catch(console.error)
+    fetch('/api/cctv').then(r => r.json()).then(d => setCctvPoints(d.items)).catch(console.error)
+    fetch('/api/education-facilities').then(r => r.json()).then(d => setEducationFacilities(d.items)).catch(console.error)
   }, [])
 
   const toggleLayer = useCallback((id: LayerId) => {
@@ -87,6 +91,8 @@ export default function Page() {
           onSelect={setSelected}
           dropoutRisks={dropoutRisks}
           universities={universities}
+          cctvPoints={cctvPoints}
+          educationFacilities={educationFacilities}
         />
       </div>
 
@@ -105,6 +111,7 @@ export default function Page() {
       <OsintPanel
         regions={data.regions}
         onFlyTo={flyTo}
+        educationFacilities={educationFacilities}
       />
     </div>
   )

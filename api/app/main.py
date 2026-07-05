@@ -8,10 +8,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from app import ai_engine, feedback_loop, imputation, predictive_model, psychology_engine
+from app import ai_engine, cctv, feedback_loop, imputation, predictive_model, psychology_engine
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
 from app.schemas import (
+    CctvInfo,
+    CctvResponse,
     DropoutRiskRequest,
     DropoutRiskResponse,
     FeedbackRequest,
@@ -111,6 +113,60 @@ def list_records(item_type: str | None = None, limit: int = 50, db: Session = De
         {"id": r.id, "item_type": r.item_type, "data": r.data, "created_at": r.created_at}
         for r in records
     ]
+
+
+# ── 어린이집·유치원·초등학교 기초자료 (컨설팅 대상 확장) ─────────────────────
+
+@app.get("/education-facilities")
+def list_education_facilities(
+    facility_type: str | None = None,
+    region: str | None = None,
+    limit: int = 200,
+    db: Session = Depends(get_db),
+):
+    """crawler/early_education_spider 가 수집한 어린이집·유치원·초등학교 기초자료 조회.
+
+    facility_type: daycare | kindergarten | elementary
+    """
+    records = (
+        db.query(RawRecord)
+        .filter(RawRecord.item_type == "EducationFacilityItem")
+        .order_by(RawRecord.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    results = []
+    summary: dict[str, int] = {}
+    for r in records:
+        data = r.data or {}
+        if facility_type and data.get("facility_type") != facility_type:
+            continue
+        if region and data.get("region") != region:
+            continue
+        results.append({"id": r.id, "data": data, "created_at": r.created_at})
+        ft = data.get("facility_type", "unknown")
+        summary[ft] = summary.get(ft, 0) + 1
+
+    return {"items": results, "total": len(results), "summary_by_type": summary}
+
+
+# ── 전국 공공 CCTV (국가교통정보센터 ITS, 도로 구간만) ────────────────────────
+
+@app.get("/cctv", response_model=CctvResponse)
+def list_cctv(
+    min_x: float = cctv.KOREA_BBOX["min_x"],
+    min_y: float = cctv.KOREA_BBOX["min_y"],
+    max_x: float = cctv.KOREA_BBOX["max_x"],
+    max_y: float = cctv.KOREA_BBOX["max_y"],
+    cctv_type: int = 1,
+):
+    """bbox(경도/위도) 내 공공 도로 CCTV 목록. 기본값은 전국 범위.
+
+    ITS_API_KEY 미설정 시 빈 목록을 반환한다 — 시설(어린이집·학교) 내부 CCTV는
+    법적으로 열람 권한이 없어 다루지 않으며, 오직 도로 구간 CCTV만 대상이다.
+    """
+    items = cctv.fetch_cctv(min_x, min_y, max_x, max_y, cctv_type)
+    return CctvResponse(items=[CctvInfo(**i) for i in items], total=len(items))
 
 
 # ── 예측 모델 ─────────────────────────────────────────────────────────────────

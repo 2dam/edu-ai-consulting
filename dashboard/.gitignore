@@ -2,3 +2,5 @@ node_modules/
 .next/
 .env*.local
 *.log
+*.tsbuildinfo
+next-env.d.ts

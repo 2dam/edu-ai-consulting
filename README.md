@@ -58,6 +58,41 @@ curl http://localhost:8000/predict-missing-cutoffs
 경고가 함께 반환됩니다. 실제 서비스에 적용하려면 PREMIUM 리포트 등에서 이
 경고를 사용자에게 그대로 노출해야 함.
 
+## 어린이집·유치원·초등학교 + 전국 공공 CCTV (확장)
+
+컨설팅 대상을 영유아·초등 단계까지 넓히고, OSINT 대시보드에 도로 구간 공공
+CCTV를 추가했다.
+
+- `crawler/edu_crawler/spiders/early_education_spider.py`
+  - `-a facility_type=elementary`: 나이스(NEIS) 교육정보 개방포털 Open API
+    (`open.neis.go.kr`)로 초등학교 기초현황을 바로 수집. `NEIS_API_KEY` 발급 필요
+    (무료, https://open.neis.go.kr).
+  - `-a facility_type=daycare|kindergarten|academy -a portal_url=<...>`: 공공데이터포털
+    (data.go.kr)의 "공공데이터 개방 표준" 응답 포맷을 사용하는 어린이집정보공개포털·
+    유치원알리미·전국학원교습소정보 표준데이터 API 연동용 스캐폴드. 기관마다 응답
+    필드명이 달라 스파이더 상단의 `FIELD_MAP` 은 실제 활용신청 후 응답을 확인하고
+    채워야 한다 (기존 academy_spider/public_data_spider 의 CSS 셀렉터 placeholder와
+    동일한 성격).
+  - 수집 결과는 기존과 동일하게 `EducationFacilityItem` → `/ingest` 로 적재된다.
+    `evaluation_grade`(어린이집평가제 등급 등), `status_note`(학원 등록상태·행정처분
+    이력 등) 필드로 시설별 "공식 평가/등록 정보"를 담는다 — 네이버·카카오 등 민간
+    리뷰는 이용약관상 스크래핑이 금지되어 있어 다루지 않는다.
+- `api/app/cctv.py`, `GET /cctv`: 국가교통정보센터(ITS) 공공 도로 CCTV Open API
+  프록시. `ITS_API_KEY` 발급 필요 (무료, https://openapi.its.go.kr). 키 미설정 시
+  빈 목록 반환.
+  - **범위 제한**: 오직 도로·거리의 공공 CCTV만 다룬다. 어린이집·유치원·학교
+    시설 "내부" CCTV는 영유아보육법 등에 따라 원아 보호자·지자체·수사기관 등으로
+    열람 권한이 엄격히 제한되어 있어 이 프로젝트에서 연동하지 않는다.
+- `GET /education-facilities`: 수집된 어린이집·유치원·초등학교·학원 데이터 조회
+  (`facility_type`, `region` 필터 지원).
+- 대시보드: "어린이집·유치원·초등·학원", "전국 공공 CCTV" 레이어 토글 추가
+  (`dashboard/src/lib/data.ts`, `dashboard/src/components/Map.tsx`). 어린이집/
+  유치원/초등/학원 데이터는 대부분 주소만 제공되므로, 지도에 표시하려면 주소→좌표
+  지오코딩 배치 작업이 다음 단계로 필요하다 (현재는 좌표가 있는 항목만 렌더링).
+  - OSINT 분석 도구에 "🧸 시설 평가정보" 탭 추가 (`dashboard/src/components/OsintPanel.tsx`)
+    — 시설 유형(전체/어린이집/유치원/초등학교/학원) 필터 + 이름·지역·주소 검색으로
+    수집된 공식 평가·등록 정보를 목록으로 조회하는 창.
+
 ## 아직 안 한 것 / 다음 단계
 
 - 실제 대상 사이트(학교알리미 정확한 URL/HTML 구조, 특정 학원 사이트)에 맞춘

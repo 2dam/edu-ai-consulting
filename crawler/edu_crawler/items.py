@@ -60,3 +60,30 @@ class PolicyNewsItem(scrapy.Item):
     published_at = scrapy.Field()
     summary = scrapy.Field()
     crawled_at = scrapy.Field()
+
+
+class EducationFacilityItem(scrapy.Item):
+    """어린이집·유치원·초등학교·학원 기본현황 + 공식 평가/등록 정보.
+
+    "리뷰" 대신 공식 출처(평가인증·정보공시·등록현황)만 다룬다 — 네이버/카카오 등
+    민간 리뷰 스크래핑은 이용약관상 금지되어 있어 취급하지 않는다.
+
+    facility_type: "daycare"(어린이집) | "kindergarten"(유치원)
+                 | "elementary"(초등학교) | "academy"(학원)
+    """
+
+    source_url = scrapy.Field()
+    facility_type = scrapy.Field()
+    name = scrapy.Field()
+    region = scrapy.Field()          # 시도
+    district = scrapy.Field()        # 시군구
+    address = scrapy.Field()
+    lat = scrapy.Field()
+    lng = scrapy.Field()
+    establishment_type = scrapy.Field()  # 국공립/사립/직장/가정 등 (학원은 등록과정 구분)
+    capacity = scrapy.Field()            # 정원
+    current_enrollment = scrapy.Field()  # 현원
+    teacher_count = scrapy.Field()
+    evaluation_grade = scrapy.Field()    # 어린이집평가제 등급 등 (해당 시)
+    status_note = scrapy.Field()         # 등록상태·행정처분 이력 요약 (학원 등)
+    crawled_at = scrapy.Field()

@@ -77,10 +77,54 @@ export const LAYERS = [
   { id: 'gangnam-zone',     label: '강남 8학군',        icon: '⭐', color: '#eab308', default: true },
   { id: 'dropout-risk',     label: '중도탈락 위험도',   icon: '⚠️', color: '#a855f7', default: false },
   { id: 'universities',     label: '주요 대학',         icon: '🎓', color: '#3b82f6', default: false },
+  { id: 'early-education',  label: '어린이집·유치원·초등·학원',icon: '🧸', color: '#ec4899', default: false },
+  { id: 'cctv',             label: '전국 공공 CCTV',    icon: '📹', color: '#14b8a6', default: false },
   { id: 'loop-status',      label: 'AI 루프 상태',      icon: '🤖', color: '#22c55e', default: true },
 ] as const
 
 export type LayerId = typeof LAYERS[number]['id']
+
+// ── 전국 공공 CCTV (국가교통정보센터 ITS, 도로 구간만) ────────────────────────
+
+export interface CctvPoint {
+  name: string
+  lat: number
+  lng: number
+  stream_url: string
+  format: string
+}
+
+// ── 어린이집·유치원·초등학교·학원 기초자료 + 공식 평가/등록 정보 ──────────────
+// "리뷰"는 네이버/카카오 등 민간 리뷰가 아니라 공식 출처(평가인증·정보공시·등록현황)만 다룬다.
+
+export type FacilityType = 'daycare' | 'kindergarten' | 'elementary' | 'academy'
+
+export const FACILITY_TYPE_LABEL: Record<FacilityType, string> = {
+  daycare: '어린이집',
+  kindergarten: '유치원',
+  elementary: '초등학교',
+  academy: '학원',
+}
+
+export interface EducationFacility {
+  id: number
+  data: {
+    facility_type: FacilityType
+    name: string
+    region: string
+    address: string
+    establishment_type?: string
+    capacity?: number | null
+    current_enrollment?: number | null
+    evaluation_grade?: string   // 어린이집평가제 등급 등 공식 평가 결과
+    status_note?: string        // 등록상태·행정처분 이력 요약 (학원 등)
+    // 원본 공공데이터는 대부분 주소만 제공 — 지도 표시를 위해서는 별도 지오코딩이 필요하다.
+    // (다음 단계: 주소 -> 좌표 변환 배치 작업을 pipelines.py 에 추가)
+    lat?: number
+    lng?: number
+  }
+  created_at: string
+}
 
 // ── 공공 API 소스 ─────────────────────────────────────────────────────────────
 

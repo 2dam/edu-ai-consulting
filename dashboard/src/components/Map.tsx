@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
-import type { AcademyNode, GangnamAcademy, LayerId } from '@/lib/data'
+import type { AcademyNode, GangnamAcademy, LayerId, CctvPoint, EducationFacility } from '@/lib/data'
 import { KOREA_CENTER } from '@/lib/data'
 
 export interface MapHandle {
@@ -14,7 +14,11 @@ interface MapProps {
   onSelect: (item: AcademyNode | GangnamAcademy | null) => void
   dropoutRisks?: Record<string, { risk_probability: number; predicted_label: string; top_factor: string | null }>
   universities?: Array<{ id: string; name: string; short: string; lat: number; lng: number; rank: number; cutoff_avg: number; region: string }>
+  cctvPoints?: CctvPoint[]
+  educationFacilities?: EducationFacility[]
 }
+
+const FACILITY_LABEL: Record<string, string> = { daycare: '어린이집', kindergarten: '유치원', elementary: '초등학교', academy: '학원' }
 
 // 점수→색상 (낮음=파랑, 중간=노랑, 높음=빨강)
 function gapColor(gap: number): string {
@@ -29,7 +33,7 @@ function tierColor(tier: 'S' | 'A' | 'B' | 'C'): string {
 }
 
 const Map = forwardRef<MapHandle, MapProps>(function Map(
-  { regions, gangnamAcademies, activeLayers, onSelect, dropoutRisks = {}, universities = [] },
+  { regions, gangnamAcademies, activeLayers, onSelect, dropoutRisks = {}, universities = [], cctvPoints = [], educationFacilities = [] },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -359,7 +363,123 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     toggle('dropout-circles', activeLayers.has('dropout-risk'))
     toggle('university-circles', activeLayers.has('universities'))
     toggle('university-labels', activeLayers.has('universities'))
+    toggle('cctv-dots', activeLayers.has('cctv'))
+    toggle('early-education-dots', activeLayers.has('early-education'))
   }, [activeLayers])
+
+  // ── 전국 공공 CCTV / 어린이집·유치원·초등학교 (비동기 도착 데이터라 별도 동기화) ──
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    const sync = () => {
+      import('maplibre-gl').then((maplibre) => {
+        // CCTV — ITS 공개 도로 구간 CCTV만 대상 (시설 내부 CCTV 아님)
+        const cctvData = {
+          type: 'FeatureCollection' as const,
+          features: cctvPoints
+            .filter(c => c.lat && c.lng)
+            .map(c => ({
+              type: 'Feature' as const,
+              geometry: { type: 'Point' as const, coordinates: [c.lng, c.lat] },
+              properties: { ...c },
+            })),
+        }
+        const cctvSource: any = map.getSource('cctv')
+        if (cctvSource) {
+          cctvSource.setData(cctvData)
+        } else {
+          map.addSource('cctv', { type: 'geojson', data: cctvData })
+          map.addLayer({
+            id: 'cctv-dots',
+            type: 'circle',
+            source: 'cctv',
+            paint: {
+              'circle-radius': 5,
+              'circle-color': '#14b8a6',
+              'circle-stroke-width': 1.5,
+              'circle-stroke-color': '#fff',
+              'circle-opacity': 0.85,
+            },
+            layout: { visibility: activeLayers.has('cctv') ? 'visible' : 'none' },
+          })
+          map.on('click', 'cctv-dots', (e: any) => {
+            const p = e.features[0].properties
+            new maplibre.Popup({ closeButton: false })
+              .setLngLat(e.lngLat)
+              .setHTML(
+                `<b>${p.name}</b><br>형식: ${p.format || '—'}<br>` +
+                `<a href="${p.stream_url}" target="_blank" rel="noreferrer" style="color:#14b8a6">실시간 영상 열기 →</a>`
+              )
+              .addTo(map)
+          })
+          map.on('mouseenter', 'cctv-dots', () => { map.getCanvas().style.cursor = 'pointer' })
+          map.on('mouseleave', 'cctv-dots', () => { map.getCanvas().style.cursor = '' })
+        }
+
+        // 어린이집·유치원·초등학교 (주소 지오코딩 전까지는 좌표가 있는 항목만 표시)
+        const eduData = {
+          type: 'FeatureCollection' as const,
+          features: educationFacilities
+            .filter(f => f.data.lat && f.data.lng)
+            .map(f => ({
+              type: 'Feature' as const,
+              geometry: { type: 'Point' as const, coordinates: [f.data.lng!, f.data.lat!] },
+              properties: {
+                id: f.id,
+                name: f.data.name,
+                facility_type: f.data.facility_type,
+                region: f.data.region,
+                address: f.data.address,
+                evaluation_grade: f.data.evaluation_grade || '',
+                status_note: f.data.status_note || '',
+              },
+            })),
+        }
+        const eduSource: any = map.getSource('early-education')
+        if (eduSource) {
+          eduSource.setData(eduData)
+        } else {
+          map.addSource('early-education', { type: 'geojson', data: eduData })
+          map.addLayer({
+            id: 'early-education-dots',
+            type: 'circle',
+            source: 'early-education',
+            paint: {
+              'circle-radius': 5,
+              'circle-color': [
+                'match', ['get', 'facility_type'],
+                'daycare', '#ec4899',
+                'kindergarten', '#f472b6',
+                'elementary', '#db2777',
+                'academy', '#a21caf',
+                '#ec4899',
+              ],
+              'circle-stroke-width': 1.5,
+              'circle-stroke-color': '#fff',
+              'circle-opacity': 0.85,
+            },
+            layout: { visibility: activeLayers.has('early-education') ? 'visible' : 'none' },
+          })
+          map.on('click', 'early-education-dots', (e: any) => {
+            const p = e.features[0].properties
+            const label = FACILITY_LABEL[p.facility_type] || p.facility_type
+            const gradeLine = p.evaluation_grade ? `<br>평가등급: <b>${p.evaluation_grade}</b>` : ''
+            const statusLine = p.status_note ? `<br>등록상태: ${p.status_note}` : ''
+            new maplibre.Popup({ closeButton: false })
+              .setLngLat(e.lngLat)
+              .setHTML(`<b>${p.name}</b><br>${label} · ${p.region || ''}<br>${p.address || ''}${gradeLine}${statusLine}`)
+              .addTo(map)
+          })
+          map.on('mouseenter', 'early-education-dots', () => { map.getCanvas().style.cursor = 'pointer' })
+          map.on('mouseleave', 'early-education-dots', () => { map.getCanvas().style.cursor = '' })
+        }
+      })
+    }
+
+    if (map.isStyleLoaded()) sync()
+    else map.once('load', sync)
+  }, [cctvPoints, educationFacilities, activeLayers])
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
 })
