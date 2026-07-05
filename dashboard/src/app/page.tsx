@@ -2,9 +2,10 @@
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { AcademyNode, GangnamAcademy, LayerId, CctvPoint, EducationFacility } from '@/lib/data'
-import { LAYERS } from '@/lib/data'
+import { LAYERS, SAMPLE_EDUCATION_FACILITIES } from '@/lib/data'
 import HUD from '@/components/HUD'
 import OsintPanel from '@/components/OsintPanel'
+import VideoPanel from '@/components/VideoPanel'
 import type { MapHandle } from '@/components/Map'
 
 const Map = dynamic(
@@ -36,11 +37,14 @@ export default function Page() {
   const [dropoutRisks, setDropoutRisks] = useState<Record<string, any>>({})
   const [universities, setUniversities] = useState<any[]>([])
   const [cctvPoints, setCctvPoints] = useState<CctvPoint[]>([])
-  const [educationFacilities, setEducationFacilities] = useState<EducationFacility[]>([])
+  // 크롤러를 아직 안 돌렸어도 화면이 비어 보이지 않도록 예시 데이터로 시작 —
+  // 실제 수집 데이터가 도착하면 아래 useEffect에서 자동으로 대체된다.
+  const [educationFacilities, setEducationFacilities] = useState<EducationFacility[]>(SAMPLE_EDUCATION_FACILITIES)
   const [activeLayers, setActiveLayers] = useState<Set<LayerId>>(
     new Set(LAYERS.filter(l => l.default).map(l => l.id))
   )
   const [selected, setSelected] = useState<AcademyNode | GangnamAcademy | null>(null)
+  const [facilityPanelSignal, setFacilityPanelSignal] = useState(0)
 
   useEffect(() => {
     const load = () => fetch('/api/education').then(r => r.json()).then(setData).catch(console.error)
@@ -54,7 +58,10 @@ export default function Page() {
     fetch('/api/dropout').then(r => r.json()).then(d => setDropoutRisks(d.dropout_risks)).catch(console.error)
     fetch('/api/universities').then(r => r.json()).then(d => setUniversities(d.universities)).catch(console.error)
     fetch('/api/cctv').then(r => r.json()).then(d => setCctvPoints(d.items)).catch(console.error)
-    fetch('/api/education-facilities').then(r => r.json()).then(d => setEducationFacilities(d.items)).catch(console.error)
+    fetch('/api/education-facilities').then(r => r.json()).then(d => {
+      // 실제 수집 데이터가 있을 때만 예시 데이터를 대체한다.
+      if (d.items && d.items.length > 0) setEducationFacilities(d.items)
+    }).catch(console.error)
   }, [])
 
   const toggleLayer = useCallback((id: LayerId) => {
@@ -105,6 +112,8 @@ export default function Page() {
         onToggleLayer={toggleLayer}
         selected={selected}
         news={news}
+        onOpenFacilityPanel={() => setFacilityPanelSignal(n => n + 1)}
+        cctvCount={cctvPoints.length}
       />
 
       {/* OSINT 분석 패널 */}
@@ -112,7 +121,11 @@ export default function Page() {
         regions={data.regions}
         onFlyTo={flyTo}
         educationFacilities={educationFacilities}
+        openFacilityPanelSignal={facilityPanelSignal}
       />
+
+      {/* 실시간 교육 동영상 패널 */}
+      <VideoPanel />
     </div>
   )
 }

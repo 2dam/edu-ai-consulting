@@ -122,9 +122,25 @@ export interface EducationFacility {
     // (다음 단계: 주소 -> 좌표 변환 배치 작업을 pipelines.py 에 추가)
     lat?: number
     lng?: number
+    is_sample?: boolean   // true면 크롤러가 아직 안 돌아 화면 구성 확인용으로 넣은 예시 데이터
   }
   created_at: string
 }
+
+// crawler/early_education_spider 를 아직 실행하지 않았거나 API 키가 없을 때도
+// 화면(지도 점·평가정보 패널)이 비어 보이지 않도록 하는 예시 데이터.
+// 실제 시설이 아니라 화면 구성 확인용 placeholder이며, 실제 수집 데이터가 들어오면
+// (page.tsx) 자동으로 대체된다.
+export const SAMPLE_EDUCATION_FACILITIES: EducationFacility[] = [
+  { id: -1, created_at: '', data: { facility_type: 'daycare', name: '대치동 A어린이집 (예시)', region: '서울 강남구', address: '서울 강남구 대치동 (예시 주소)', evaluation_grade: '최우수 (예시)', lat: 37.4975, lng: 127.0620, is_sample: true } },
+  { id: -2, created_at: '', data: { facility_type: 'daycare', name: '역삼동 B어린이집 (예시)', region: '서울 강남구', address: '서울 강남구 역삼동 (예시 주소)', evaluation_grade: '우수 (예시)', lat: 37.5006, lng: 127.0365, is_sample: true } },
+  { id: -3, created_at: '', data: { facility_type: 'kindergarten', name: '서초 C유치원 (예시)', region: '서울 서초구', address: '서울 서초구 서초동 (예시 주소)', establishment_type: '사립 (예시)', lat: 37.4920, lng: 127.0165, is_sample: true } },
+  { id: -4, created_at: '', data: { facility_type: 'kindergarten', name: '반포 D유치원 (예시)', region: '서울 서초구', address: '서울 서초구 반포동 (예시 주소)', establishment_type: '국공립 (예시)', lat: 37.5045, lng: 127.0090, is_sample: true } },
+  { id: -5, created_at: '', data: { facility_type: 'elementary', name: '대치초등학교 (예시)', region: '서울', address: '서울 강남구 대치동 (예시 주소)', establishment_type: '공립 (예시)', lat: 37.4950, lng: 127.0580, is_sample: true } },
+  { id: -6, created_at: '', data: { facility_type: 'elementary', name: '역삼초등학교 (예시)', region: '서울', address: '서울 강남구 역삼동 (예시 주소)', establishment_type: '공립 (예시)', lat: 37.5000, lng: 127.0400, is_sample: true } },
+  { id: -7, created_at: '', data: { facility_type: 'academy', name: '대치 E학원 (예시)', region: '서울 강남구', address: '서울 강남구 대치동 (예시 주소)', establishment_type: '수학·과학 (예시)', status_note: '등록 정상 (예시)', lat: 37.4965, lng: 127.0630, is_sample: true } },
+  { id: -8, created_at: '', data: { facility_type: 'academy', name: '압구정 F학원 (예시)', region: '서울 강남구', address: '서울 강남구 압구정동 (예시 주소)', establishment_type: '영어 (예시)', status_note: '등록 정상 (예시)', lat: 37.5272, lng: 127.0286, is_sample: true } },
+]
 
 // ── 공공 API 소스 ─────────────────────────────────────────────────────────────
 

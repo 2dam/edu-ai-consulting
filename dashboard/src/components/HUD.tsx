@@ -11,6 +11,8 @@ interface HUDProps {
   onToggleLayer: (id: LayerId) => void
   selected: AcademyNode | GangnamAcademy | null
   news: any[]
+  onOpenFacilityPanel?: () => void
+  cctvCount?: number
 }
 
 function Clock() {
@@ -39,7 +41,7 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
   )
 }
 
-export default function HUD({ regions, loopStatus, backendCount, activeLayers, onToggleLayer, selected, news }: HUDProps) {
+export default function HUD({ regions, loopStatus, backendCount, activeLayers, onToggleLayer, selected, news, onOpenFacilityPanel, cctvCount = 0 }: HUDProps) {
   const totalAcademies = regions.reduce((s, r) => s + r.academy_count, 0)
   const maxGap = Math.max(...regions.map(r => r.gap_index))
   const minGap = Math.min(...regions.map(r => r.gap_index))
@@ -118,25 +120,45 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
       <div style={{ ...panel, bottom: 20, left: 16, width: 220 }}>
         <div style={label}>데이터 레이어</div>
         {LAYERS.map(layer => (
-          <div
-            key={layer.id}
-            onClick={() => onToggleLayer(layer.id)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '5px 0', cursor: 'pointer', userSelect: 'none',
-              opacity: activeLayers.has(layer.id) ? 1 : 0.4,
-              transition: 'opacity 0.2s',
-            }}
-          >
-            <div style={{
-              width: 10, height: 10, borderRadius: 2,
-              background: activeLayers.has(layer.id) ? layer.color : 'transparent',
-              border: `1.5px solid ${layer.color}`,
-              transition: 'background 0.2s',
-            }} />
-            <span style={{ fontSize: 11 }}>{layer.icon} {layer.label}</span>
+          <div key={layer.id}>
+            <div
+              onClick={() => onToggleLayer(layer.id)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '5px 0', cursor: 'pointer', userSelect: 'none',
+                opacity: activeLayers.has(layer.id) ? 1 : 0.4,
+                transition: 'opacity 0.2s',
+              }}
+            >
+              <div style={{
+                width: 10, height: 10, borderRadius: 2,
+                background: activeLayers.has(layer.id) ? layer.color : 'transparent',
+                border: `1.5px solid ${layer.color}`,
+                transition: 'background 0.2s',
+              }} />
+              <span style={{ fontSize: 11 }}>{layer.icon} {layer.label}</span>
+            </div>
+            {layer.id === 'cctv' && activeLayers.has('cctv') && cctvCount === 0 && (
+              <div style={{ fontSize: 9.5, color: '#eab308', lineHeight: 1.5, padding: '2px 0 6px 18px' }}>
+                ⚠ ITS_API_KEY 미설정 또는 백엔드 미실행 — api/.env에 키 추가 후
+                FastAPI 서버(uvicorn app.main:app)를 실행하면 표시됩니다.
+              </div>
+            )}
           </div>
         ))}
+        {onOpenFacilityPanel && (
+          <button
+            onClick={onOpenFacilityPanel}
+            style={{
+              marginTop: 10, width: '100%',
+              background: 'rgba(236,72,153,0.15)', border: '1px solid rgba(236,72,153,0.4)',
+              borderRadius: 6, color: '#ec4899', padding: '6px 8px', fontSize: 11, fontWeight: 700,
+              cursor: 'pointer', textAlign: 'left' as const,
+            }}
+          >
+            🧸 어린이집·유치원·학원 평가정보 보기 →
+          </button>
+        )}
       </div>
 
       {/* ── 우측 패널: 선택 항목 상세 ────────────────────────────────── */}

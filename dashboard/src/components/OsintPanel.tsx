@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { AcademyNode, EducationFacility, FacilityType } from '@/lib/data'
 import { REGION_NODES, FACILITY_TYPE_LABEL } from '@/lib/data'
 
@@ -7,6 +7,7 @@ interface OsintPanelProps {
   regions: AcademyNode[]
   onFlyTo?: (lat: number, lng: number, zoom: number) => void
   educationFacilities?: EducationFacility[]
+  openFacilityPanelSignal?: number
 }
 
 type Tool = 'search' | 'gap-calc' | 'score-dist' | 'report' | 'facility-rating'
@@ -14,7 +15,7 @@ type Tool = 'search' | 'gap-calc' | 'score-dist' | 'report' | 'facility-rating'
 const SUBJECTS = ['전체', '수학', '영어', '국어', '과학', '사회']
 const FACILITY_TYPE_FILTERS: Array<FacilityType | '전체'> = ['전체', 'daycare', 'kindergarten', 'elementary', 'academy']
 
-export default function OsintPanel({ regions, onFlyTo, educationFacilities = [] }: OsintPanelProps) {
+export default function OsintPanel({ regions, onFlyTo, educationFacilities = [], openFacilityPanelSignal }: OsintPanelProps) {
   const [open, setOpen] = useState(false)
   const [activeTool, setActiveTool] = useState<Tool>('search')
   const [searchQuery, setSearchQuery] = useState('')
@@ -27,6 +28,13 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [] 
   const [loading, setLoading] = useState(false)
   const [facilityTypeFilter, setFacilityTypeFilter] = useState<FacilityType | '전체'>('전체')
   const [facilityQuery, setFacilityQuery] = useState('')
+
+  // HUD의 "어린이집·유치원·학원 평가정보 보기" 버튼 클릭 시 패널을 열고 해당 탭으로 이동
+  useEffect(() => {
+    if (!openFacilityPanelSignal) return
+    setOpen(true)
+    setActiveTool('facility-rating')
+  }, [openFacilityPanelSignal])
 
   const handleSearch = () => {
     const q = searchQuery.trim().toLowerCase()
@@ -346,6 +354,16 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [] 
                   네이버·카카오 등 민간 리뷰가 아닌, 어린이집평가제·정보공시·학원 등록현황 등
                   <strong style={{ color: '#ec4899' }}> 공식 출처 기반 평가정보</strong>만 표시합니다.
                 </div>
+
+                {educationFacilities.length > 0 && educationFacilities.every(f => f.data.is_sample) && (
+                  <div style={{
+                    background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)',
+                    borderRadius: 6, padding: '8px 10px', marginBottom: 10, fontSize: 10, color: '#eab308', lineHeight: 1.6,
+                  }}>
+                    ⚠ 아직 실제 데이터를 수집하기 전이라 화면 구성 확인용 예시 데이터를 보여주고 있습니다.
+                    crawler/edu_crawler/spiders/early_education_spider.py 실행 후 실제 데이터로 교체됩니다.
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' as const, marginBottom: 10 }}>
                   {FACILITY_TYPE_FILTERS.map(ft => (
