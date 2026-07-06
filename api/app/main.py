@@ -76,7 +76,8 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 def index():
-    return FileResponse(STATIC_DIR / "index.html")
+    # 통합된 랜딩 페이지(마케팅 + 리포트 체험 폼)를 기본 페이지로 제공.
+    return FileResponse(STATIC_DIR / "landing.html")
 
 
 @app.get("/landing")
