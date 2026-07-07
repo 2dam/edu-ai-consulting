@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>iChapterwise | 세상에서 입시 데이터를 가장 많이 읽은 AI</title>
+<meta name="description" content="학원 커리큘럼과 대학 입결 데이터를 AI가 분석해서, 학생 한 명을 위한 맞춤 입시 컨설팅 리포트를 만들어 드립니다.">
 <style>
   :root {
     --bg: #ffffff;
@@ -13,8 +14,11 @@
     --text: #1d1b2e;
     --muted: #6b6880;
     --border: #ecebf3;
+    --ok: #16a34a;
+    --err: #c0392b;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     margin: 0;
     font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
@@ -51,7 +55,7 @@
   .cta {
     display: inline-block; background: linear-gradient(135deg, var(--accent), var(--accent2));
     color: #fff; padding: 16px 36px; border-radius: 999px; font-weight: 800; font-size: 1.05rem;
-    text-decoration: none; box-shadow: 0 12px 30px #7c5cff44;
+    text-decoration: none; box-shadow: 0 12px 30px #7c5cff44; border: none; cursor: pointer;
   }
   .cta:hover { opacity: .92; }
   .cta.ghost {
@@ -64,6 +68,7 @@
   section .sub { text-align: center; color: var(--muted); margin: 0 0 48px; }
 
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
   .card {
     background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 28px;
   }
@@ -92,16 +97,66 @@
   .tier ul { list-style: none; padding: 0; margin: 20px 0; color: var(--muted); font-size: 0.92rem; }
   .tier li { padding: 6px 0; }
 
+  /* ── 지금 체험하기 (실제 리포트 폼) ─────────────────────────── */
+  #try { background: #f7f6fc; }
+  .try-box {
+    max-width: 560px; margin: 0 auto; background: #fff; border: 1px solid var(--border);
+    border-radius: 20px; padding: 36px; box-shadow: 0 20px 50px #7c5cff14;
+  }
+  .try-box label { display: block; margin-top: 18px; font-weight: 700; font-size: 0.92rem; }
+  .try-box input, .try-box select {
+    width: 100%; padding: 11px 12px; margin-top: 6px; box-sizing: border-box; font-size: 0.95rem;
+    border: 1px solid var(--border); border-radius: 10px; font-family: inherit;
+  }
+  .try-box button {
+    margin-top: 22px; width: 100%; padding: 14px; font-size: 1rem; font-weight: 800; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; border-radius: 999px;
+  }
+  .try-box button:disabled { opacity: .6; cursor: default; }
+  #try-result { margin-top: 20px; white-space: pre-wrap; line-height: 1.7; background: var(--bg-card); padding: 18px; border-radius: 12px; display: none; font-size: 0.9rem; }
+  #try-error { margin-top: 14px; color: var(--err); display: none; font-size: 0.9rem; }
+  .try-note { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 16px; }
+
+  /* ── 실시간 대시보드 임베드 ───────────────────────────────── */
+  .dashboard-embed {
+    border-radius: 20px; overflow: hidden; border: 1px solid var(--border);
+    box-shadow: 0 20px 50px #7c5cff1f; background: #0a0c10;
+  }
+  .dashboard-embed iframe {
+    width: 100%; height: 640px; border: none; display: block;
+  }
+  @media (max-width: 720px) {
+    .dashboard-embed iframe { height: 420px; }
+  }
+
+  /* ── AI 교육뉴스 커뮤니티 & 맘카페 소개 ───────────────────── */
+  #community { background: #fff; }
+  #community .grid3 .card { position: relative; }
+
+  /* ── FAQ ──────────────────────────────────────────────────── */
+  .faq { max-width: 720px; margin: 0 auto; }
+  .faq details {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 12px;
+  }
+  .faq summary { font-weight: 700; cursor: pointer; list-style: none; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::before { content: '＋ '; color: var(--accent); }
+  .faq details[open] summary::before { content: '－ '; }
+  .faq p { color: var(--muted); margin: 12px 0 0; font-size: 0.92rem; }
+
   .cta-band { text-align: center; padding: 90px 0; background: radial-gradient(circle at 50% 50%, #7c5cff14, transparent 70%); }
   .cta-band h2 { font-size: 2rem; }
   .cta-band p { color: var(--muted); margin: 0 0 32px; }
 
   footer { padding: 32px 0; text-align: center; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); }
+  footer a { color: var(--muted); }
 
   @media (max-width: 720px) {
-    .grid3, .steps, .tiers { grid-template-columns: 1fr; }
+    .grid3, .grid4, .steps, .tiers { grid-template-columns: 1fr; }
     .tier.highlight { transform: none; }
     .hero h1 { font-size: 1.9rem; }
+    .try-box { padding: 24px; }
   }
 </style>
 </head>
@@ -109,19 +164,64 @@
 
 <header>
   <div class="container">
-    <a class="logo" href="/landing">i<span>Chapter</span>wise</a>
-    <a class="nav-cta" href="/">무료로 시작 →</a>
+    <a class="logo" href="#top">i<span>Chapter</span>wise</a>
+    <a class="nav-cta" href="#try">무료로 시작 →</a>
   </div>
 </header>
 
-<section class="hero">
+<section class="hero" id="top">
   <div class="container">
     <span class="badge">🤖 AI 빅데이터 입시 컨설팅</span>
     <h1>세상에서 입시 데이터를<br>가장 많이 읽은 <span class="grad">AI</span></h1>
     <p>학원 커리큘럼과 대학 입결 데이터를 AI가 분석해서, 학생 한 명을 위한 입시 리포트를 몇 분 만에 만들어 드려요.</p>
     <div class="hero-ctas">
-      <a class="cta" href="/">지금 리포트 받기 →</a>
+      <a class="cta" href="#try">지금 리포트 받기 →</a>
       <a class="cta ghost" href="#how">어떻게 작동하나요?</a>
+    </div>
+  </div>
+</section>
+
+<section id="dashboard">
+  <div class="container">
+    <h2>실시간 교육 인텔리전스 대시보드</h2>
+    <p class="sub">저희가 실제로 수집·분석하는 데이터를 지도에서 직접 확인해보세요</p>
+    <div class="dashboard-embed">
+      <iframe
+        src="https://app.ichapterwise.com"
+        title="EduIntel 실시간 교육 인텔리전스 대시보드"
+        loading="lazy"
+      ></iframe>
+    </div>
+    <div style="text-align:center; margin-top:16px;">
+      <a class="cta ghost" href="https://app.ichapterwise.com" target="_blank" rel="noreferrer">전체 화면으로 보기 ↗</a>
+    </div>
+  </div>
+</section>
+
+<section id="community" style="background:#f7f6fc;">
+  <div class="container">
+    <span class="badge">🆕 새로 오픈</span>
+    <h2>AI 교육뉴스 커뮤니티 &amp; 맘카페</h2>
+    <p class="sub">입시 리포트만으론 부족하다면, 같은 고민을 하는 학부모들과 이야기 나눠보세요</p>
+    <div class="grid3">
+      <div class="card">
+        <div class="icon">📰</div>
+        <h3>AI가 요약하는 교육 뉴스</h3>
+        <p>정책·입시·트렌드 뉴스를 AI가 핵심만 요약하고, 댓글 토론의 찬반 쟁점까지 정리해드려요.</p>
+      </div>
+      <div class="card">
+        <div class="icon">💬</div>
+        <h3>학부모 맘카페</h3>
+        <p>지역별 게시판과 교육·육아 게시판에서 같은 지역·같은 고민을 가진 학부모들과 정보를 나눠보세요.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🛡️</div>
+        <h3>안전하게 운영되는 공간</h3>
+        <p>신고·모더레이션 체계와 AI 어드바이저리 필터가 함께 운영되어, 확정적이지 않은 판단은 항상 사람이 검토합니다.</p>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:32px;">
+      <a class="cta" href="https://community.ichapterwise.com" target="_blank" rel="noreferrer">커뮤니티 살펴보기 →</a>
     </div>
   </div>
 </section>
@@ -150,7 +250,36 @@
   </div>
 </section>
 
-<section id="how" style="background:#f7f6fc;">
+<section style="background:#f7f6fc;">
+  <div class="container">
+    <h2>데이터로 증명합니다</h2>
+    <p class="sub">과장된 숫자 대신, 실제로 하고 있는 일을 그대로 보여드려요</p>
+    <div class="grid4">
+      <div class="card">
+        <div class="icon">🗂️</div>
+        <h3>공개 데이터만 사용</h3>
+        <p>대학 입학처 공시자료, 학원 커리큘럼, 어린이집·유치원·초등학교 공식 공시정보 등 합법적으로 공개된 자료만 수집합니다.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔒</div>
+        <h3>개인정보 비식별화</h3>
+        <p>이름·연락처·주소 같은 식별 정보는 분석 전 자동으로 걸러내는 비식별화 파이프라인을 거칩니다.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🧭</div>
+        <h3>AI는 참고자료, 결정은 사람이</h3>
+        <p>리포트는 데이터 기반 참고자료입니다. 최종 진학 결정은 학생·보호자·컨설턴트가 함께 내리시길 권합니다.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔁</div>
+        <h3>피드백으로 계속 좋아짐</h3>
+        <p>리포트에 대한 평가가 쌓일수록 분석 모델과 문구가 자동으로 재학습되어 점점 더 정교해집니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
   <div class="container">
     <h2>3단계면 끝</h2>
     <p class="sub">진짜 간단해요</p>
@@ -167,14 +296,48 @@
       </div>
       <div class="step">
         <div class="num">3</div>
-        <h3>리포트 확인</h3>
+        <h3><a href="#try" style="color:inherit;">리포트 확인 →</a></h3>
         <p>맞춤 학습 로드맵과 입시 전략을 확인하세요.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section>
+<section id="try">
+  <div class="container">
+    <h2>지금 바로 체험해보세요</h2>
+    <p class="sub">회원가입 없이, 아래 정보만 입력하면 바로 리포트가 나옵니다</p>
+
+    <form id="report-form" class="try-box">
+      <label>학생 식별 라벨 (이름 대신 사용, 비식별)
+        <input type="text" id="student_label" required placeholder="예: stu-001">
+      </label>
+      <label>희망 티어
+        <select id="tier">
+          <option value="BASIC">BASIC</option>
+          <option value="STANDARD" selected>STANDARD</option>
+          <option value="PREMIUM">PREMIUM</option>
+        </select>
+      </label>
+      <label>성적대 (예: 내신 2등급)
+        <input type="text" id="grade" required>
+      </label>
+      <label>지망 학과
+        <input type="text" id="major" required>
+      </label>
+      <label>관심 지역
+        <input type="text" id="region">
+      </label>
+      <button type="submit" id="submit-btn">리포트 생성</button>
+      <div class="try-note">입력하신 정보는 리포트 생성 목적으로만 사용되며, 실명이 아닌 임의 라벨 사용을 권장합니다.</div>
+    </form>
+
+    <div id="try-error"></div>
+    <div id="try-result"></div>
+  </div>
+</section>
+
+<section style="background:#f7f6fc;">
   <div class="container">
     <h2>요금제</h2>
     <p class="sub">필요한 만큼만 골라보세요</p>
@@ -185,6 +348,7 @@
           <li>핵심 입시 분석</li>
           <li>간단 학습 가이드</li>
         </ul>
+        <a class="cta ghost" href="#try">BASIC으로 시작 →</a>
       </div>
       <div class="tier highlight">
         <div class="name">STANDARD</div>
@@ -193,6 +357,7 @@
           <li>학기별 학습 로드맵</li>
           <li>학원 커리큘럼 추천</li>
         </ul>
+        <a class="cta" href="#try">STANDARD로 시작 →</a>
       </div>
       <div class="tier">
         <div class="name">PREMIUM</div>
@@ -201,7 +366,32 @@
           <li>심층 데이터 리포트</li>
           <li>1:1 후속 질문 지원</li>
         </ul>
+        <a class="cta ghost" href="#try">PREMIUM으로 시작 →</a>
       </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>자주 묻는 질문</h2>
+    <div class="faq">
+      <details>
+        <summary>학생 개인정보는 안전한가요?</summary>
+        <p>이름·연락처·주소 등 식별 정보는 저장 전 자동으로 제거됩니다. 학생 식별 라벨도 실명이 아닌 임의 문자열 사용을 권장드립니다.</p>
+      </details>
+      <details>
+        <summary>입시 데이터는 어디서 가져오나요?</summary>
+        <p>대학 입학처가 공개한 입시 결과 공시자료, 학원 홈페이지에 공개된 커리큘럼, 학교알리미·어린이집정보공개포털 등 정부·기관이 공식으로 공개한 자료만 사용합니다.</p>
+      </details>
+      <details>
+        <summary>AI 리포트를 그대로 믿어도 되나요?</summary>
+        <p>리포트는 데이터 기반 참고자료로 설계되었습니다. 실제 진학·학습 전략 결정은 학생·보호자·컨설턴트가 함께 검토하시길 권장드립니다.</p>
+      </details>
+      <details>
+        <summary>리포트는 얼마나 걸리나요?</summary>
+        <p>정보를 입력하고 제출하면 보통 30초 이내에 결과가 나옵니다.</p>
+      </details>
     </div>
   </div>
 </section>
@@ -210,15 +400,62 @@
   <div class="container">
     <h2>입시, 감으로 하지 마세요</h2>
     <p>회원가입 없이, 지금 바로 첫 리포트를 받아보세요.</p>
-    <a class="cta" href="/">무료 리포트 받기 →</a>
+    <a class="cta" href="#try">무료 리포트 받기 →</a>
   </div>
 </div>
 
 <footer>
   <div class="container">
-    © 2026 iChapterwise. AI 빅데이터 입시 컨설팅.
+    © 2026 iChapterwise. AI 빅데이터 입시 컨설팅. · <a href="mailto:jincheondong9@gmail.com">문의하기</a>
   </div>
 </footer>
+
+<script>
+  const form = document.getElementById('report-form');
+  const btn = document.getElementById('submit-btn');
+  const result = document.getElementById('try-result');
+  const error = document.getElementById('try-error');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    error.style.display = 'none';
+    result.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = '생성 중... (최대 30초)';
+
+    const payload = {
+      student_label: document.getElementById('student_label').value,
+      tier: document.getElementById('tier').value,
+      profile: {
+        "성적대": document.getElementById('grade').value,
+        "지망학과": document.getElementById('major').value,
+        "지역": document.getElementById('region').value
+      }
+    };
+
+    try {
+      const res = await fetch('/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `요청 실패 (${res.status})`);
+      }
+      const data = await res.json();
+      result.textContent = data.report_text;
+      result.style.display = 'block';
+      result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (err) {
+      error.textContent = '오류: ' + err.message;
+      error.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '리포트 생성';
+    }
+  });
+</script>
 
 </body>
 </html>
