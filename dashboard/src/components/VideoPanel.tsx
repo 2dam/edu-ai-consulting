@@ -21,18 +21,20 @@ export default function VideoPanel() {
   const [loaded, setLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [video, setVideo] = useState<VideoResult | null>(null)
-  const [fetchedOnce, setFetchedOnce] = useState(false)
 
   const topic = VIDEO_TOPICS[activeTopic]
   const youtubeSearchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(topic.q)
+  const embedUrl = video
+    ? `https://www.youtube.com/embed/${video.video_id}`
+    : `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(topic.q)}`
 
   useEffect(() => {
     if (!loaded) return
     setLoading(true)
     fetch(`/api/youtube?q=${encodeURIComponent(topic.q)}`)
       .then(r => r.json())
-      .then(d => { setVideo(d.result); setFetchedOnce(true) })
-      .catch(() => { setVideo(null); setFetchedOnce(true) })
+      .then(d => setVideo(d.result))
+      .catch(() => setVideo(null))
       .finally(() => setLoading(false))
   }, [loaded, topic.q])
 
@@ -119,41 +121,19 @@ export default function VideoPanel() {
               }}>
                 영상 검색 중...
               </div>
-            ) : video ? (
+            ) : (
               <>
                 <iframe
-                  src={`https://www.youtube.com/embed/${video.video_id}`}
+                  key={embedUrl}
+                  src={embedUrl}
                   allow="autoplay; encrypted-media"
                   allowFullScreen
                   style={{ width: '100%', aspectRatio: '16 / 9', border: 'none', borderRadius: 8, background: '#000' }}
                 />
                 <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 8, lineHeight: 1.5 }}>
-                  {video.title} · {video.channel}
-                </div>
-              </>
-            ) : (
-              <div style={{
-                width: '100%',
-                aspectRatio: '16 / 9',
-                borderRadius: 8,
-                background: 'linear-gradient(135deg, rgba(239,68,68,0.18), rgba(15,23,42,0.96))',
-                border: '1px solid rgba(239,68,68,0.22)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'column',
-                gap: 10,
-                padding: 18,
-                boxSizing: 'border-box' as const,
-                textAlign: 'center' as const,
-              }}>
-                <div style={{ fontSize: 12, color: '#e2e8f0', fontWeight: 800 }}>
-                  {topic.label}
-                </div>
-                <div style={{ fontSize: 10.5, color: '#94a3b8', lineHeight: 1.55 }}>
-                  {fetchedOnce
-                    ? 'YouTube API 키가 없어 자동 임베드를 만들 수 없습니다.'
-                    : 'YouTube 검색으로 바로 연결합니다.'}
+                  {video
+                    ? `${video.title} · ${video.channel}`
+                    : 'YouTube 검색 임베드로 재생합니다. 재생이 제한되면 아래 링크로 여세요.'}
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const, justifyContent: 'center' }}>
                   <a
@@ -173,11 +153,11 @@ export default function VideoPanel() {
                     YouTube에서 보기 ↗
                   </a>
                 </div>
-              </div>
+              </>
             )}
             <div style={{ fontSize: 10, color: '#64748b', marginTop: 8, lineHeight: 1.6 }}>
               YouTube Data API 키가 있으면 최신 영상 1건을 직접 임베드합니다. 키가 없으면
-              선택한 주제의 YouTube 검색 결과로 연결합니다.
+              선택한 주제의 YouTube 검색 임베드를 사용합니다.
             </div>
           </div>
         </div>
