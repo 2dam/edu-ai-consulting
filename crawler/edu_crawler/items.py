@@ -34,3 +34,21 @@ class PolicyNewsItem(scrapy.Item):
     published_at = scrapy.Field()
     summary = scrapy.Field()
     crawled_at = scrapy.Field()
+
+
+class EducationNewsItem(scrapy.Item):
+    """AI 교육 뉴스 커뮤니티 모듈용 — 공개 교육 뉴스 기사 (api의 NewsPost와 대응).
+
+    로그인이 필요한 커뮤니티/사설 카페는 대상이 아니며, 공개적으로 열람 가능한
+    교육 뉴스 매체만 수집한다."""
+
+    title = scrapy.Field()
+    url = scrapy.Field()
+    source = scrapy.Field()
+    published_at = scrapy.Field()
+    category = scrapy.Field()
+    body_text = scrapy.Field()
+    thumbnail_url = scrapy.Field()
+    region = scrapy.Field()
+    tags = scrapy.Field()
+    crawled_at = scrapy.Field()
