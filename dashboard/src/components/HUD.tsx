@@ -140,8 +140,8 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
             </div>
             {layer.id === 'cctv' && activeLayers.has('cctv') && cctvCount === 0 && (
               <div style={{ fontSize: 9.5, color: '#eab308', lineHeight: 1.5, padding: '2px 0 6px 18px' }}>
-                ⚠ ITS_API_KEY 미설정 또는 백엔드 미실행 — api/.env에 키 추가 후
-                FastAPI 서버(uvicorn app.main:app)를 실행하면 표시됩니다.
+                ⚠ 잠시 CCTV를 불러올 수 없습니다 — 배포 서버 네트워크에서 ITS API
+                연결이 차단된 것으로 보입니다 (조치 예정, 로컬 실행 시에는 정상 동작).
               </div>
             )}
           </div>
