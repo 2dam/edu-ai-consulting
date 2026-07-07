@@ -45,10 +45,12 @@ def search_video(query: str) -> dict | None:
         "q": query,
         "part": "snippet",
         "type": "video",
-        "maxResults": 1,
+        "maxResults": 5,
         "order": "date",
         "relevanceLanguage": "ko",
         "safeSearch": "strict",
+        "videoEmbeddable": "true",
+        "videoSyndicated": "true",
     }
     try:
         res = requests.get(YOUTUBE_SEARCH_URL, params=params, timeout=8)
