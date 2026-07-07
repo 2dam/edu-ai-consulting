@@ -1,0 +1,46 @@
+.comment-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 8px 0;
+}
+
+.comment-form textarea {
+  flex: 1;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.comment-form.compact textarea {
+  resize: none;
+}
+
+.comment-form button {
+  border: none;
+  background: #4338ca;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.comment-form button:disabled {
+  background: #c7c7c7;
+  cursor: not-allowed;
+}
+
+.comment-form-error {
+  color: #e11d48;
+  font-size: 12px;
+}
+
+.comment-form-login-hint {
+  font-size: 13px;
+  color: #888;
+}

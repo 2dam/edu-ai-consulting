@@ -1,0 +1,40 @@
+.source-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  margin: 6px 0;
+}
+
+.source-link {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.source-link:hover {
+  text-decoration: underline;
+}
+
+.fake-news-badge {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.fake-news-badge.risk-high {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.fake-news-badge.risk-medium {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.fake-news-badge.risk-low {
+  background: #f0fdf4;
+  color: #15803d;
+}

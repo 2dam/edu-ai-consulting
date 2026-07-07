@@ -1,0 +1,59 @@
+.report-widget {
+  position: relative;
+  display: inline-block;
+}
+
+.report-toggle {
+  border: none;
+  background: none;
+  color: #999;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.report-toggle:hover {
+  color: #e11d48;
+}
+
+.report-popover {
+  position: absolute;
+  z-index: 10;
+  top: 22px;
+  left: 0;
+  background: #fff;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.report-reason {
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.report-reason:hover {
+  background: #f3f4f6;
+}
+
+.report-detail-input {
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.report-done {
+  font-size: 13px;
+  color: #16a34a;
+}

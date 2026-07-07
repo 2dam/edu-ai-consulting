@@ -1,0 +1,49 @@
+.trending-topics {
+  width: 240px;
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 16px;
+  height: fit-content;
+}
+
+.trending-topics h3 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+
+.trending-topics ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trending-topics li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.trending-rank {
+  background: #4338ca;
+  color: #fff;
+  border-radius: 6px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  .trending-topics {
+    display: none;
+  }
+}

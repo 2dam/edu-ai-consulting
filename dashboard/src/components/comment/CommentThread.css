@@ -1,0 +1,68 @@
+.comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.comment-node {
+  border-left: 2px solid #f0f0f0;
+  padding: 8px 0 8px 12px;
+  margin-top: 6px;
+}
+
+.comment-body-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.comment-author {
+  font-weight: 700;
+}
+
+.comment-time {
+  color: #999;
+}
+
+.toxicity-badge {
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 11px;
+}
+
+.comment-text {
+  margin: 4px 0;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.hidden-content + .comment-text {
+  color: #aaa;
+  font-style: italic;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.comment-reply-toggle {
+  border: none;
+  background: none;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.comment-reply-toggle:hover {
+  color: #4338ca;
+}
+
+.comment-empty {
+  color: #999;
+  font-size: 14px;
+}
