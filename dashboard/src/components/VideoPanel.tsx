@@ -24,6 +24,8 @@ export default function VideoPanel() {
   const [fetchedOnce, setFetchedOnce] = useState(false)
 
   const topic = VIDEO_TOPICS[activeTopic]
+  const youtubeSearchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(topic.q)
+  const fallbackEmbedUrl = 'https://www.youtube.com/embed?listType=search&list=' + encodeURIComponent(topic.q)
 
   useEffect(() => {
     if (!loaded) return
@@ -110,7 +112,15 @@ export default function VideoPanel() {
               ))}
             </div>
 
-            {video ? (
+            {loading ? (
+              <div style={{
+                width: '100%', aspectRatio: '16 / 9', borderRadius: 8, background: '#000',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#94a3b8', fontSize: 11,
+              }}>
+                영상 검색 중...
+              </div>
+            ) : video ? (
               <>
                 <iframe
                   src={`https://www.youtube.com/embed/${video.video_id}`}
@@ -123,32 +133,33 @@ export default function VideoPanel() {
                 </div>
               </>
             ) : (
-              <div style={{
-                width: '100%', aspectRatio: '16 / 9', borderRadius: 8, background: '#000',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10,
-                padding: 16, boxSizing: 'border-box' as const,
-              }}>
-                <div style={{ fontSize: 11, color: '#64748b', textAlign: 'center' as const, lineHeight: 1.6 }}>
-                  {loading
-                    ? '영상 검색 중...'
-                    : fetchedOnce
-                      ? 'YOUTUBE_API_KEY가 아직 설정되지 않았거나 검색 결과가 없습니다.'
-                      : ''}
+              <>
+                <iframe
+                  src={fallbackEmbedUrl}
+                  title={`${topic.label} YouTube 검색 결과`}
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                  style={{ width: '100%', aspectRatio: '16 / 9', border: 'none', borderRadius: 8, background: '#000' }}
+                />
+                <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 8, lineHeight: 1.5 }}>
+                  {fetchedOnce
+                    ? 'API 키가 없어서 YouTube 검색 임베드로 대체 표시 중입니다.'
+                    : 'YouTube 검색 임베드를 준비 중입니다.'}
+                  {' '}
+                  <a
+                    href={youtubeSearchUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: '#ef4444', fontWeight: 700, textDecoration: 'none' }}
+                  >
+                    새 창에서 열기 ↗
+                  </a>
                 </div>
-                <a
-                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(topic.q)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ fontSize: 11, color: '#ef4444', fontWeight: 700, textDecoration: 'none' }}
-                >
-                  YouTube에서 직접 검색하기 ↗
-                </a>
-              </div>
+              </>
             )}
-
             <div style={{ fontSize: 10, color: '#64748b', marginTop: 8, lineHeight: 1.6 }}>
-              YouTube Data API로 검색어에 맞는 최신 영상 1건을 임베드합니다. 주제를 바꾸면
-              해당 주제의 최신 영상으로 갱신돼요.
+              YouTube Data API 키가 있으면 최신 영상 1건을 직접 임베드하고, 키가 없으면
+              같은 검색어의 YouTube 검색 임베드로 대체합니다.
             </div>
           </div>
         </div>
