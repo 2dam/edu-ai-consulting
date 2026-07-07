@@ -29,7 +29,8 @@ Example request:
 ```
 
 The engine returns learning-state probabilities, weakest links, strongest links,
-recommendations, and a short consulting narrative.
+recommendations, a decision-adjustment layer for intervention fit, and a short
+consulting narrative.
 
 ## Dashboard
 
@@ -37,4 +38,6 @@ The Next.js dashboard calls `/api/qcrm`, which proxies to the FastAPI backend.
 If the backend is not running, the dashboard shows a deterministic sample result
 so the UI can still be previewed.
 
-The result is displayed in the right-side `Mini QCRM Diagnosis` panel.
+The result is displayed in the right-side `Mini QCRM Diagnosis` panel. The
+decision-adjustment layer appears inside the same panel as intervention fit and
+confidence, so it does not become a second diagnosis widget.

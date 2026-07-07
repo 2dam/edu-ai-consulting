@@ -85,6 +85,12 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://ichapterwise.com",
+        "https://www.ichapterwise.com",
+        "https://app.ichapterwise.com",
+        "https://community.ichapterwise.com",
         "https://edu-ai-consulting-community.onrender.com",
     ],
     allow_credentials=True,
@@ -251,7 +257,12 @@ def create_report(req: ReportRequest, db: Session = Depends(get_db)):
         risk_result = predictive_model.predict_dropout_risk(db, req.student_features)
         risk_context = predictive_model.to_consulting_context(risk_result)
 
-    combined_psych_context = "\n\n".join(filter(None, [psych_context, risk_context]))
+    qcrm_context = ""
+    if req.qcrm_profile:
+        qcrm_result = qcrm_engine.run_mini_qcrm(req.qcrm_profile)
+        qcrm_context = qcrm_engine.to_consulting_context(qcrm_result)
+
+    combined_psych_context = "\n\n".join(filter(None, [psych_context, risk_context, qcrm_context]))
 
     try:
         report_text, variant = ai_engine.generate_report(

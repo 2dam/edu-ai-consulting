@@ -5,6 +5,12 @@ type QcrmResult = {
   labels: Record<string, string>
   readiness_score: number
   readiness_level: string
+  decision_adjustment?: {
+    adjusted_success_probability: number
+    concurrence: number
+    confidence: number
+    recommendation_level: string
+  }
   weakest_links: Array<{ factor: string; label: string; score: number }>
   strongest_links: Array<{ factor: string; label: string; score: number }>
   recommendations: string[]
@@ -22,16 +28,17 @@ export default function QcrmPanel({ result }: { result: QcrmResult | null }) {
 
   const color = levelColor[result.readiness_level] || '#3b82f6'
   const entries = Object.entries(result.states)
+  const adjustment = result.decision_adjustment
 
   return (
     <div style={{
       position: 'absolute',
       right: 16,
-      top: 300,
+      top: 252,
       width: 240,
       // 우하단 "실시간 교육 뉴스" 패널(bottom:20, maxHeight:220)과 겹치지 않도록
       // 그 높이(220) + 여백(20) + 간격(20)만큼 아래쪽을 비워둔다.
-      maxHeight: 'calc(100vh - 560px)',
+      maxHeight: 'calc(100vh - 512px)',
       overflowY: 'auto',
       background: 'rgba(10,12,16,0.9)',
       border: '1px solid rgba(34,197,94,0.28)',
@@ -52,6 +59,35 @@ export default function QcrmPanel({ result }: { result: QcrmResult | null }) {
       <div style={{ height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.08)', marginBottom: 12 }}>
         <div style={{ height: '100%', width: `${Math.round(result.readiness_score * 100)}%`, background: color, borderRadius: 3 }} />
       </div>
+
+      {adjustment && (
+        <>
+          <div style={{ fontSize: 10, color: '#64748b', marginBottom: 6 }}>판단 보정</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '5px 8px', fontSize: 11 }}>
+            <span style={{ color: '#94a3b8' }}>개입안 적합도</span>
+            <span style={{ color: '#e2e8f0', fontFamily: 'monospace' }}>
+              {Math.round(adjustment.adjusted_success_probability * 100)}%
+            </span>
+            <span style={{ color: '#94a3b8' }}>추천 모드</span>
+            <span style={{ color, fontWeight: 700 }}>{adjustment.recommendation_level}</span>
+            <span style={{ color: '#94a3b8' }}>신뢰도</span>
+            <span style={{ color: '#e2e8f0', fontFamily: 'monospace' }}>
+              {Math.round(adjustment.confidence * 100)}%
+            </span>
+          </div>
+          <div style={{ height: 4, borderRadius: 3, background: 'rgba(255,255,255,0.08)', marginTop: 8 }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${Math.round(adjustment.adjusted_success_probability * 100)}%`,
+                background: color,
+                borderRadius: 3,
+              }}
+            />
+          </div>
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 0' }} />
+        </>
+      )}
 
       {entries.map(([key, value]) => (
         <div key={key} style={{ marginBottom: 8 }}>

@@ -10,6 +10,8 @@ import math
 from dataclasses import dataclass
 from typing import Any
 
+from app import beqbn_engine
+
 
 FACTOR_LABELS = {
     "concept_mastery": "Concept mastery",
@@ -103,11 +105,13 @@ def run_mini_qcrm(profile: dict[str, Any] | None = None, iterations: int = 3) ->
 
     ordered = sorted(states.items(), key=lambda item: item[1])
     readiness = round(0.34 * states["concept_mastery"] + 0.24 * states["problem_interpretation"] + 0.22 * states["strategy_selection"] + 0.20 * states["attention_control"], 3)
+    decision_adjustment = run_decision_adjustment(states)
     result = {
         "states": {key: round(value, 3) for key, value in states.items()},
         "labels": FACTOR_LABELS,
         "readiness_score": readiness,
         "readiness_level": _readiness_level(readiness),
+        "decision_adjustment": decision_adjustment,
         "weakest_links": [{"factor": key, "label": FACTOR_LABELS[key], "score": round(value, 3)} for key, value in ordered[:2]],
         "strongest_links": [{"factor": key, "label": FACTOR_LABELS[key], "score": round(value, 3)} for key, value in ordered[-2:][::-1]],
         "recommendations": _recommend(states),
@@ -120,7 +124,45 @@ def run_mini_qcrm(profile: dict[str, Any] | None = None, iterations: int = 3) ->
 def to_consulting_context(result: dict[str, Any]) -> str:
     weak = ", ".join(item["label"] for item in result.get("weakest_links", []))
     recs = " ".join(f"- {item}" for item in result.get("recommendations", []))
-    return f"[Mini QCRM 학습 사고 상태 진단]\n- 종합 준비도: {result.get('readiness_score')} ({result.get('readiness_level')})\n- 우선 점검 연결고리: {weak}\n- 권장 개입: {recs}"
+    adjustment = result.get("decision_adjustment", {})
+    adjustment_line = ""
+    if adjustment:
+        adjustment_line = (
+            "\n- 판단 보정: "
+            f"{adjustment.get('recommendation_level')} "
+            f"(개입안 적합도 {adjustment.get('adjusted_success_probability')}, "
+            f"신뢰도 {adjustment.get('confidence')})"
+        )
+    return f"[Mini QCRM 학습 사고 상태 진단]\n- 종합 준비도: {result.get('readiness_score')} ({result.get('readiness_level')})\n- 우선 점검 연결고리: {weak}{adjustment_line}\n- 권장 개입: {recs}"
+
+
+def run_decision_adjustment(states: dict[str, float]) -> dict[str, Any]:
+    profile = {
+        "context_support": round(
+            0.35 * states["concept_mastery"]
+            + 0.30 * states["problem_interpretation"]
+            + 0.20 * states["attention_control"]
+            + 0.15 * states["time_management"],
+            4,
+        ),
+        "success_given_supported": round(
+            0.35 * states["strategy_selection"]
+            + 0.30 * states["calculation_accuracy"]
+            + 0.20 * states["concept_mastery"]
+            + 0.15 * states["attention_control"],
+            4,
+        ),
+        "success_given_unsupported": round(
+            0.40 * states["concept_mastery"]
+            + 0.25 * states["problem_interpretation"]
+            + 0.20 * states["calculation_accuracy"]
+            + 0.15 * states["time_management"],
+            4,
+        ),
+        "uncertainty_bias": 1.0,
+        "phase_shift": round((states["strategy_selection"] - states["attention_control"]) * 0.8, 4),
+    }
+    return beqbn_engine.run_beqbn_consulting(profile)
 
 
 def _readiness_level(score: float) -> str:

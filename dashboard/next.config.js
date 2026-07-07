@@ -5,7 +5,7 @@ const nextConfig = {
     return [
       {
         source: '/backend/:path*',
-        destination: `${process.env.BACKEND_URL || 'http://localhost:8000'}/:path*`,
+        destination: `${process.env.BACKEND_URL || (process.env.NODE_ENV === 'production' ? 'https://ichapterwise.com' : 'http://localhost:8000')}/:path*`,
       },
     ]
   },

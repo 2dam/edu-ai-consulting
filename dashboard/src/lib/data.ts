@@ -6,7 +6,9 @@
 export const KOREA_CENTER = { lng: 127.8, lat: 36.5, zoom: 6.5 }
 export const GANGNAM_CENTER = { lng: 127.05, lat: 37.51, zoom: 13 }
 
-export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
+export const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  (process.env.NODE_ENV === 'production' ? 'https://ichapterwise.com' : 'http://localhost:8000')
 
 // ── 전국 주요 교육 거점 (공공 데이터 기반 기본값) ──────────────────────────
 

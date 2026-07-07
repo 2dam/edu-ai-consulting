@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { REGION_NODES, GANGNAM_ACADEMIES } from '@/lib/data'
+import { BACKEND_URL } from '@/lib/backend'
 
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:8000'
 const BACKEND_TIMEOUT_MS = 3500
 
 export async function GET() {
@@ -11,11 +11,11 @@ export async function GET() {
 
   try {
     const [recRes, loopRes] = await Promise.all([
-      fetch(`${BACKEND}/records?limit=200`, {
+      fetch(`${BACKEND_URL}/records?limit=200`, {
         next: { revalidate: 60 },
         signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
       }),
-      fetch(`${BACKEND}/loop-status`, {
+      fetch(`${BACKEND_URL}/loop-status`, {
         next: { revalidate: 30 },
         signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
       }),
