@@ -213,7 +213,7 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
       </div>
 
       {/* ── 우하단: 실시간 뉴스 ─────────────────────────────────────── */}
-      <div style={{ ...panel, bottom: 20, right: 16, width: 280, maxHeight: 220, overflowY: 'auto' }}>
+      <div style={{ ...panel, bottom: 20, right: 16, width: 240, maxHeight: 220, overflowY: 'auto' }}>
         <div style={label}>📡 실시간 교육 뉴스</div>
         {news.map((item, i) => (
           <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: i < news.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>

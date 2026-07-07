@@ -47,7 +47,7 @@ export default function VideoPanel() {
         style={{
           position: 'absolute',
           bottom: 20,
-          right: 310,
+          right: 270,
           background: open ? 'rgba(239,68,68,0.2)' : 'rgba(10,12,16,0.88)',
           border: '1px solid rgba(239,68,68,0.4)',
           borderRadius: 20,
@@ -68,7 +68,7 @@ export default function VideoPanel() {
         <div style={{
           position: 'absolute',
           bottom: 70,
-          right: 310,
+          right: 270,
           background: 'rgba(10,12,16,0.95)',
           border: '1px solid rgba(239,68,68,0.3)',
           borderRadius: 10,
