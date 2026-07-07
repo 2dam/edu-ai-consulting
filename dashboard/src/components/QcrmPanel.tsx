@@ -28,8 +28,10 @@ export default function QcrmPanel({ result }: { result: QcrmResult | null }) {
       position: 'absolute',
       right: 16,
       top: 300,
-      width: 300,
-      maxHeight: 'calc(100vh - 340px)',
+      width: 240,
+      // 우하단 "실시간 교육 뉴스" 패널(bottom:20, maxHeight:220)과 겹치지 않도록
+      // 그 높이(220) + 여백(20) + 간격(20)만큼 아래쪽을 비워둔다.
+      maxHeight: 'calc(100vh - 560px)',
       overflowY: 'auto',
       background: 'rgba(10,12,16,0.9)',
       border: '1px solid rgba(34,197,94,0.28)',
