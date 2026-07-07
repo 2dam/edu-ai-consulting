@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDUINTEL — OSIRIS형 교육 인텔리전스 대시보드</title>
+<style>
+:root{
+  --bg:#0a0c10;
+  --panel:rgba(10,12,16,0.92);
+  --border:rgba(249,115,22,0.3);
+  --accent:#f97316;
+  --accent-dim:rgba(249,115,22,0.15);
+  --text:#e2e8f0;
+  --text-dim:#64748b;
+  --text-mid:#94a3b8;
+  --blue:#3b82f6;
+  --yellow:#eab308;
+  --red:#ef4444;
+  --purple:#a855f7;
+  --green:#22c55e;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;overflow:hidden;}
+#stage{position:relative;width:100vw;height:100vh;overflow:hidden;}
+
+/* ── MAP ─────────────────────────────────────────────── */
+#mapWrap{position:absolute;inset:0;background:
+  radial-gradient(ellipse at 30% 20%, rgba(249,115,22,0.06), transparent 60%),
+  radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.05), transparent 60%),
+  var(--bg);
+}
+#mapSvg{width:100%;height:100%;display:block;}
+.grid-line{stroke:rgba(255,255,255,0.035);stroke-width:1;}
+.node-circle{cursor:pointer;transition:r 0.15s ease, filter 0.15s ease;}
+.node-circle:hover{filter:brightness(1.4);}
+.node-label{font-size:9px;fill:var(--text-mid);font-family:monospace;pointer-events:none;}
+.gangnam-star{cursor:pointer;}
+.uni-marker{cursor:pointer;}
+.gap-heat{pointer-events:none;}
+.layer-hidden{display:none;}
+
+/* ── TOP BAR ─────────────────────────────────────────── */
+#topbar{position:absolute;top:0;left:0;right:0;padding:14px 20px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:5;}
+#brand{pointer-events:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 18px;backdrop-filter:blur(12px);}
+#brand .t1{font-family:monospace;letter-spacing:0.15em;color:var(--accent);font-size:14px;font-weight:700;}
+#brand .t2{font-size:11px;color:var(--text-dim);margin-top:2px;}
+
+/* ── LAYER PANEL (top-left) ─────────────────────────────*/
+#layerPanel{pointer-events:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px;backdrop-filter:blur(12px);width:190px;margin-top:8px;}
+#layerPanel .lp-title{font-size:10px;color:var(--text-dim);letter-spacing:0.08em;margin-bottom:8px;text-transform:uppercase;}
+.layer-btn{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:11.5px;margin-bottom:3px;transition:background 0.15s;}
+.layer-btn:hover{background:rgba(255,255,255,0.05);}
+.layer-btn .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.layer-btn.off{opacity:0.35;}
+.layer-btn .lbl{flex:1;}
+.layer-btn .chk{font-size:10px;color:var(--accent);}
+
+/* ── HUD (top-right) ────────────────────────────────────*/
+#hud{pointer-events:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px;backdrop-filter:blur(12px);width:290px;}
+#hud .hud-title{font-family:monospace;color:var(--accent);font-size:11px;letter-spacing:0.1em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.stat-box{background:rgba(255,255,255,0.04);border-radius:6px;padding:8px 10px;}
+.stat-box .v{font-size:18px;font-weight:700;font-family:monospace;color:var(--text);}
+.stat-box .l{font-size:9.5px;color:var(--text-dim);margin-top:2px;}
+#newsTicker{border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;}
+#newsTicker .nt-title{font-size:9.5px;color:var(--text-dim);letter-spacing:0.08em;margin-bottom:6px;text-transform:uppercase;}
+.news-item{font-size:11px;line-height:1.5;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.06);cursor:default;}
+.news-item .tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:6px;}
+.news-item .tag.market{background:rgba(76,114,176,0.25);color:#7ba3e0;}
+.news-item .tag.policy{background:rgba(85,168,104,0.25);color:#7cd992;}
+.news-item .tag.company{background:rgba(221,132,82,0.25);color:#f0a875;}
+.news-item .tag.risk{background:rgba(239,68,68,0.2);color:#f28b8b;}
+.news-item .title{color:var(--text-mid);}
+#newsScroll{max-height:210px;overflow-y:auto;}
+#newsScroll::-webkit-scrollbar{width:4px;}
+#newsScroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:4px;}
+
+/* ── LEGEND ──────────────────────────────────────────────*/
+#legend{position:absolute;bottom:20px;left:20px;pointer-events:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px;backdrop-filter:blur(12px);font-size:10.5px;color:var(--text-mid);z-index:5;}
+#legend .row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+#legend .dot{width:9px;height:9px;border-radius:50%;}
+
+/* ── BOTTOM TOGGLE BUTTONS ──────────────────────────────*/
+.toggle-btn{position:absolute;bottom:20px;background:var(--panel);border:1px solid var(--border);border-radius:20px;color:var(--accent);padding:8px 22px;font-size:11.5px;font-weight:700;cursor:pointer;letter-spacing:0.06em;backdrop-filter:blur(12px);z-index:10;transition:background 0.15s;}
+.toggle-btn:hover{background:var(--accent-dim);}
+.toggle-btn.active{background:var(--accent-dim);}
+#osintToggle{left:50%;transform:translateX(-50%);}
+#videoToggle{right:20px;}
+
+/* ── OSINT PANEL ─────────────────────────────────────────*/
+#osintPanel{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--border);border-radius:10px;backdrop-filter:blur(16px);width:600px;max-height:56vh;overflow:hidden;display:none;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:9;}
+#osintPanel.open{display:flex;}
+.tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.06);padding:0 4px;}
+.tab-btn{padding:9px 14px;font-size:11px;cursor:pointer;background:transparent;color:var(--text-dim);border:none;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab-btn.active{background:var(--accent-dim);color:var(--accent);border-bottom-color:var(--accent);}
+.tab-body{padding:16px;overflow-y:auto;flex:1;}
+.tool-pane{display:none;}
+.tool-pane.active{display:block;}
+.row-flex{display:flex;gap:8px;margin-bottom:12px;}
+.osint-input,.osint-select{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--text);padding:7px 10px;font-size:12px;outline:none;width:100%;}
+.osint-btn{background:var(--accent);color:#000;border:none;border-radius:6px;padding:7px 16px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.mini-label{font-size:10px;color:var(--text-dim);margin-bottom:4px;display:block;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.region-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:8px 10px;cursor:pointer;font-size:11px;}
+.region-card:hover{background:rgba(255,255,255,0.07);}
+.region-card .rname{font-weight:600;margin-bottom:3px;}
+.region-card .rmeta{color:var(--text-dim);font-size:10px;}
+.compare-row{display:grid;grid-template-columns:110px 1fr 1fr 70px;gap:8px;margin-bottom:8px;align-items:center;font-size:11px;}
+.compare-a{text-align:center;padding:4px 8px;background:rgba(249,115,22,0.1);border-radius:4px;color:var(--accent);}
+.compare-b{text-align:center;padding:4px 8px;background:rgba(59,130,246,0.1);border-radius:4px;color:var(--blue);}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.bar-label{width:52px;font-size:10px;color:var(--text-mid);text-align:right;flex-shrink:0;}
+.bar-track{flex:1;height:14px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width 0.5s ease;}
+.bar-val{width:28px;font-size:10px;font-family:monospace;flex-shrink:0;}
+.report-box{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px;font-size:11px;line-height:1.7;color:#cbd5e1;white-space:pre-wrap;max-height:230px;overflow-y:auto;}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.chip{padding:4px 10px;font-size:10px;border-radius:12px;cursor:pointer;background:rgba(255,255,255,0.06);color:var(--text-mid);border:1px solid rgba(255,255,255,0.1);}
+.chip.active{background:var(--accent);color:#000;font-weight:700;border-color:var(--accent);}
+
+/* ── VIDEO PANEL ─────────────────────────────────────────*/
+#videoPanel{position:absolute;bottom:70px;right:20px;background:var(--panel);border:1px solid var(--border);border-radius:10px;backdrop-filter:blur(16px);width:420px;display:none;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:9;overflow:hidden;}
+#videoPanel.open{display:flex;}
+#videoPanel .vp-head{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;}
+#videoPanel .vp-head .vt{font-size:11.5px;font-weight:700;color:var(--accent);letter-spacing:0.04em;display:flex;align-items:center;gap:6px;}
+#videoPanel .vp-body{padding:12px 14px;}
+#videoFrame{width:100%;aspect-ratio:16/9;border:none;border-radius:8px;background:#000;}
+.video-note{font-size:10px;color:var(--text-dim);margin-top:8px;line-height:1.5;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse 1.2s infinite;}
+
+@media(max-width:900px){
+  #osintPanel{width:92vw;}
+  #videoPanel{width:92vw;right:4vw;}
+  #hud{width:230px;}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="mapWrap">
+    <svg id="mapSvg" viewBox="0 0 800 900" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <div id="topbar">
+    <div>
+      <div id="brand">
+        <div class="t1">◆ EDUINTEL — OSIRIS</div>
+        <div class="t2">교육 인텔리전스 대시보드 · 기준 2026-07-01</div>
+      </div>
+      <div id="layerPanel">
+        <div class="lp-title">레이어</div>
+        <div id="layerList"></div>
+      </div>
+    </div>
+    <div id="hud">
+      <div class="hud-title"><span>SYSTEM STATUS</span><span class="pulse"></span></div>
+      <div class="stat-grid" id="statGrid"></div>
+      <div id="newsTicker">
+        <div class="nt-title">교육컨설팅 OSINT 피드</div>
+        <div id="newsScroll"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="legend">
+    <div class="row"><span class="dot" style="background:#f97316"></span> S등급 (최상위 학원가)</div>
+    <div class="row"><span class="dot" style="background:#eab308"></span> A등급</div>
+    <div class="row"><span class="dot" style="background:#3b82f6"></span> B등급</div>
+    <div class="row"><span class="dot" style="background:#64748b"></span> C등급</div>
+    <div class="row" style="margin-top:6px;"><span class="dot" style="background:#a855f7"></span> 중도탈락 위험 / <span class="dot" style="background:#22c55e;margin-left:4px;"></span> 대학</div>
+  </div>
+
+  <button id="osintToggle" class="toggle-btn">▲ OSINT 분석 도구</button>
+  <button id="videoToggle" class="toggle-btn">▶ 실시간 교육 영상</button>
+
+  <div id="osintPanel">
+    <div class="tabs" id="tabBar"></div>
+    <div class="tab-body">
+      <div class="tool-pane" id="pane-search">
+        <div class="row-flex">
+          <input class="osint-input" id="searchInput" placeholder="지역명 검색 (예: 강남, 부산, 대전...)">
+          <button class="osint-btn" id="searchBtn">검색</button>
+        </div>
+        <div class="grid3" id="searchResults"></div>
+      </div>
+      <div class="tool-pane" id="pane-gap">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div><label class="mini-label">지역 A</label><select class="osint-select" id="compareA"></select></div>
+          <div><label class="mini-label">지역 B</label><select class="osint-select" id="compareB"></select></div>
+        </div>
+        <div id="gapResult"></div>
+      </div>
+      <div class="tool-pane" id="pane-score">
+        <div class="chip-row" id="subjectChips"></div>
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:10px;">전국 지역별 수능 성적 백분위 (높을수록 좋음)</div>
+        <div id="scoreBars"></div>
+      </div>
+      <div class="tool-pane" id="pane-report">
+        <div class="row-flex">
+          <div style="flex:1;"><label class="mini-label">분석 지역 선택</label><select class="osint-select" id="reportRegion"></select></div>
+          <div style="display:flex;align-items:flex-end;"><button class="osint-btn" id="reportBtn">🤖 AI 분석</button></div>
+        </div>
+        <div class="report-box" id="reportBox">지역을 선택하고 [AI 분석] 버튼을 누르면 교육격차·학원 데이터를 기반으로 해당 지역 학생을 위한 맞춤 컨설팅 인사이트를 생성합니다. (오프라인 템플릿 모드)</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="videoPanel">
+    <div class="vp-head">
+      <div class="vt"><span class="live-dot"></span> 실시간 교육 동영상</div>
+    </div>
+    <div class="vp-body">
+      <div class="chip-row" id="videoTopics"></div>
+      <iframe id="videoFrame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      <div class="video-note">YouTube 실시간 검색 결과를 임베드합니다. 주제를 바꾸면 관련 최신/라이브 영상으로 갱신돼요. 특정 영상이 재생되지 않으면 채널이 현재 라이브 중이 아닐 수 있어요.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA (edu-ai-consulting 저장소 dashboard/src/lib/data.ts 기반) ──────────
+const REGION_NODES = [
+  { id:'gangnam', name:'강남구', region:'서울', lat:37.5172, lng:127.0473, academy_count:3842, avg_score_rank:98, gap_index:0.92, tier:'S' },
+  { id:'seocho', name:'서초구', region:'서울', lat:37.4837, lng:127.0324, academy_count:2916, avg_score_rank:96, gap_index:0.89, tier:'S' },
+  { id:'songpa', name:'송파구', region:'서울', lat:37.5145, lng:127.1059, academy_count:2104, avg_score_rank:91, gap_index:0.85, tier:'A' },
+  { id:'mapo', name:'마포구', region:'서울', lat:37.5638, lng:126.9084, academy_count:1203, avg_score_rank:82, gap_index:0.71, tier:'A' },
+  { id:'nowon', name:'노원구', region:'서울', lat:37.6543, lng:127.0568, academy_count:1876, avg_score_rank:74, gap_index:0.65, tier:'B' },
+  { id:'busan', name:'부산시', region:'부산', lat:35.1796, lng:129.0756, academy_count:4201, avg_score_rank:71, gap_index:0.58, tier:'B' },
+  { id:'daegu', name:'대구시', region:'대구', lat:35.8714, lng:128.6014, academy_count:3102, avg_score_rank:69, gap_index:0.55, tier:'B' },
+  { id:'incheon', name:'인천시', region:'인천', lat:37.4563, lng:126.7052, academy_count:2891, avg_score_rank:66, gap_index:0.53, tier:'B' },
+  { id:'gwangju', name:'광주시', region:'광주', lat:35.1595, lng:126.8526, academy_count:1987, avg_score_rank:72, gap_index:0.56, tier:'B' },
+  { id:'daejeon', name:'대전시', region:'대전', lat:36.3504, lng:127.3845, academy_count:2134, avg_score_rank:70, gap_index:0.54, tier:'B' },
+  { id:'ulsan', name:'울산시', region:'울산', lat:35.5384, lng:129.3114, academy_count:987, avg_score_rank:65, gap_index:0.50, tier:'C' },
+  { id:'sejong', name:'세종시', region:'세종', lat:36.4800, lng:127.2890, academy_count:412, avg_score_rank:78, gap_index:0.62, tier:'A' },
+  { id:'suwon', name:'수원시', region:'경기', lat:37.2636, lng:127.0286, academy_count:3401, avg_score_rank:76, gap_index:0.64, tier:'A' },
+  { id:'changwon',name:'창원시', region:'경남', lat:35.2280, lng:128.6811, academy_count:1654, avg_score_rank:60, gap_index:0.45, tier:'C' },
+  { id:'cheongju',name:'청주시', region:'충북', lat:36.6424, lng:127.4890, academy_count:1123, avg_score_rank:58, gap_index:0.42, tier:'C' },
+  { id:'jeonju', name:'전주시', region:'전북', lat:35.8242, lng:127.1480, academy_count:1345, avg_score_rank:59, gap_index:0.44, tier:'C' },
+  { id:'chuncheon',name:'춘천시', region:'강원', lat:37.8813, lng:127.7298, academy_count:543, avg_score_rank:52, gap_index:0.38, tier:'C' },
+  { id:'jeju', name:'제주시', region:'제주', lat:33.4996, lng:126.5312, academy_count:612, avg_score_rank:54, gap_index:0.40, tier:'C' },
+  { id:'mokpo', name:'목포시', region:'전남', lat:34.8118, lng:126.3922, academy_count:389, avg_score_rank:46, gap_index:0.30, tier:'C' },
+  { id:'pohang', name:'포항시', region:'경북', lat:36.0190, lng:129.3435, academy_count:678, avg_score_rank:49, gap_index:0.33, tier:'C' },
+];
+
+const GANGNAM_ACADEMIES = [
+  { id:'megastudy', name:'대치메가스터디학원', lat:37.4963, lng:127.0630, subject:'종합', tier:'S' },
+  { id:'etoos', name:'대치이투스학원', lat:37.4971, lng:127.0645, subject:'종합', tier:'S' },
+  { id:'cnc', name:'대치씨앤씨학원', lat:37.4958, lng:127.0621, subject:'수학', tier:'S' },
+  { id:'cheungsol', name:'압구정청솔학원', lat:37.5272, lng:127.0283, subject:'수학', tier:'S' },
+  { id:'hyper', name:'강남하이퍼학원', lat:37.5001, lng:127.0538, subject:'영어', tier:'A' },
+  { id:'myungin', name:'대치명인학원', lat:37.4977, lng:127.0613, subject:'국어', tier:'A' },
+  { id:'daesung', name:'강남대성학원', lat:37.5031, lng:127.0487, subject:'종합', tier:'S' },
+  { id:'mathpower', name:'대치수학의힘', lat:37.4969, lng:127.0635, subject:'수학', tier:'A' },
+];
+
+const UNIVERSITIES = [
+  { name:'서울대학교', lat:37.4592, lng:126.9520 },
+  { name:'연세대학교', lat:37.5658, lng:126.9386 },
+  { name:'고려대학교', lat:37.5895, lng:127.0324 },
+  { name:'카이스트', lat:36.3733, lng:127.3617 },
+  { name:'부산대학교', lat:35.2340, lng:129.0824 },
+  { name:'경북대학교', lat:35.8907, lng:128.6108 },
+  { name:'전남대학교', lat:35.1761, lng:126.9095 },
+];
+
+const LAYERS = [
+  { id:'academy-density', label:'학원 밀도', icon:'🏫', color:'#f97316', default:true },
+  { id:'gap-heatmap', label:'교육격차 히트맵', icon:'🌡️', color:'#ef4444', default:true },
+  { id:'gangnam-zone', label:'강남 8학군', icon:'⭐', color:'#eab308', default:true },
+  { id:'dropout-risk', label:'중도탈락 위험도', icon:'⚠️', color:'#a855f7', default:false },
+  { id:'universities', label:'주요 대학', icon:'🎓', color:'#3b82f6', default:false },
+  { id:'loop-status', label:'AI 루프 상태', icon:'🤖', color:'#22c55e', default:true },
+];
+
+// 지난 리서치에서 정리한 교육컨설팅 OSINT 피드 (결합)
+const OSINT_NEWS = [
+  { tag:'market', label:'시장', title:'글로벌 교육컨설팅 시장, 2026년 29.5억 달러 규모 (CAGR 4.12%)' },
+  { tag:'policy', label:'정책', title:"교육부 2026 정책방향: 'AI 3강 도약과 국가책임 교육', AI 대학진학 챗봇 도입" },
+  { tag:'policy', label:'정책', title:'2026-2027 교육산업 삼중고 — B2C 붕괴·B2G 불확실성·R&D 캐시플로 위기' },
+  { tag:'company', label:'기업', title:"베어러블 '마이폴리오' — 월 35만원→2.5만원 AI 구독 컨설팅, 이용자 67% 비수도권" },
+  { tag:'company', label:'기업', title:'Crimson Education, 이사회 개편(존 키 의장) 및 IPO 검토' },
+  { tag:'risk', label:'리스크', title:"고액 입시 컨설팅 '부유층 전유물' 지적 — 시간당 60만원대" },
+  { tag:'risk', label:'리스크', title:'무등록 불법 입시컨설팅 단속 강화 — 학원법 22조 위반시 처벌' },
+];
+
+// 중도탈락 위험도(모의) — gap_index 기반 간이 산출
+const DROPOUT_RISK = {};
+REGION_NODES.forEach(r => { DROPOUT_RISK[r.id] = Math.min(0.95, +(r.gap_index * 0.55 + (1 - r.avg_score_rank/100) * 0.35).toFixed(2)); });
+
+// ── 투영 (Korea bbox → SVG 800x900) ─────────────────────────────────────────
+const BBOX = { lngMin:124.5, lngMax:131.0, latMin:33.0, latMax:39.0 };
+function proj(lat, lng){
+  const x = (lng - BBOX.lngMin) / (BBOX.lngMax - BBOX.lngMin) * 800;
+  const y = 900 - (lat - BBOX.latMin) / (BBOX.latMax - BBOX.latMin) * 900;
+  return [x, y];
+}
+
+const TIER_COLOR = { S:'#f97316', A:'#eab308', B:'#3b82f6', C:'#64748b' };
+
+const svg = document.getElementById('mapSvg');
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+// grid background
+for (let gx = 0; gx <= 800; gx += 50) svg.appendChild(el('line', {x1:gx,y1:0,x2:gx,y2:900,class:'grid-line'}));
+for (let gy = 0; gy <= 900; gy += 50) svg.appendChild(el('line', {x1:0,y1:gy,x2:800,y2:gy,class:'grid-line'}));
+
+const layerGroups = {};
+LAYERS.forEach(l => { layerGroups[l.id] = el('g', {class:'layer-'+l.id}); svg.appendChild(layerGroups[l.id]); });
+
+// academy-density + gap-heatmap 레이어: REGION_NODES
+REGION_NODES.forEach(r => {
+  const [x,y] = proj(r.lat, r.lng);
+  const radius = 5 + Math.sqrt(r.academy_count)/12;
+
+  // gap heat glow
+  const glow = el('circle', {cx:x, cy:y, r: radius + r.gap_index*22, fill:TIER_COLOR[r.tier], opacity:0.10, class:'gap-heat'});
+  layerGroups['gap-heatmap'].appendChild(glow);
+
+  const c = el('circle', {cx:x, cy:y, r:radius, fill:TIER_COLOR[r.tier], class:'node-circle', 'data-id':r.id, opacity:0.9, stroke:'#0a0c10', 'stroke-width':1.2});
+  c.addEventListener('click', () => showRegionDetail(r, x, y));
+  layerGroups['academy-density'].appendChild(c);
+
+  const label = el('text', {x:x, y:y - radius - 5, class:'node-label', 'text-anchor':'middle'});
+  label.textContent = r.name;
+  layerGroups['academy-density'].appendChild(label);
+
+  // dropout risk ring
+  const risk = DROPOUT_RISK[r.id];
+  const ring = el('circle', {cx:x, cy:y, r:radius+4, fill:'none', stroke:'#a855f7', 'stroke-width': 1 + risk*3, opacity:0.75});
+  layerGroups['dropout-risk'].appendChild(ring);
+});
+
+// gangnam-zone 레이어
+GANGNAM_ACADEMIES.forEach(a => {
+  const [x,y] = proj(a.lat, a.lng);
+  const star = el('circle', {cx:x, cy:y, r:3.2, fill:'#eab308', class:'gangnam-star', stroke:'#0a0c10', 'stroke-width':0.6});
+  star.addEventListener('click', () => showAcademyDetail(a, x, y));
+  layerGroups['gangnam-zone'].appendChild(star);
+});
+
+// universities 레이어
+UNIVERSITIES.forEach(u => {
+  const [x,y] = proj(u.lat, u.lng);
+  const m = el('rect', {x:x-4, y:y-4, width:8, height:8, fill:'#3b82f6', class:'uni-marker', transform:`rotate(45 ${x} ${y})`, stroke:'#0a0c10', 'stroke-width':0.8});
+  const t = el('title', {});
+  t.textContent = u.name;
+  m.appendChild(t);
+  layerGroups['universities'].appendChild(m);
+});
+
+// loop-status 레이어: 우측 하단에 작은 펄스 인디케이터 (지도 위 표시)
+const loopIndicator = el('g', {});
+const loopDot = el('circle', {cx:760, cy:870, r:5, fill:'#22c55e'});
+const loopText = el('text', {x:748, y:874, class:'node-label', 'text-anchor':'end', fill:'#22c55e'});
+loopText.textContent = 'AI LOOP ACTIVE';
+loopIndicator.appendChild(loopDot);
+loopIndicator.appendChild(loopText);
+layerGroups['loop-status'].appendChild(loopIndicator);
+
+// 상세 팝업 (간단 tooltip)
+let detailPopup = null;
+function clearPopup(){ if (detailPopup) { detailPopup.remove(); detailPopup = null; } }
+function showRegionDetail(r, x, y){
+  clearPopup();
+  const g = el('g', {});
+  const w = 150, h = 58;
+  const bx = Math.min(Math.max(x - w/2, 10), 790-w);
+  const by = Math.max(y - h - 14, 10);
+  const rect = el('rect', {x:bx, y:by, width:w, height:h, rx:6, fill:'rgba(10,12,16,0.95)', stroke:'#f97316', 'stroke-width':1});
+  g.appendChild(rect);
+  const t1 = el('text', {x:bx+8, y:by+18, fill:'#f97316', 'font-size':11, 'font-weight':700});
+  t1.textContent = `${r.region} ${r.name} (${r.tier})`;
+  g.appendChild(t1);
+  const t2 = el('text', {x:bx+8, y:by+33, fill:'#cbd5e1', 'font-size':9.5, 'font-family':'monospace'});
+  t2.textContent = `학원 ${r.academy_count.toLocaleString()}개 · 격차 ${(r.gap_index*100).toFixed(0)}`;
+  g.appendChild(t2);
+  const t3 = el('text', {x:bx+8, y:by+47, fill:'#cbd5e1', 'font-size':9.5, 'font-family':'monospace'});
+  t3.textContent = `수능 상위 ${100-r.avg_score_rank}% · 탈락위험 ${(DROPOUT_RISK[r.id]*100).toFixed(0)}%`;
+  g.appendChild(t3);
+  svg.appendChild(g);
+  detailPopup = g;
+}
+function showAcademyDetail(a, x, y){
+  clearPopup();
+  const g = el('g', {});
+  const w = 130, h = 40;
+  const bx = Math.min(Math.max(x - w/2, 10), 790-w);
+  const by = Math.max(y - h - 10, 10);
+  const rect = el('rect', {x:bx, y:by, width:w, height:h, rx:6, fill:'rgba(10,12,16,0.95)', stroke:'#eab308', 'stroke-width':1});
+  g.appendChild(rect);
+  const t1 = el('text', {x:bx+8, y:by+17, fill:'#eab308', 'font-size':10.5, 'font-weight':700});
+  t1.textContent = a.name;
+  g.appendChild(t1);
+  const t2 = el('text', {x:bx+8, y:by+31, fill:'#cbd5e1', 'font-size':9.5});
+  t2.textContent = `${a.subject} · ${a.tier}등급`;
+  g.appendChild(t2);
+  svg.appendChild(g);
+  detailPopup = g;
+}
+svg.addEventListener('click', (e) => { if (e.target === svg) clearPopup(); });
+
+// ── LAYER TOGGLES ────────────────────────────────────────────────────────
+const activeLayers = new Set(LAYERS.filter(l => l.default).map(l => l.id));
+function renderLayerList(){
+  const list = document.getElementById('layerList');
+  list.innerHTML = '';
+  LAYERS.forEach(l => {
+    const on = activeLayers.has(l.id);
+    const btn = document.createElement('div');
+    btn.className = 'layer-btn' + (on ? '' : ' off');
+    btn.innerHTML = `<span class="dot" style="background:${l.color}"></span><span class="lbl">${l.icon} ${l.label}</span><span class="chk">${on ? '●' : '○'}</span>`;
+    btn.onclick = () => {
+      if (activeLayers.has(l.id)) activeLayers.delete(l.id); else activeLayers.add(l.id);
+      layerGroups[l.id].classList.toggle('layer-hidden', !activeLayers.has(l.id));
+      renderLayerList();
+    };
+    list.appendChild(btn);
+  });
+}
+LAYERS.forEach(l => { if (!l.default) layerGroups[l.id].classList.add('layer-hidden'); });
+renderLayerList();
+
+// ── HUD STATS ────────────────────────────────────────────────────────────
+let loopCycles = 1042;
+function renderStats(){
+  const grid = document.getElementById('statGrid');
+  grid.innerHTML = `
+    <div class="stat-box"><div class="v">${REGION_NODES.length}</div><div class="l">모니터링 지역</div></div>
+    <div class="stat-box"><div class="v">${GANGNAM_ACADEMIES.length}</div><div class="l">강남 8학군 학원</div></div>
+    <div class="stat-box"><div class="v">${REGION_NODES.reduce((s,r)=>s+r.academy_count,0).toLocaleString()}</div><div class="l">총 학원 레코드</div></div>
+    <div class="stat-box"><div class="v">${loopCycles.toLocaleString()}</div><div class="l">AI 루프 사이클</div></div>
+  `;
+}
+renderStats();
+setInterval(() => { loopCycles += Math.floor(Math.random()*3)+1; renderStats(); }, 4000);
+
+function renderNews(){
+  const wrap = document.getElementById('newsScroll');
+  wrap.innerHTML = '';
+  OSINT_NEWS.forEach(n => {
+    const item = document.createElement('div');
+    item.className = 'news-item';
+    item.innerHTML = `<span class="tag ${n.tag}">${n.label}</span><span class="title">${n.title}</span>`;
+    wrap.appendChild(item);
+  });
+}
+renderNews();
+
+// ── OSINT PANEL ──────────────────────────────────────────────────────────
+const osintToggle = document.getElementById('osintToggle');
+const osintPanel = document.getElementById('osintPanel');
+osintToggle.onclick = () => {
+  const open = osintPanel.classList.toggle('open');
+  osintToggle.classList.toggle('active', open);
+  osintToggle.textContent = open ? '▼ OSINT 닫기' : '▲ OSINT 분석 도구';
+};
+
+const TABS = [ ['search','🔍 학원·지역 검색'], ['gap','📊 격차 계산기'], ['score','📈 성적 분포'], ['report','🤖 AI 리포트'] ];
+const tabBar = document.getElementById('tabBar');
+let activeTab = 'search';
+function renderTabs(){
+  tabBar.innerHTML = '';
+  TABS.forEach(([id,label]) => {
+    const b = document.createElement('button');
+    b.className = 'tab-btn' + (activeTab===id ? ' active' : '');
+    b.textContent = label;
+    b.onclick = () => { activeTab = id; renderTabs(); renderPanes(); };
+    tabBar.appendChild(b);
+  });
+}
+function renderPanes(){
+  ['search','gap','score','report'].forEach(id => {
+    document.getElementById('pane-'+id).classList.toggle('active', id===activeTab);
+  });
+}
+renderTabs(); renderPanes();
+
+// 검색
+function renderDefaultCards(){
+  const wrap = document.getElementById('searchResults');
+  wrap.innerHTML = '';
+  REGION_NODES.slice(0,12).forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'region-card';
+    d.innerHTML = `<div class="rname">${r.name}</div><div class="rmeta">학원 ${r.academy_count.toLocaleString()}개 · 격차 ${(r.gap_index*100).toFixed(0)}</div>`;
+    wrap.appendChild(d);
+  });
+}
+renderDefaultCards();
+document.getElementById('searchBtn').onclick = () => {
+  const q = document.getElementById('searchInput').value.trim();
+  const wrap = document.getElementById('searchResults');
+  wrap.innerHTML = '';
+  wrap.style.gridTemplateColumns = '1fr';
+  if (!q) { wrap.style.gridTemplateColumns = '1fr 1fr 1fr'; renderDefaultCards(); return; }
+  const results = REGION_NODES.filter(r => r.name.includes(q) || r.region.includes(q));
+  if (!results.length){ wrap.innerHTML = '<div style="color:var(--text-dim);font-size:11px;">결과 없음</div>'; return; }
+  results.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'region-card';
+    d.style.display = 'flex'; d.style.justifyContent = 'space-between';
+    d.innerHTML = `<div><div class="rname">${r.region} ${r.name}</div><div class="rmeta">학원 ${r.academy_count.toLocaleString()}개 · 수능 상위 ${100-r.avg_score_rank}%</div></div><div style="font-size:16px;font-weight:800;color:${TIER_COLOR[r.tier]}">${r.tier}</div>`;
+    wrap.appendChild(d);
+  });
+};
+document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('searchBtn').click(); });
+
+// 격차 계산기
+const compareA = document.getElementById('compareA');
+const compareB = document.getElementById('compareB');
+REGION_NODES.forEach(r => {
+  compareA.innerHTML += `<option value="${r.id}">${r.name}</option>`;
+  compareB.innerHTML += `<option value="${r.id}">${r.name}</option>`;
+});
+compareA.value = 'gangnam'; compareB.value = 'mokpo';
+function renderGap(){
+  const a = REGION_NODES.find(r=>r.id===compareA.value);
+  const b = REGION_NODES.find(r=>r.id===compareB.value);
+  const gapDiff = ((a.gap_index - b.gap_index)*100).toFixed(1);
+  const scoreDiff = a.avg_score_rank - b.avg_score_rank;
+  const academyDiff = a.academy_count - b.academy_count;
+  document.getElementById('gapResult').innerHTML = `
+    <div class="compare-row"><div style="color:var(--text-dim)">교육격차 지수</div><div class="compare-a">${(a.gap_index*100).toFixed(0)}/100</div><div class="compare-b">${(b.gap_index*100).toFixed(0)}/100</div><div style="text-align:center;color:${gapDiff>0?'var(--red)':'var(--green)'};font-family:monospace;font-weight:700;">${gapDiff>0?'+':''}${gapDiff}점</div></div>
+    <div class="compare-row"><div style="color:var(--text-dim)">수능 성적 백분위</div><div class="compare-a">상위 ${100-a.avg_score_rank}%</div><div class="compare-b">상위 ${100-b.avg_score_rank}%</div><div style="text-align:center;color:${scoreDiff>0?'var(--red)':'var(--green)'};font-family:monospace;font-weight:700;">${scoreDiff>0?'+':''}${scoreDiff}p</div></div>
+    <div class="compare-row"><div style="color:var(--text-dim)">학원 수</div><div class="compare-a">${a.academy_count.toLocaleString()}개</div><div class="compare-b">${b.academy_count.toLocaleString()}개</div><div style="text-align:center;color:${academyDiff>0?'var(--red)':'var(--green)'};font-family:monospace;font-weight:700;">${academyDiff>0?'+':''}${academyDiff.toLocaleString()}개</div></div>
+    <div style="margin-top:14px;padding:12px;background:rgba(239,68,68,0.08);border-radius:8px;border:1px solid rgba(239,68,68,0.2);">
+      <div style="font-size:11px;color:var(--red);margin-bottom:6px;font-weight:600;">격차 분석 요약</div>
+      <div style="font-size:11px;color:var(--text-mid);line-height:1.7;">${a.name}은 ${b.name}보다 학원이 <strong style="color:var(--accent)">${academyDiff.toLocaleString()}개</strong> 많으며, 수능 성적이 <strong style="color:var(--accent)">${scoreDiff}백분위</strong> 높습니다. 교육격차 지수 차이는 <strong style="color:var(--red)">${gapDiff}점</strong>으로, 이는 ${b.name} 학생이 동등한 입시 정보를 얻기 위해 <strong style="color:var(--purple)">AI 컨설팅이 핵심 보완재</strong>임을 시사합니다.</div>
+    </div>`;
+}
+compareA.onchange = renderGap; compareB.onchange = renderGap;
+renderGap();
+
+// 성적 분포
+const SUBJECTS = ['전체','수학','영어','국어','과학','사회'];
+let activeSubject = '전체';
+function renderSubjectChips(){
+  const wrap = document.getElementById('subjectChips');
+  wrap.innerHTML = '';
+  SUBJECTS.forEach(s => {
+    const c = document.createElement('div');
+    c.className = 'chip' + (activeSubject===s ? ' active':'');
+    c.textContent = s;
+    c.onclick = () => { activeSubject = s; renderSubjectChips(); renderScoreBars(); };
+    wrap.appendChild(c);
+  });
+}
+function renderScoreBars(){
+  const mod = { '수학':0.98, '영어':1.01, '국어':0.99, '과학':0.97, '사회':1.0, '전체':1.0 };
+  const wrap = document.getElementById('scoreBars');
+  wrap.innerHTML = '';
+  [...REGION_NODES].sort((a,b)=>b.avg_score_rank-a.avg_score_rank).forEach(r => {
+    const score = Math.min(99, Math.round(r.avg_score_rank * (mod[activeSubject]||1)));
+    const color = score>90 ? '#ef4444' : score>75 ? '#f97316' : score>60 ? '#eab308' : '#3b82f6';
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `<div class="bar-label">${r.name}</div><div class="bar-track"><div class="bar-fill" style="width:${score}%;background:${color}"></div></div><div class="bar-val" style="color:${color}">${score}</div>`;
+    wrap.appendChild(row);
+  });
+}
+renderSubjectChips(); renderScoreBars();
+
+// AI 리포트 (오프라인 템플릿)
+const reportRegion = document.getElementById('reportRegion');
+REGION_NODES.forEach(r => { reportRegion.innerHTML += `<option value="${r.id}">${r.region} ${r.name}</option>`; });
+reportRegion.value = 'gangnam';
+document.getElementById('reportBtn').onclick = () => {
+  const r = REGION_NODES.find(x=>x.id===reportRegion.value);
+  const box = document.getElementById('reportBox');
+  box.textContent = '분석 중...';
+  setTimeout(() => {
+    box.textContent = `[오프라인 템플릿 모드] ${r.region} ${r.name} 지역 분석
+
+교육격차 지수: ${(r.gap_index*100).toFixed(0)}/100 (전국 대비 ${r.gap_index>0.6?'높음':'보통'})
+학원 수: ${r.academy_count.toLocaleString()}개
+수능 성적 백분위: 상위 ${100-r.avg_score_rank}%
+중도탈락 위험도(모의): ${(DROPOUT_RISK[r.id]*100).toFixed(0)}%
+
+시사점: ${r.tier==='S'||r.tier==='A' ? '학원 인프라가 밀집돼 있어 정보 접근성은 높으나, 고액 컨설팅 의존도와 경쟁 강도가 커 심리적 소진 위험을 함께 관리할 필요가 있습니다.' : '학원 인프라 대비 정보 격차가 상대적으로 크므로, 저비용 AI 기반 진로·생기부 컨설팅 도입이 우선순위가 높습니다.'}
+
+* 실제 AI 리포트(OpenAI 기반)를 생성하려면 저장소의 FastAPI 백엔드(/reports)를 실행하고 OPENAI_API_KEY를 설정하세요.`;
+  }, 500);
+};
+document.getElementById('reportBtn').click();
+
+// ── VIDEO PANEL (실시간 교육 동영상) ──────────────────────────────────────
+const videoToggle = document.getElementById('videoToggle');
+const videoPanel = document.getElementById('videoPanel');
+const videoFrame = document.getElementById('videoFrame');
+const VIDEO_TOPICS = [
+  { label:'교육 뉴스 실시간', q:'대한민국 교육 뉴스 실시간' },
+  { label:'입시 컨설팅', q:'2026 입시 컨설팅 설명회' },
+  { label:'EBS 수능 강의', q:'EBSi 수능 강의' },
+  { label:'교육정책 브리핑', q:'교육부 정책 브리핑 라이브' },
+  { label:'유학 컨설팅', q:'해외 유학 컨설팅 세미나' },
+];
+let activeVideoTopic = 0;
+function loadVideo(){
+  const q = encodeURIComponent(VIDEO_TOPICS[activeVideoTopic].q);
+  videoFrame.src = `https://www.youtube.com/embed?listType=search&list=${q}`;
+}
+function renderVideoTopics(){
+  const wrap = document.getElementById('videoTopics');
+  wrap.innerHTML = '';
+  VIDEO_TOPICS.forEach((t, i) => {
+    const c = document.createElement('div');
+    c.className = 'chip' + (activeVideoTopic===i ? ' active':'');
+    c.textContent = t.label;
+    c.onclick = () => { activeVideoTopic = i; renderVideoTopics(); loadVideo(); };
+    wrap.appendChild(c);
+  });
+}
+videoToggle.onclick = () => {
+  const open = videoPanel.classList.toggle('open');
+  videoToggle.classList.toggle('active', open);
+  videoToggle.textContent = open ? '▼ 영상 닫기' : '▶ 실시간 교육 영상';
+  if (open && !videoFrame.src) { renderVideoTopics(); loadVideo(); }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+[
+  {
+    "academy_name": "대치메가스터디학원",
+    "region": "서울 대치",
+    "website": "https://www.megastudy.net",
+    "sns": {
+      "instagram": "https://www.instagram.com/megastudy_official/",
+      "youtube": "https://www.youtube.com/@megastudy"
+    }
+  },
+  {
+    "academy_name": "대치이투스학원",
+    "region": "서울 대치",
+    "website": "https://www.etoos.com",
+    "sns": {
+      "instagram": "https://www.instagram.com/etoos_official/",
+      "youtube": "https://www.youtube.com/@etoos"
+    }
+  },
+  {
+    "academy_name": "대치씨앤씨학원",
+    "region": "서울 대치",
+    "website": "https://www.cncedu.co.kr",
+    "sns": {
+      "instagram": "",
+      "naverblog": "https://blog.naver.com/cncmath"
+    }
+  },
+  {
+    "academy_name": "압구정청솔학원",
+    "region": "서울 압구정",
+    "website": "https://www.chungsolacademy.com",
+    "sns": {
+      "instagram": "",
+      "naverblog": ""
+    }
+  },
+  {
+    "academy_name": "강남하이퍼학원",
+    "region": "서울 강남",
+    "website": "https://www.hyperedu.co.kr",
+    "sns": {
+      "instagram": "",
+      "naverblog": ""
+    }
+  },
+  {
+    "academy_name": "대치명인학원",
+    "region": "서울 대치",
+    "website": "https://www.myunginedu.com",
+    "sns": {
+      "instagram": "",
+      "naverblog": ""
+    }
+  },
+  {
+    "academy_name": "강남대성학원",
+    "region": "서울 강남",
+    "website": "https://www.daesungedulife.com",
+    "sns": {
+      "instagram": "https://www.instagram.com/daesung_official/",
+      "youtube": "https://www.youtube.com/@daesungedu"
+    }
+  },
+  {
+    "academy_name": "대치수학의힘",
+    "region": "서울 대치",
+    "website": "https://www.mathpower.co.kr",
+    "sns": {
+      "instagram": "",
+      "naverblog": ""
+    }
+  }
+]
