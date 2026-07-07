@@ -7,7 +7,7 @@
 
 1. `POST /community/users`에 닉네임(선택적으로 지역)만 보내면 `User` 행이 생성되고
    `id`가 발급됩니다. 비밀번호도, 세션도, 이메일 인증도 없습니다.
-2. 프론트엔드(`dashboard/`)는 발급받은 `id`를 `localStorage`에 저장하고, 이후 모든
+2. 프론트엔드(`dashboard-community/`)는 발급받은 `id`를 `localStorage`에 저장하고, 이후 모든
    쓰기 요청(게시글/댓글 작성, 투표, 신고 등)에 `X-User-Id: <id>` 헤더로 실어 보냅니다.
 3. 백엔드(`api/app/auth.py`의 `get_current_user`)는 이 헤더 값을 그대로 신뢰해서
    `User` 행을 조회합니다. 서명도, 만료도, 검증도 없습니다.

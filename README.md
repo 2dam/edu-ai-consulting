@@ -17,7 +17,7 @@
   - `/ingest`, `/records`, `/reports`: 기존 입시 컨설팅 MVP (변경 없음)
   - `/community/*`, `/news/*`, `/mom-cafe/*`, `/admin/*`: 커뮤니티/뉴스/맘카페 모듈
     (아래 "커뮤니티 모듈 API" 참고)
-- `dashboard/` — Vite + React + TypeScript 프론트엔드 (커뮤니티/뉴스/맘카페 UI)
+- `dashboard-community/` — Vite + React + TypeScript 프론트엔드 (커뮤니티/뉴스/맘카페 UI)
 - `docs/` — 데이터 모델, 모더레이션 정책, 임시 인증 등 상세 문서
 
 ## 실행 방법
@@ -38,8 +38,8 @@ scrapy crawl public_data -a start_url="<공시자료 URL>" -a item_kind=admissio
 scrapy crawl academy -a start_url="<학원 페이지 URL>" -a academy_name="OO학원" -a region="강남"
 scrapy crawl education_news -a start_url="<교육 뉴스 목록 URL>"   # ALLOWED_SOURCES 등재 필요
 
-# 3. 대시보드 프론트엔드 (다른 터미널)
-cd dashboard
+# 3. 커뮤니티 대시보드 프론트엔드 (다른 터미널) — 기존 OSINT용 dashboard/(Next.js)와는 별개
+cd dashboard-community
 npm install
 npm run dev   # http://localhost:5173, api(localhost:8000)를 CORS로 호출
 ```
@@ -84,7 +84,7 @@ PATCH /admin/news/posts/{id}/moderation           뉴스 모더레이션 (관리
 
 `api/.env` (기존 `OPENAI_API_KEY`, `DATABASE_URL`에서 추가/변경 없음 — 커뮤니티 모듈은
 같은 SQLite DB와 같은 OpenAI 클라이언트를 재사용합니다).
-`dashboard/.env.development`: `VITE_API_BASE_URL` (기본 `http://localhost:8000`).
+`dashboard-community/.env.development`: `VITE_API_BASE_URL` (기본 `http://localhost:8000`).
 
 ## 사용 예시 (리포트 생성)
 
@@ -113,5 +113,5 @@ curl -X POST http://localhost:8000/reports \
 - `education_news_spider.py`의 `ALLOWED_SOURCES`가 아직 비어 있음 — 실제 대상 매체를
   정하고 robots.txt/로그인 필요 여부를 직접 확인한 뒤 등재해야 합니다.
 - 댓글 단위 모더레이션(개별 댓글 숨김/삭제) 미구현 — 현재는 게시글/뉴스 단위만 지원.
-- `dashboard/`는 아직 별도 배포 파이프라인이 없음 — `render.yaml`은 `api/`만 배포하므로
+- `dashboard-community/`는 아직 별도 배포 파이프라인이 없음 — `render.yaml`은 `api/`만 배포하므로
   프론트엔드는 별도 정적 호스팅 서비스 추가가 필요합니다.
