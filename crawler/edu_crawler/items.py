@@ -81,13 +81,13 @@ class EducationNewsItem(scrapy.Item):
 
 
 class EducationFacilityItem(scrapy.Item):
-    """어린이집·유치원·초등학교·학원 기본현황 + 공식 평가/등록 정보.
+    """어린이집·유치원·초등학교·학원·대학 기본현황 + 공식 평가/등록 정보.
 
     "리뷰" 대신 공식 출처(평가인증·정보공시·등록현황)만 다룬다 — 네이버/카카오 등
     민간 리뷰 스크래핑은 이용약관상 금지되어 있어 취급하지 않는다.
 
     facility_type: "daycare"(어린이집) | "kindergarten"(유치원)
-                 | "elementary"(초등학교) | "academy"(학원)
+                 | "elementary"(초등학교) | "academy"(학원) | "university"(대학)
     """
 
     source_url = scrapy.Field()

@@ -97,13 +97,14 @@ export interface CctvPoint {
 // ── 어린이집·유치원·초등학교·학원 기초자료 + 공식 평가/등록 정보 ──────────────
 // "리뷰"는 네이버/카카오 등 민간 리뷰가 아니라 공식 출처(평가인증·정보공시·등록현황)만 다룬다.
 
-export type FacilityType = 'daycare' | 'kindergarten' | 'elementary' | 'academy'
+export type FacilityType = 'daycare' | 'kindergarten' | 'elementary' | 'academy' | 'university'
 
 export const FACILITY_TYPE_LABEL: Record<FacilityType, string> = {
   daycare: '어린이집',
   kindergarten: '유치원',
   elementary: '초등학교',
   academy: '학원',
+  university: '대학',
 }
 
 export interface EducationFacility {

@@ -13,7 +13,7 @@ interface OsintPanelProps {
 type Tool = 'search' | 'gap-calc' | 'score-dist' | 'report' | 'facility-rating'
 
 const SUBJECTS = ['전체', '수학', '영어', '국어', '과학', '사회']
-const FACILITY_TYPE_FILTERS: Array<FacilityType | '전체'> = ['전체', 'daycare', 'kindergarten', 'elementary', 'academy']
+const FACILITY_TYPE_FILTERS: Array<FacilityType | '전체'> = ['전체', 'daycare', 'kindergarten', 'elementary', 'academy', 'university']
 
 export default function OsintPanel({ regions, onFlyTo, educationFacilities = [], openFacilityPanelSignal }: OsintPanelProps) {
   const [open, setOpen] = useState(false)

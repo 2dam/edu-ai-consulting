@@ -9,6 +9,12 @@
   -a region_code 를 생략하거나 "all"로 주면 SIDO_CODES 의 17개 시도교육청을 모두
   순회하고, 각 시도마다 응답의 list_total_count 를 보고 결과가 남아있는 한
   pIndex 를 늘려가며 페이지네이션한다 (page_size 단위).
+- university: 한국대학교육협의회_대학알리미 대학 기본 정보 (data.go.kr, apis.data.go.kr/B340014/
+  BasicInformationService_2/getUniversityCode). 활용신청 자동승인, XML 전용(응답에
+  type=json이 안 먹힘). 실제 전국 대학·전문대학 목록(schlId·학교명·설립구분·지역)을
+  준다 — 컷오프·경쟁력 점수 같은 통계는 이 오퍼레이션에 없으므로 제공하지 않는다
+  (허위로 지어내지 않기 위해 dashboard의 rank/cutoff_avg 필드는 그대로 두고 이
+  스파이더가 채우는 evaluation_grade/status_note 에는 넣지 않음).
 - daycare / kindergarten / academy: 어린이집정보공개포털(info.childcare.go.kr),
   유치원알리미(e-childschoolinfo.moe.go.kr), 전국학원교습소정보 표준데이터 등은
   공공데이터포털(data.go.kr)의 "공공데이터 개방 표준" REST 포맷
@@ -24,6 +30,7 @@
   scrapy crawl early_education -a facility_type=elementary -a region_code=B10
   # 전국 17개 시도교육청 전체 (페이지네이션 포함, 시간이 다소 걸림)
   scrapy crawl early_education -a facility_type=elementary -a region_code=all
+  scrapy crawl early_education -a facility_type=university -a svy_yr=2024
   scrapy crawl early_education -a facility_type=daycare -a portal_url="https://apis.data.go.kr/..." -a service_key=...
   scrapy crawl early_education -a facility_type=academy -a portal_url="https://apis.data.go.kr/..." -a service_key=... -a region_name=전국
 """
@@ -36,6 +43,7 @@ import scrapy
 from edu_crawler.items import EducationFacilityItem
 
 NEIS_SCHOOL_INFO_URL = "https://open.neis.go.kr/hub/schoolInfo"
+UNIVERSITY_CODE_URL = "https://apis.data.go.kr/B340014/BasicInformationService_2/getUniversityCode"
 
 # NEIS 시도교육청코드(ATPT_OFCDC_SC_CODE) 전체 17개. L10/O10 은 결번(NEIS 자체 체계).
 SIDO_CODES = {
@@ -100,10 +108,10 @@ class EarlyEducationSpider(scrapy.Spider):
 
     def __init__(self, facility_type="elementary", region_code=None, region_name="",
                  portal_url=None, service_key=None, page_size=100, max_pages=200,
-                 *args, **kwargs):
+                 svy_yr=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if facility_type not in ("daycare", "kindergarten", "elementary", "academy"):
-            raise ValueError("usage: -a facility_type=daycare|kindergarten|elementary|academy")
+        if facility_type not in ("daycare", "kindergarten", "elementary", "academy", "university"):
+            raise ValueError("usage: -a facility_type=daycare|kindergarten|elementary|academy|university")
         self.facility_type = facility_type
         self.region_code = region_code
         self.region_name = region_name
@@ -112,6 +120,7 @@ class EarlyEducationSpider(scrapy.Spider):
         self.page_size = int(page_size)
         # 응답 파싱 오류 등으로 total_count 를 못 믿을 상황에 대비한 안전장치 (지역당 최대 페이지 수).
         self.max_pages = int(max_pages)
+        self.svy_yr = svy_yr or "2024"
 
     def start_requests(self):
         if self.facility_type == "elementary":
@@ -121,6 +130,8 @@ class EarlyEducationSpider(scrapy.Spider):
                 targets = SIDO_CODES
             for code, name in targets.items():
                 yield self._neis_request(code, name, page_index=1)
+        elif self.facility_type == "university":
+            yield self._university_request(page_index=1)
         else:
             if not self.portal_url:
                 raise ValueError(
@@ -198,6 +209,63 @@ class EarlyEducationSpider(scrapy.Spider):
                 "%s(%s) 수집 완료: %d/%d건 (%d페이지)",
                 region_name, region_code, min(fetched_so_far, total_count), total_count, page_index,
             )
+
+    # ── 대학알리미 대학 기본 정보 (university) ──────────────────────────
+
+    def _university_request(self, page_index):
+        service_key = os.environ.get("DATA_GO_KR_SERVICE_KEY", "")
+        params = {
+            "serviceKey": service_key,
+            "pageNo": page_index,
+            "numOfRows": self.page_size,
+            "svyYr": self.svy_yr,
+        }
+        url = f"{UNIVERSITY_CODE_URL}?{urlencode(params)}"
+        return scrapy.Request(url, callback=self.parse_university, meta={"page_index": page_index})
+
+    def parse_university(self, response):
+        """대학알리미 응답은 XML 전용 (type=json 파라미터가 적용되지 않음)."""
+        now = datetime.now(timezone.utc).isoformat()
+        page_index = response.meta["page_index"]
+
+        result_code = response.xpath("//header/resultCode/text()").get()
+        if result_code != "00":
+            result_msg = response.xpath("//header/resultMsg/text()").get("알 수 없는 오류")
+            self.logger.error("대학알리미 응답 오류 (pageNo=%d): %s", page_index, result_msg)
+            return
+
+        total_count = int(response.xpath("//body/totalCount/text()").get(default="0"))
+        rows = response.xpath("//items/item")
+
+        for row in rows:
+            def field(name):
+                return (row.xpath(f"./{name}/text()").get(default="") or "").strip()
+
+            item = EducationFacilityItem()
+            item["source_url"] = _sanitize_url(response.url)
+            item["facility_type"] = "university"
+            item["name"] = field("schlKrnNm")
+            item["region"] = field("znNm")
+            item["district"] = ""
+            item["address"] = ""
+            item["establishment_type"] = field("estbDivNm")
+            item["capacity"] = None
+            item["current_enrollment"] = None
+            item["teacher_count"] = None
+            item["evaluation_grade"] = ""
+            # 대학알리미 기본정보 API는 학교 목록/코드만 제공하며 컷오프·경쟁력 점수는
+            # 이 오퍼레이션에 없다 — 없는 지표를 지어내지 않고 학교구분·본분교 여부만 기록.
+            campus = field("clgcpDivNm")
+            item["status_note"] = f"{field('schlDivNm')} · {campus}" if campus else field("schlDivNm")
+            item["crawled_at"] = now
+            if item["name"]:
+                yield item
+
+        fetched_so_far = page_index * self.page_size
+        if len(rows) >= self.page_size and fetched_so_far < total_count and page_index < self.max_pages:
+            yield self._university_request(page_index + 1)
+        else:
+            self.logger.info("대학알리미 수집 완료: %d/%d건 (%d페이지)", min(fetched_so_far, total_count), total_count, page_index)
 
     # ── 공공데이터포털 표준 포맷 (daycare/kindergarten/academy) ───────────
 

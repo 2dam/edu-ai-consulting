@@ -18,7 +18,7 @@ interface MapProps {
   educationFacilities?: EducationFacility[]
 }
 
-const FACILITY_LABEL: Record<string, string> = { daycare: '어린이집', kindergarten: '유치원', elementary: '초등학교', academy: '학원' }
+const FACILITY_LABEL: Record<string, string> = { daycare: '어린이집', kindergarten: '유치원', elementary: '초등학교', academy: '학원', university: '대학' }
 
 // 점수→색상 (낮음=파랑, 중간=노랑, 높음=빨강)
 function gapColor(gap: number): string {
@@ -453,6 +453,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
                 'kindergarten', '#f472b6',
                 'elementary', '#db2777',
                 'academy', '#a21caf',
+                'university', '#3b82f6',
                 '#ec4899',
               ],
               'circle-stroke-width': 1.5,
