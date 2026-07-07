@@ -6,10 +6,13 @@ listType=search 같은 비공식 임베드 트릭은 YouTube가 자주 차단해
 API 키는 https://console.cloud.google.com 에서 "YouTube Data API v3"를 활성화하고
 발급받는다 (무료 할당량: 하루 10,000 유닛, 검색 1회당 100유닛 — 약 하루 100회).
 """
+import logging
 import os
 import time
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 # 검색 할당량이 적어(하루 약 100회) 캐시를 길게 유지한다.
@@ -44,10 +47,18 @@ def search_video(query: str) -> dict | None:
         res = requests.get(YOUTUBE_SEARCH_URL, params=params, timeout=8)
         res.raise_for_status()
         items = res.json().get("items", [])
-    except (requests.RequestException, ValueError):
+    except requests.HTTPError as exc:
+        logger.error("YouTube 검색 실패 (status=%s): %s", exc.response.status_code, exc.response.text[:300])
+        return None
+    except requests.RequestException as exc:
+        logger.error("YouTube 검색 요청 실패: %s", exc)
+        return None
+    except ValueError:
+        logger.error("YouTube 응답이 JSON이 아님: %s", res.text[:300])
         return None
 
     if not items:
+        logger.info("YouTube 검색 결과 없음: %s", query)
         result = None
     else:
         snippet = items[0].get("snippet", {})
