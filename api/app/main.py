@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from app import ai_engine, cctv, feedback_loop, imputation, predictive_model, psychology_engine, youtube
+from app import ai_engine, cctv, feedback_loop, imputation, predictive_model, psychology_engine, qcrm_engine, youtube
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
 from app.schemas import (
@@ -22,6 +22,8 @@ from app.schemas import (
     LoopStatusResponse,
     PsychAssessmentRequest,
     PsychAssessmentResponse,
+    QcrmAssessmentRequest,
+    QcrmAssessmentResponse,
     ReportRequest,
     ReportResponse,
 )
@@ -199,6 +201,12 @@ def psych_assessment(req: PsychAssessmentRequest):
 def predict_dropout_risk(req: DropoutRiskRequest, db: Session = Depends(get_db)):
     result = predictive_model.predict_dropout_risk(db, req.student_features)
     return DropoutRiskResponse(**result)
+
+
+@app.post("/qcrm-assessment", response_model=QcrmAssessmentResponse)
+def qcrm_assessment(req: QcrmAssessmentRequest):
+    result = qcrm_engine.run_mini_qcrm(req.profile, req.iterations)
+    return QcrmAssessmentResponse(**result, narrative=qcrm_engine.to_consulting_context(result))
 
 
 # ── 리포트 생성 ───────────────────────────────────────────────────────────────

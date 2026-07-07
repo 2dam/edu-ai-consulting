@@ -5,6 +5,7 @@ import type { AcademyNode, GangnamAcademy, LayerId, CctvPoint, EducationFacility
 import { LAYERS, SAMPLE_EDUCATION_FACILITIES } from '@/lib/data'
 import HUD from '@/components/HUD'
 import OsintPanel from '@/components/OsintPanel'
+import QcrmPanel from '@/components/QcrmPanel'
 import VideoPanel from '@/components/VideoPanel'
 import type { MapHandle } from '@/components/Map'
 
@@ -35,6 +36,7 @@ export default function Page() {
   } | null>(null)
   const [news, setNews] = useState<any[]>([])
   const [dropoutRisks, setDropoutRisks] = useState<Record<string, any>>({})
+  const [qcrmResult, setQcrmResult] = useState<any>(null)
   const [universities, setUniversities] = useState<any[]>([])
   const [cctvPoints, setCctvPoints] = useState<CctvPoint[]>([])
   // 크롤러를 아직 안 돌렸어도 화면이 비어 보이지 않도록 예시 데이터로 시작 —
@@ -56,6 +58,7 @@ export default function Page() {
   useEffect(() => {
     fetch('/api/news').then(r => r.json()).then(d => setNews(d.items)).catch(console.error)
     fetch('/api/dropout').then(r => r.json()).then(d => setDropoutRisks(d.dropout_risks)).catch(console.error)
+    fetch('/api/qcrm').then(r => r.json()).then(setQcrmResult).catch(console.error)
     fetch('/api/universities').then(r => r.json()).then(d => setUniversities(d.universities)).catch(console.error)
     fetch('/api/cctv').then(r => r.json()).then(d => setCctvPoints(d.items)).catch(console.error)
     fetch('/api/education-facilities').then(r => r.json()).then(d => {
@@ -123,6 +126,8 @@ export default function Page() {
         educationFacilities={educationFacilities}
         openFacilityPanelSignal={facilityPanelSignal}
       />
+
+      <QcrmPanel result={qcrmResult} />
 
       {/* 실시간 교육 동영상 패널 */}
       <VideoPanel />

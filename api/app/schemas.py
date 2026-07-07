@@ -45,6 +45,24 @@ class DropoutRiskResponse(BaseModel):
     warning: str | None = None
 
 
+class QcrmAssessmentRequest(BaseModel):
+    profile: dict[str, Any] | None = None
+    iterations: int = 3
+
+
+class QcrmAssessmentResponse(BaseModel):
+    states: dict[str, float]
+    labels: dict[str, str]
+    readiness_score: float
+    readiness_level: str
+    weakest_links: list[dict[str, Any]]
+    strongest_links: list[dict[str, Any]]
+    recommendations: list[str]
+    trace: list[dict[str, Any]]
+    method_note: str
+    narrative: str
+
+
 class ReportResponse(BaseModel):
     id: int
     student_label: str
