@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { REGION_NODES, GANGNAM_ACADEMIES } from '@/lib/data'
 
 const BACKEND = process.env.BACKEND_URL || 'http://localhost:8000'
+const BACKEND_TIMEOUT_MS = 3500
 
 export async function GET() {
   // FastAPI 백엔드에서 실제 수집 데이터 병합
@@ -10,8 +11,14 @@ export async function GET() {
 
   try {
     const [recRes, loopRes] = await Promise.all([
-      fetch(`${BACKEND}/records?limit=200`, { next: { revalidate: 60 } }),
-      fetch(`${BACKEND}/loop-status`, { next: { revalidate: 30 } }),
+      fetch(`${BACKEND}/records?limit=200`, {
+        next: { revalidate: 60 },
+        signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
+      }),
+      fetch(`${BACKEND}/loop-status`, {
+        next: { revalidate: 30 },
+        signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
+      }),
     ])
     if (recRes.ok) backendRecords = await recRes.json()
     if (loopRes.ok) loopStatus = await loopRes.json()
