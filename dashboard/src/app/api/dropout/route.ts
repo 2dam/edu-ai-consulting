@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-
-const BACKEND = process.env.BACKEND_URL || 'http://localhost:8000'
+import { BACKEND_URL } from '@/lib/backend'
 
 // 지역별 평균 피처로 중도탈락 위험도 예측
 // (실제 데이터 수집 전에는 지역 특성 기반 합성 피처 사용)
@@ -33,7 +32,7 @@ export async function GET() {
   await Promise.all(
     Object.entries(REGION_FEATURES).map(async ([regionId, features]) => {
       try {
-        const res = await fetch(`${BACKEND}/predict-dropout-risk`, {
+        const res = await fetch(`${BACKEND_URL}/predict-dropout-risk`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ student_features: features }),

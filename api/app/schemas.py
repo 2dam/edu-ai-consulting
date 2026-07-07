@@ -19,6 +19,8 @@ class ReportRequest(BaseModel):
     psych_answers: dict[str, int] | None = None
     # 출결/성적 등 정량 피처 (app/predictive_model.FEATURE_NAMES). 앙상블 중도탈락 예측에 사용
     student_features: dict[str, float] | None = None
+    # QCRM 학습 사고 상태 진단 입력 (app/qcrm_engine.py 참고)
+    qcrm_profile: dict[str, Any] | None = None
 
 
 class PsychAssessmentRequest(BaseModel):
@@ -55,6 +57,7 @@ class QcrmAssessmentResponse(BaseModel):
     labels: dict[str, str]
     readiness_score: float
     readiness_level: str
+    decision_adjustment: dict[str, Any]
     weakest_links: list[dict[str, Any]]
     strongest_links: list[dict[str, Any]]
     recommendations: list[str]

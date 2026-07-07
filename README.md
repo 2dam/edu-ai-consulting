@@ -23,7 +23,8 @@
     (변동성 표면을 격자로 만들어 VAE로 인페인팅하는 아이디어를 응용)
   - `/education-facilities`, `/cctv`, `/youtube-video`, `/psych-assessment`,
     `/predict-dropout-risk`, `/qcrm-assessment`: 어린이집·유치원·초등학교 확장 +
-    OSINT 대시보드용 엔드포인트 (아래 "어린이집·유치원·초등학교 + 전국 공공 CCTV" 참고)
+    OSINT 대시보드용 엔드포인트. `/qcrm-assessment`는 학습 사고 상태와 함께
+    선택 편향/상호의존성 기반 판단 보정을 제공한다.
   - `/community/*`, `/news/*`, `/mom-cafe/*`, `/admin/*`: 커뮤니티/뉴스/맘카페 모듈
     (아래 "커뮤니티 모듈 API" 참고)
 - `dashboard/` — Next.js 기반 OSINT/EduIntel 실시간 인텔리전스 대시보드
@@ -110,6 +111,49 @@ curl -X POST http://localhost:8000/reports \
     "profile": {"성적대": "내신 2등급", "지망학과": "전기전자공학", "지역": "광주"}
   }'
 ```
+
+`/reports` 요청에 `qcrm_profile`을 함께 넣으면 QCRM 학습 사고 상태와 판단 보정 요약이
+리포트 프롬프트에 자동 반영됩니다.
+
+```bash
+curl -X POST http://localhost:8000/reports \
+  -H "Content-Type: application/json" \
+  -d '{
+    "student_label": "stu-anon-002",
+    "tier": "STANDARD",
+    "profile": {"성적대": "내신 3등급", "지망학과": "교육학", "지역": "대전"},
+    "qcrm_profile": {
+      "concept_mastery": 0.62,
+      "problem_interpretation": 0.48,
+      "strategy_selection": 0.42,
+      "calculation_accuracy": 0.74,
+      "attention_control": 0.52,
+      "time_management": 0.45
+    }
+  }'
+```
+
+## 사용 예시 (QCRM 진단)
+
+```bash
+curl -X POST http://localhost:8000/qcrm-assessment \
+  -H "Content-Type: application/json" \
+  -d '{
+    "profile": {
+      "concept_mastery": 0.62,
+      "problem_interpretation": 0.48,
+      "strategy_selection": 0.42,
+      "calculation_accuracy": 0.74,
+      "attention_control": 0.52,
+      "time_management": 0.45
+    },
+    "iterations": 3
+  }'
+```
+
+입력값은 0~1 확률로 넣는 것을 기본으로 하며, 5점 척도나 100점 척도 값도 내부에서
+확률로 정규화됩니다. 응답의 `decision_adjustment`는 QCRM 상태값을 바탕으로 산출한
+개입안 적합도, 추천 모드, 판단 신뢰도입니다.
 
 ## 사용 예시 (결측 컷오프 예측)
 

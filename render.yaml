@@ -11,6 +11,19 @@ services:
       - key: DATABASE_URL
         value: sqlite:///./edu_consulting.db
 
+  # OSINT/EduIntel Next.js 대시보드 (app.ichapterwise.com).
+  - type: web
+    name: edu-ai-consulting-dashboard
+    runtime: node
+    rootDir: dashboard
+    buildCommand: npm install && npm run build
+    startCommand: npx next start -p $PORT
+    envVars:
+      - key: BACKEND_URL
+        value: https://ichapterwise.com
+      - key: NEXT_PUBLIC_BACKEND_URL
+        value: https://ichapterwise.com
+
   # AI 교육뉴스 커뮤니티·맘카페 프론트엔드 (Vite+React 정적 빌드).
   # 기존 dashboard/(OSINT용 Next.js 대시보드, app.ichapterwise.com)와는 별개 서비스.
   - type: web
