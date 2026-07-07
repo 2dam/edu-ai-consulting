@@ -25,9 +25,16 @@ def search_video(query: str) -> dict | None:
 
     YOUTUBE_API_KEY 미설정, API 오류, 검색 결과 없음 등은 모두 None으로 처리한다.
     """
-    api_key = os.environ.get("YOUTUBE_API_KEY", "")
+    # 일부 호스팅 환경변수 UI에 붙는 공백/개행문자 방어.
+    api_key = os.environ.get("YOUTUBE_API_KEY", "").strip()
     if not api_key or not query:
         return None
+
+    if len(api_key) not in (0, 39):
+        logger.warning(
+            "YOUTUBE_API_KEY 길이가 예상(39자)과 다름: %d자 (%s...%s)",
+            len(api_key), api_key[:4], api_key[-4:],
+        )
 
     cached = _cache.get(query)
     if cached and time.time() - cached[0] < _CACHE_TTL_SECONDS:
