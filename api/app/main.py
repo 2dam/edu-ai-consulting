@@ -1,18 +1,47 @@
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from app import ai_engine
-from app.database import Base, engine, get_db
+from app import models_community  # noqa: F401 - Base.metadata에 커뮤니티 테이블을 등록시키기 위한 import
+from app.database import Base, SessionLocal, engine, get_db
 from app.models import ConsultingReport, RawRecord
+from app.routers import admin, community, mom_cafe, news
 from app.schemas import IngestPayload, ReportRequest, ReportResponse
+from app.seed import seed_defaults
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AI 빅데이터 교육 컨설팅 API")
+
+# dashboard/(Vite 개발 서버, 기본 5173 포트)에서 오는 요청을 허용한다.
+# 커뮤니티/뉴스 모듈이 별도 프론트엔드로 분리되며 새로 필요해진 설정 — 기존 라우트에는 영향 없음.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(community.router)
+app.include_router(news.router)
+app.include_router(mom_cafe.router)
+app.include_router(admin.router)
+
+
+@app.on_event("startup")
+def _seed_community_defaults() -> None:
+    db = SessionLocal()
+    try:
+        seed_defaults(db)
+    finally:
+        db.close()
+
 
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
