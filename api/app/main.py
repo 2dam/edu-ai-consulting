@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from app import ai_engine, cctv, feedback_loop, imputation, predictive_model, psychology_engine
+from app import ai_engine, cctv, feedback_loop, imputation, predictive_model, psychology_engine, youtube
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
 from app.schemas import (
@@ -168,6 +168,18 @@ def list_cctv(
     """
     items = cctv.fetch_cctv(min_x, min_y, max_x, max_y, cctv_type)
     return CctvResponse(items=[CctvInfo(**i) for i in items], total=len(items))
+
+
+# ── 실시간 교육 동영상 (YouTube Data API) ─────────────────────────────────────
+
+@app.get("/youtube-video")
+def youtube_video(q: str):
+    """검색어에 맞는 최신 영상 1건. listType=search 임베드 트릭 대신 정식 Data API로
+    실제 videoId를 찾아 표준 embed URL을 쓸 수 있게 한다.
+
+    YOUTUBE_API_KEY 미설정 또는 검색 결과 없음 시 result: null 반환.
+    """
+    return {"result": youtube.search_video(q)}
 
 
 # ── 예측 모델 ─────────────────────────────────────────────────────────────────

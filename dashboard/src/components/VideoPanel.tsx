@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const VIDEO_TOPICS = [
   { label: '교육 뉴스 실시간', q: '대한민국 교육 뉴스 실시간' },
@@ -9,19 +9,36 @@ const VIDEO_TOPICS = [
   { label: '유학 컨설팅', q: '해외 유학 컨설팅 세미나' },
 ]
 
+interface VideoResult {
+  video_id: string
+  title: string
+  channel: string
+}
+
 export default function VideoPanel() {
   const [open, setOpen] = useState(false)
   const [activeTopic, setActiveTopic] = useState(0)
   const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [video, setVideo] = useState<VideoResult | null>(null)
+  const [fetchedOnce, setFetchedOnce] = useState(false)
+
+  const topic = VIDEO_TOPICS[activeTopic]
+
+  useEffect(() => {
+    if (!loaded) return
+    setLoading(true)
+    fetch(`/api/youtube?q=${encodeURIComponent(topic.q)}`)
+      .then(r => r.json())
+      .then(d => { setVideo(d.result); setFetchedOnce(true) })
+      .catch(() => { setVideo(null); setFetchedOnce(true) })
+      .finally(() => setLoading(false))
+  }, [loaded, topic.q])
 
   const handleToggle = () => {
     setOpen(o => !o)
     setLoaded(true)
   }
-
-  const videoSrc = loaded
-    ? `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(VIDEO_TOPICS[activeTopic].q)}`
-    : ''
 
   return (
     <>
@@ -93,16 +110,45 @@ export default function VideoPanel() {
               ))}
             </div>
 
-            <iframe
-              src={videoSrc}
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              style={{ width: '100%', aspectRatio: '16 / 9', border: 'none', borderRadius: 8, background: '#000' }}
-            />
+            {video ? (
+              <>
+                <iframe
+                  src={`https://www.youtube.com/embed/${video.video_id}`}
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                  style={{ width: '100%', aspectRatio: '16 / 9', border: 'none', borderRadius: 8, background: '#000' }}
+                />
+                <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 8, lineHeight: 1.5 }}>
+                  {video.title} · {video.channel}
+                </div>
+              </>
+            ) : (
+              <div style={{
+                width: '100%', aspectRatio: '16 / 9', borderRadius: 8, background: '#000',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10,
+                padding: 16, boxSizing: 'border-box' as const,
+              }}>
+                <div style={{ fontSize: 11, color: '#64748b', textAlign: 'center' as const, lineHeight: 1.6 }}>
+                  {loading
+                    ? '영상 검색 중...'
+                    : fetchedOnce
+                      ? 'YOUTUBE_API_KEY가 아직 설정되지 않았거나 검색 결과가 없습니다.'
+                      : ''}
+                </div>
+                <a
+                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(topic.q)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ fontSize: 11, color: '#ef4444', fontWeight: 700, textDecoration: 'none' }}
+                >
+                  YouTube에서 직접 검색하기 ↗
+                </a>
+              </div>
+            )}
 
             <div style={{ fontSize: 10, color: '#64748b', marginTop: 8, lineHeight: 1.6 }}>
-              YouTube 실시간 검색 결과를 임베드합니다. 주제를 바꾸면 관련 최신/라이브 영상으로
-              갱신돼요. 특정 영상이 재생되지 않으면 채널이 현재 라이브 중이 아닐 수 있어요.
+              YouTube Data API로 검색어에 맞는 최신 영상 1건을 임베드합니다. 주제를 바꾸면
+              해당 주제의 최신 영상으로 갱신돼요.
             </div>
           </div>
         </div>
