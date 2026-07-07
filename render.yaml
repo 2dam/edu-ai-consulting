@@ -10,3 +10,20 @@ services:
         sync: false
       - key: DATABASE_URL
         value: sqlite:///./edu_consulting.db
+
+  # AI 교육뉴스 커뮤니티·맘카페 프론트엔드 (Vite+React 정적 빌드).
+  # 기존 dashboard/(OSINT용 Next.js 대시보드, app.ichapterwise.com)와는 별개 서비스.
+  - type: web
+    name: edu-ai-consulting-community
+    runtime: static
+    rootDir: dashboard-community
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://ichapterwise.com
+    routes:
+      # React Router의 클라이언트 사이드 라우팅을 위해 모든 경로를 index.html로 폴백.
+      - type: rewrite
+        source: /*
+        destination: /index.html

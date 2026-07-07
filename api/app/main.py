@@ -76,11 +76,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AI 빅데이터 교육 컨설팅 API", lifespan=lifespan)
 
-# dashboard/(Vite 개발 서버, 기본 5173 포트)에서 오는 요청을 허용한다.
-# 커뮤니티/뉴스 모듈이 별도 프론트엔드로 분리되며 새로 필요해진 설정 — 기존 라우트에는 영향 없음.
+# dashboard-community/(Vite 개발 서버 localhost:5173 + Render Static Site 배포본)에서
+# 오는 요청을 허용한다. 커뮤니티/뉴스 모듈이 별도 프론트엔드로 분리되며 새로 필요해진
+# 설정 — 기존 라우트에는 영향 없음.
+# TODO: community.ichapterwise.com 커스텀 도메인을 연결하면 여기에도 추가할 것.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://edu-ai-consulting-community.onrender.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
