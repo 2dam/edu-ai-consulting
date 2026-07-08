@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -221,18 +222,49 @@ def youtube_video(q: str):
 
 _EDUCATION_NEWS_QUERIES = ["수능", "대입", "교육부", "학원", "교육정책"]
 
+# 교육 전문 매체 화이트리스트 — "교육" 단어가 우연히 들어간 무관한 기사(인사 발령,
+# 지역 소식 등)를 걸러내기 위해 아래 매체의 기사만 노출한다.
+_EDU_MEDIA_DOMAINS = {
+    "news.unn.net",  # 한국대학신문
+    "veritas-a.com",  # 베리타스알파
+    "dhnews.co.kr",  # 대학저널
+    "chosunedu.co.kr",  # 조선에듀
+    "edunews.or.kr",  # 에듀뉴스
+    "kedupress.com",  # 대한민국교육신문
+    "eduyonhap.com",  # 교육연합신문
+    "ebs.co.kr",  # EBS
+    "ebsi.co.kr",  # EBSi
+    "edudonga.com",  # 에듀동아
+}
+
+# 화이트리스트 매체는 발행량이 적어 주제어 검색만으로는 잘 안 걸리므로,
+# 매체명 자체도 검색어로 써서 최근 기사를 직접 끌어온다.
+_EDU_MEDIA_NAME_QUERIES = [
+    "한국대학신문", "베리타스알파", "대학저널", "조선에듀",
+    "에듀뉴스", "대한민국교육신문", "교육연합신문", "에듀동아",
+]
+
+
+def _is_whitelisted(url: str) -> bool:
+    return any(domain in url for domain in _EDU_MEDIA_DOMAINS)
+
 
 @app.get("/education-news")
 def education_news(limit: int = 20):
-    """수능·대입·교육부·학원·교육정책 키워드로 검색한 최신 뉴스를 모아 최신순으로 반환.
+    """교육 전문 매체(화이트리스트)의 최신 기사만 모아 최신순으로 반환.
 
-    NAVER_CLIENT_ID/SECRET 미설정 시 빈 목록 반환.
+    NAVER_CLIENT_ID/SECRET 미설정 시 빈 목록 반환. 검색어가 13개라 순차 호출하면
+    캐시가 비어있을 때 100초 이상 걸릴 수 있어 동시에 호출한다.
     """
+    all_queries = _EDUCATION_NEWS_QUERIES + _EDU_MEDIA_NAME_QUERIES
+    with ThreadPoolExecutor(max_workers=len(all_queries)) as executor:
+        results = executor.map(lambda q: naver_news.search_news(q, display=10), all_queries)
+
     seen_urls: set[str] = set()
     merged: list[dict] = []
-    for query in _EDUCATION_NEWS_QUERIES:
-        for item in naver_news.search_news(query, display=10):
-            if item["url"] in seen_urls:
+    for items in results:
+        for item in items:
+            if item["url"] in seen_urls or not _is_whitelisted(item["url"]):
                 continue
             seen_urls.add(item["url"])
             merged.append(item)
