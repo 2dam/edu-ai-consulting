@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from app import ai_engine, cctv, feedback_loop, imputation, predictive_model, psychology_engine, qcrm_engine, youtube
+from app import ai_engine, cctv, feedback_loop, imputation, naver_news, predictive_model, psychology_engine, qcrm_engine, youtube
 from app import models_community  # noqa: F401 - Base.metadata에 커뮤니티 테이블을 등록시키기 위한 import
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
@@ -215,6 +215,30 @@ def youtube_video(q: str):
     YOUTUBE_API_KEY 미설정 또는 검색 결과 없음 시 result: null 반환.
     """
     return {"result": youtube.search_video(q)}
+
+
+# ── 실시간 교육 뉴스 (네이버 뉴스 검색 오픈API) ────────────────────────────────
+
+_EDUCATION_NEWS_QUERIES = ["수능", "대입", "교육부", "학원", "교육정책"]
+
+
+@app.get("/education-news")
+def education_news(limit: int = 20):
+    """수능·대입·교육부·학원·교육정책 키워드로 검색한 최신 뉴스를 모아 최신순으로 반환.
+
+    NAVER_CLIENT_ID/SECRET 미설정 시 빈 목록 반환.
+    """
+    seen_urls: set[str] = set()
+    merged: list[dict] = []
+    for query in _EDUCATION_NEWS_QUERIES:
+        for item in naver_news.search_news(query, display=10):
+            if item["url"] in seen_urls:
+                continue
+            seen_urls.add(item["url"])
+            merged.append(item)
+
+    merged.sort(key=lambda x: x["pub_date"] or "", reverse=True)
+    return {"items": merged[:limit], "total": len(merged)}
 
 
 # ── 예측 모델 ─────────────────────────────────────────────────────────────────
