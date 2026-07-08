@@ -7,14 +7,16 @@ export async function GET(request: Request) {
   try {
     const res = await fetch(`${BACKEND_URL}/youtube-video?q=${encodeURIComponent(q)}`, {
       next: { revalidate: 300 },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(20000),
     })
     if (res.ok) {
       const data = await res.json()
       return NextResponse.json(data)
     }
-  } catch {
-    // 백엔드 미실행 또는 YOUTUBE_API_KEY 미설정 시 결과 없음
+    console.error('youtube-video backend responded', res.status)
+  } catch (err) {
+    // 백엔드 미실행 또는 YOUTUBE_API_KEY 미설정 시 결과 없음 — 원인은 로그에 남긴다.
+    console.error('youtube-video fetch failed', err)
   }
   return NextResponse.json({ result: null })
 }
