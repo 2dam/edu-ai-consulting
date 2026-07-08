@@ -139,6 +139,20 @@ def ingest(payload: IngestPayload, db: Session = Depends(get_db)):
     return {"id": record.id}
 
 
+@app.get("/debug/storage")
+def debug_storage():
+    """영구 디스크 마운트/DATABASE_URL 점검용 임시 엔드포인트. 확인 후 제거할 것."""
+    import os as _os
+
+    db_path = Path("/var/data")
+    return {
+        "DATABASE_URL": _os.getenv("DATABASE_URL"),
+        "var_data_exists": db_path.exists(),
+        "var_data_is_dir": db_path.is_dir() if db_path.exists() else None,
+        "var_data_contents": [p.name for p in db_path.iterdir()] if db_path.exists() else None,
+    }
+
+
 @app.get("/records")
 def list_records(item_type: str | None = None, limit: int = 50, db: Session = Depends(get_db)):
     query = db.query(RawRecord)
