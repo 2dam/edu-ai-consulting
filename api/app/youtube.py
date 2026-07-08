@@ -15,8 +15,10 @@ import requests
 logger = logging.getLogger(__name__)
 
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
-# 검색 할당량이 적어(하루 약 100회) 캐시를 길게 유지한다.
-_CACHE_TTL_SECONDS = 600
+# 검색 할당량이 적어(하루 약 100회, 검색 1회=100유닛) 캐시를 길게 유지한다.
+# 패널 탭이 여러 개라 10분 캐시로는 하루 할당량을 금방 넘길 수 있어 4시간으로 늘림
+# (탭 5개 * 하루 6회 = 30회/일 수준으로 유지).
+_CACHE_TTL_SECONDS = 4 * 60 * 60
 _cache: dict[str, tuple[float, dict | None]] = {}
 
 
