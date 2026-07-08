@@ -5,15 +5,17 @@ import { BACKEND_URL } from '@/lib/backend'
 export async function GET() {
   try {
     const res = await fetch(`${BACKEND_URL}/education-facilities?limit=20000`, {
-      next: { revalidate: 60 },
-      signal: AbortSignal.timeout(8000),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(30000),
     })
     if (res.ok) {
       const data = await res.json()
       return NextResponse.json(data)
     }
-  } catch {
-    // 백엔드 미실행 시 빈 목록
+    console.error('education-facilities backend responded', res.status)
+  } catch (err) {
+    // 백엔드 미실행/타임아웃 시 빈 목록으로 폴백 — 원인은 로그에 남긴다.
+    console.error('education-facilities fetch failed', err)
   }
   return NextResponse.json({ items: [], total: 0, summary_by_type: {} })
 }
