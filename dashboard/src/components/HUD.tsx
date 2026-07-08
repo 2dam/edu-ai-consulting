@@ -216,14 +216,28 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
       <div style={{ ...panel, bottom: 20, right: 16, width: 240, maxHeight: 220, overflowY: 'auto' }}>
         <div style={label}>📡 실시간 교육 뉴스</div>
         {news.map((item, i) => (
-          <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: i < news.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+          <a
+            key={i}
+            href={item.url && item.url !== '#' ? item.url : undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'block',
+              marginBottom: 10,
+              paddingBottom: 10,
+              borderBottom: i < news.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              color: 'inherit',
+              textDecoration: 'none',
+              cursor: item.url && item.url !== '#' ? 'pointer' : 'default',
+            }}
+          >
             <div style={{ fontSize: 11, lineHeight: 1.4, marginBottom: 3 }}>{item.title}</div>
             <div style={{ fontSize: 10, color: '#64748b', display: 'flex', gap: 8 }}>
               <span style={{ color: '#3b82f6' }}>{item.category}</span>
               <span>{item.source}</span>
               <span>{item.time}</span>
             </div>
-          </div>
+          </a>
         ))}
       </div>
 
