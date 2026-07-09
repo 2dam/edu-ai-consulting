@@ -140,6 +140,22 @@ def ingest(payload: IngestPayload, db: Session = Depends(get_db)):
     return {"id": record.id}
 
 
+@app.post("/ingest-batch")
+def ingest_batch(payloads: list[IngestPayload], db: Session = Depends(get_db)):
+    """대량 크롤링(학원 등)에서 건별 요청 왕복 비용을 줄이기 위한 일괄 적재."""
+    records = [
+        RawRecord(
+            item_type=p.item_type,
+            data=p.data,
+            source_url=p.data.get("source_url", ""),
+        )
+        for p in payloads
+    ]
+    db.add_all(records)
+    db.commit()
+    return {"count": len(records)}
+
+
 @app.get("/records")
 def list_records(item_type: str | None = None, limit: int = 50, db: Session = Depends(get_db)):
     query = db.query(RawRecord)

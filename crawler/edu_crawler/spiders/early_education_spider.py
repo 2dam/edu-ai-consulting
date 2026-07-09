@@ -15,24 +15,27 @@
   준다 — 컷오프·경쟁력 점수 같은 통계는 이 오퍼레이션에 없으므로 제공하지 않는다
   (허위로 지어내지 않기 위해 dashboard의 rank/cutoff_avg 필드는 그대로 두고 이
   스파이더가 채우는 evaluation_grade/status_note 에는 넣지 않음).
-- daycare / kindergarten / academy: 어린이집정보공개포털(info.childcare.go.kr),
-  유치원알리미(e-childschoolinfo.moe.go.kr), 전국학원교습소정보 표준데이터 등은
-  공공데이터포털(data.go.kr)의 "공공데이터 개방 표준" REST 포맷
-  (response.body.items.item)을 따르는 API로 제공되는 경우가 많다.
+- academy: 나이스(NEIS) 학원교습소정보 Open API (open.neis.go.kr/hub/acaInsTiInfo).
+  elementary와 동일한 NEIS_API_KEY·17개 시도교육청 순회·페이지네이션 패턴을 그대로
+  쓴다. 교육부·16개 시도교육청이 매주 갱신하는 실등록 현황이라 정기 재크롤링(주1회
+  정도)에 의미가 있다.
+- daycare / kindergarten: 어린이집정보공개포털(info.childcare.go.kr),
+  유치원알리미(e-childschoolinfo.moe.go.kr) 등은 공공데이터포털(data.go.kr)의
+  "공공데이터 개방 표준" REST 포맷(response.body.items.item)을 따르는 API로
+  제공되는 경우가 많다.
   -a portal_url=<data.go.kr 활용신청 후 발급받은 실제 엔드포인트> 로 지정하면
   표준 포맷으로 파싱하며, 이쪽도 body.totalCount 기준으로 페이지네이션한다.
   주의: 기관마다 응답 필드명이 다르므로 FIELD_MAP 은 실제 활용신청 후 받은 응답
-  스키마를 확인하고 채워 넣을 것 — academy_spider/public_data_spider 의 CSS 셀렉터와
-  동일하게 "확인 후 채우는" placeholder다 (README "아직 안 한 것" 항목 참고).
+  스키마를 확인하고 채워 넣을 것 — "확인 후 채우는" placeholder다.
 
 실행 예:
   # 서울만
   scrapy crawl early_education -a facility_type=elementary -a region_code=B10
   # 전국 17개 시도교육청 전체 (페이지네이션 포함, 시간이 다소 걸림)
   scrapy crawl early_education -a facility_type=elementary -a region_code=all
+  scrapy crawl early_education -a facility_type=academy -a region_code=all
   scrapy crawl early_education -a facility_type=university -a svy_yr=2024
   scrapy crawl early_education -a facility_type=daycare -a portal_url="https://apis.data.go.kr/..." -a service_key=...
-  scrapy crawl early_education -a facility_type=academy -a portal_url="https://apis.data.go.kr/..." -a service_key=... -a region_name=전국
 """
 import os
 from datetime import datetime, timezone
@@ -43,6 +46,7 @@ import scrapy
 from edu_crawler.items import EducationFacilityItem
 
 NEIS_SCHOOL_INFO_URL = "https://open.neis.go.kr/hub/schoolInfo"
+NEIS_ACADEMY_URL = "https://open.neis.go.kr/hub/acaInsTiInfo"
 UNIVERSITY_CODE_URL = "https://apis.data.go.kr/B340014/BasicInformationService_2/getUniversityCode"
 
 # NEIS 시도교육청코드(ATPT_OFCDC_SC_CODE) 전체 17개. L10/O10 은 결번(NEIS 자체 체계).
@@ -93,13 +97,8 @@ FIELD_MAP = {
         "address": "org_rdnma",
         "establishment_type": "fond_sc_nm",
     },
-    "academy": {
-        # 전국학원교습소정보 표준데이터 (data.go.kr) 기준 — 실제 응답 필드명 확인 후 수정
-        "name": "academyname",
-        "address": "roadnameaddress",
-        "establishment_type": "coursename",       # 교습과정 (예: 수학·영어·입시 등)
-        "status_note": "registrationstatusname",  # 등록상태 (정상/휴원/폐원 등)
-    },
+    # academy는 나이스 학원교습소정보 API로 이전(parse_neis_academy 참고) — 이 표는
+    # daycare/kindergarten처럼 data.go.kr "공공데이터 개방 표준" 포맷을 쓰는 유형만 남는다.
 }
 
 
@@ -123,13 +122,14 @@ class EarlyEducationSpider(scrapy.Spider):
         self.svy_yr = svy_yr or "2024"
 
     def start_requests(self):
-        if self.facility_type == "elementary":
+        if self.facility_type in ("elementary", "academy"):
             if self.region_code and self.region_code != "all":
                 targets = {self.region_code: self.region_name or SIDO_CODES.get(self.region_code, "")}
             else:
                 targets = SIDO_CODES
+            request_fn = self._neis_request if self.facility_type == "elementary" else self._neis_academy_request
             for code, name in targets.items():
-                yield self._neis_request(code, name, page_index=1)
+                yield request_fn(code, name, page_index=1)
         elif self.facility_type == "university":
             yield self._university_request(page_index=1)
         else:
@@ -207,6 +207,79 @@ class EarlyEducationSpider(scrapy.Spider):
         else:
             self.logger.info(
                 "%s(%s) 수집 완료: %d/%d건 (%d페이지)",
+                region_name, region_code, min(fetched_so_far, total_count), total_count, page_index,
+            )
+
+    # ── 나이스 학원교습소정보 (academy) — 매주 갱신 ─────────────────────────
+
+    def _neis_academy_request(self, region_code, region_name, page_index):
+        params = {
+            "Type": "json",
+            "pIndex": page_index,
+            "pSize": self.page_size,
+            "ATPT_OFCDC_SC_CODE": region_code,
+        }
+        neis_key = os.environ.get("NEIS_API_KEY", "")
+        if neis_key:
+            params["KEY"] = neis_key
+        url = f"{NEIS_ACADEMY_URL}?{urlencode(params)}"
+        return scrapy.Request(
+            url,
+            callback=self.parse_neis_academy,
+            meta={"region_code": region_code, "region_name": region_name, "page_index": page_index},
+        )
+
+    def parse_neis_academy(self, response):
+        now = datetime.now(timezone.utc).isoformat()
+        region_code = response.meta["region_code"]
+        region_name = response.meta["region_name"]
+        page_index = response.meta["page_index"]
+
+        try:
+            payload = response.json()
+        except ValueError:
+            self.logger.error("나이스 학원 응답 파싱 실패 (%s pIndex=%d): %s", region_code, page_index, response.text[:300])
+            return
+
+        neis_block = payload.get("acaInsTiInfo")
+        if not isinstance(neis_block, list) or len(neis_block) < 2:
+            result_msg = payload.get("RESULT", {}).get("MESSAGE", "결과 없음")
+            self.logger.info("%s(%s) 학원 pIndex=%d: %s — 수집 종료", region_name, region_code, page_index, result_msg)
+            return
+
+        head = neis_block[0].get("head", [])
+        total_count = head[0].get("list_total_count", 0) if head else 0
+        rows = neis_block[1].get("row", [])
+
+        for row in rows:
+            item = EducationFacilityItem()
+            item["source_url"] = _sanitize_url(response.url)
+            item["facility_type"] = "academy"
+            item["name"] = row.get("ACA_NM", "")
+            item["region"] = region_name
+            item["district"] = row.get("ADMST_ZONE_NM", "")
+            road_addr = row.get("FA_RDNMA", "") or ""
+            detail_addr = row.get("FA_RDNDA", "") or ""
+            item["address"] = f"{road_addr} {detail_addr}".strip()
+            item["establishment_type"] = row.get("ACA_INSTI_SC_NM", "")
+            capacity = row.get("TOFOR_SMTOT")
+            item["capacity"] = capacity if isinstance(capacity, int) and capacity > 0 else None
+            item["current_enrollment"] = None
+            item["teacher_count"] = None
+            item["evaluation_grade"] = ""
+            reg_status = row.get("REG_STTUS_NM", "")
+            realm = row.get("REALM_SC_NM", "")
+            item["status_note"] = f"{reg_status} · {realm}" if realm else reg_status
+            item["crawled_at"] = now
+            if item["name"]:
+                yield item
+
+        fetched_so_far = page_index * self.page_size
+        if rows and len(rows) >= self.page_size and fetched_so_far < total_count and page_index < self.max_pages:
+            yield self._neis_academy_request(region_code, region_name, page_index + 1)
+        else:
+            self.logger.info(
+                "%s(%s) 학원 수집 완료: %d/%d건 (%d페이지)",
                 region_name, region_code, min(fetched_so_far, total_count), total_count, page_index,
             )
 
