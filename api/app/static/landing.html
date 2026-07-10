@@ -77,21 +77,6 @@
   .hero .sub { font-size: 16.5px; color: var(--ink-muted); max-width: 520px; margin: 0 0 32px; }
   .hero-ctas { display: flex; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
 
-  .contents-card {
-    border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface);
-    padding: 22px 26px; box-shadow: var(--shadow-card);
-  }
-  .contents-card .contents-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 14px; }
-  .contents-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; list-style: none; padding: 0; margin: 0; }
-  .contents-list li a {
-    display: flex; align-items: baseline; gap: 10px; padding: 7px 0; text-decoration: none;
-    border-bottom: 1px dotted var(--line); font-size: 14px;
-  }
-  .contents-list li:nth-last-child(-n+2) a { border-bottom: none; }
-  .contents-list .ch { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 700; min-width: 20px; }
-  .contents-list .title { color: var(--ink); }
-  .contents-list li a:hover .title { color: var(--accent); }
-
   section.chapter { padding: 64px 0; border-top: 1px solid var(--line); }
   .chapter-head { margin-bottom: 34px; }
   .chapter-head h2 { font-size: 26px; margin: 8px 0 10px; }
@@ -187,7 +172,6 @@
 
   @media (max-width: 760px) {
     .hero h1 { font-size: 30px; }
-    .contents-list { grid-template-columns: 1fr; }
     .stat-grid, .case-grid, .feature-grid, .segment-grid, .tier-grid { grid-template-columns: 1fr; }
     .try-shell { grid-template-columns: 1fr; }
     nav.toc-strip .chapter-link { display: none; }
@@ -201,11 +185,11 @@
   <div class="wrap">
     <a class="logo" href="#top">i<span class="accent-word">Chapter</span>wise</a>
     <nav class="toc-strip" aria-label="목차">
-      <a class="chapter-link" href="#summary">1장 지표</a>
-      <a class="chapter-link" href="#data">2장 데이터</a>
-      <a class="chapter-link" href="#results">3장 성과</a>
-      <a class="chapter-link" href="#community">4장 커뮤니티</a>
-      <a class="chapter-link" href="#panel">5장 위원회</a>
+      <a class="chapter-link" href="#summary">Chap.1 지표</a>
+      <a class="chapter-link" href="#data">Chap.2 데이터</a>
+      <a class="chapter-link" href="#results">Chap.3 성과</a>
+      <a class="chapter-link" href="#community">Chap.4 커뮤니티</a>
+      <a class="chapter-link" href="#panel">Chap.5 위원회</a>
       <a class="btn btn-primary" href="#try" style="padding:8px 16px; font-size:13px;">무료로 시작</a>
     </nav>
   </div>
@@ -219,18 +203,6 @@
     <div class="hero-ctas">
       <a class="btn btn-primary" href="#try">무료 리포트 받기</a>
       <a class="btn btn-ghost" href="#data">라이브 데이터 보기</a>
-    </div>
-
-    <div class="contents-card">
-      <div class="contents-label">이 리포트의 목차</div>
-      <ol class="contents-list">
-        <li><a href="#summary"><span class="ch">01</span><span class="title">핵심 지표 요약</span></a></li>
-        <li><a href="#data"><span class="ch">02</span><span class="title">데이터로 증명합니다</span></a></li>
-        <li><a href="#results"><span class="ch">03</span><span class="title">성과와 사례</span></a></li>
-        <li><a href="#community"><span class="ch">04</span><span class="title">커뮤니티 · 맘카페</span></a></li>
-        <li><a href="#panel"><span class="ch">05</span><span class="title">EduIntelligence Panel</span></a></li>
-        <li><a href="#try"><span class="ch">06</span><span class="title">지금 시작하기</span></a></li>
-      </ol>
     </div>
   </section>
 
