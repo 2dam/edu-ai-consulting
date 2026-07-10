@@ -12,9 +12,10 @@ from sqlalchemy.orm import Session
 
 from app import ai_engine, cctv, feedback_loop, imputation, naver_news, predictive_model, psychology_engine, qcrm_engine, youtube
 from app import models_community  # noqa: F401 - Base.metadata에 커뮤니티 테이블을 등록시키기 위한 import
+from app import models_reputation  # noqa: F401 - Base.metadata에 학원 평판 테이블을 등록시키기 위한 import
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
-from app.routers import admin, committee, community, mom_cafe, news
+from app.routers import admin, committee, community, mom_cafe, news, reputation
 from app.schemas import (
     CctvInfo,
     CctvResponse,
@@ -104,6 +105,7 @@ app.include_router(news.router)
 app.include_router(mom_cafe.router)
 app.include_router(admin.router)
 app.include_router(committee.router)
+app.include_router(reputation.router)
 
 STATIC_DIR = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
