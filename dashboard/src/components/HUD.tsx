@@ -86,6 +86,16 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
         </div>
         <div style={{ fontSize: 11, color: '#64748b' }}><Clock /> KST</div>
         <div style={{ fontSize: 10, color: '#64748b' }}>LIVE · {regions.length}개 지역 · {totalAcademies.toLocaleString()}개 학원</div>
+        <a
+          href="/committee"
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            fontSize: 10, fontWeight: 700, color: '#a855f7', textDecoration: 'none',
+            border: '1px solid rgba(168,85,247,0.4)', borderRadius: 4, padding: '3px 8px',
+            letterSpacing: '0.04em',
+          }}
+        >🧑‍⚖️ EduIntelligence Panel</a>
       </div>
 
       {/* ── 좌측 패널: 통계 ──────────────────────────────────────────── */}
