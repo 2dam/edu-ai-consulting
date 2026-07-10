@@ -7,442 +7,491 @@
 <meta name="description" content="학원 커리큘럼과 대학 입결 데이터를 AI가 분석해서, 학생 한 명을 위한 맞춤 입시 컨설팅 리포트를 만들어 드립니다.">
 <style>
   :root {
-    --bg: #ffffff;
-    --bg-card: #f7f6fc;
-    --accent: #7c5cff;
-    --accent2: #ff5cb3;
-    --text: #1d1b2e;
-    --muted: #6b6880;
-    --border: #ecebf3;
-    --ok: #16a34a;
-    --err: #c0392b;
+    --paper: #170F35;
+    --surface: #1F1746;
+    --surface-sunken: #140B2C;
+    --surface-hover: #2A2158;
+    --ink: #F1EDFF;
+    --ink-muted: #B6AAD9;
+    --ink-faint: #7C6FA8;
+    --accent: #9B84FF;
+    --accent2: #FF7EC4;
+    --line: #362B5E;
+    --good: #3FCB93;
+    --good-bg: #163826;
+    --err: #FF8A80;
+    --radius-sm: 3px;
+    --radius-md: 6px;
+    --shadow-card: 0 2px 10px rgba(6,3,20,0.35);
+    --font-display: Georgia, 'Noto Serif KR', Batang, 'Apple SD Gothic Neo', serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
   body {
-    margin: 0;
-    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--font-body); line-height: 1.65; font-size: 15.5px;
   }
-  .container { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 28px; }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 400; text-wrap: balance; margin: 0; color: var(--ink); }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-muted); display: flex; align-items: center; gap: 10px;
+  }
+  .eyebrow .chapter-no { color: var(--accent); font-weight: 700; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-body);
+    font-size: 14.5px; font-weight: 600; padding: 12px 22px; border-radius: var(--radius-md);
+    text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: var(--paper); }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.5; cursor: default; }
+  .btn-ghost { border-color: var(--line); color: var(--ink); background: transparent; }
+  .btn-ghost:hover { background: var(--surface-hover); }
+  .btn-text { color: var(--accent); font-weight: 600; font-size: 14px; text-decoration: none; }
+  .btn-text:hover { color: var(--accent2); }
 
-  header { position: sticky; top: 0; background: rgba(255,255,255,.85); backdrop-filter: blur(8px); z-index: 10; border-bottom: 1px solid var(--border); }
-  header .container { display: flex; align-items: center; justify-content: space-between; height: 64px; }
-  .logo { font-weight: 800; font-size: 1.2rem; color: var(--text); text-decoration: none; }
-  .logo span { color: var(--accent); }
-  .nav-cta {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff; padding: 10px 20px; border-radius: 999px; text-decoration: none;
-    font-weight: 700; font-size: 0.9rem;
+  header {
+    position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--paper) 85%, transparent);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
   }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 20px; }
+  .logo { font-family: var(--font-display); font-size: 19px; font-weight: 700; text-decoration: none; letter-spacing: -0.01em; flex-shrink: 0; }
+  .logo .accent-word { background: linear-gradient(120deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  nav.toc-strip { display: flex; gap: 16px; align-items: center; }
+  nav.toc-strip a.chapter-link { font-size: 12.5px; color: var(--ink-muted); text-decoration: none; font-family: var(--font-mono); }
+  nav.toc-strip a.chapter-link:hover { color: var(--accent); }
 
-  .hero {
-    padding: 110px 0 100px; text-align: center; position: relative; overflow: hidden;
-    background: radial-gradient(circle at 50% -10%, #7c5cff22, transparent 60%);
-  }
-  .badge {
-    display: inline-block; background: #7c5cff14; border: 1px solid #7c5cff33; color: var(--accent);
-    padding: 6px 16px; border-radius: 999px; font-size: 0.85rem; margin-bottom: 24px; font-weight: 600;
-  }
-  .hero h1 { font-size: 2.6rem; margin: 0 0 20px; line-height: 1.3; font-weight: 800; }
-  .hero h1 .grad {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .hero p { font-size: 1.1rem; color: var(--muted); max-width: 540px; margin: 0 auto 36px; }
-  .cta {
-    display: inline-block; background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff; padding: 16px 36px; border-radius: 999px; font-weight: 800; font-size: 1.05rem;
-    text-decoration: none; box-shadow: 0 12px 30px #7c5cff44; border: none; cursor: pointer;
-  }
-  .cta:hover { opacity: .92; }
-  .cta.ghost {
-    background: transparent; border: 1px solid var(--border); box-shadow: none; color: var(--text);
-  }
-  .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .hero { padding: 72px 0 40px; }
+  .hero h1 { font-size: 40px; line-height: 1.28; margin: 18px 0 20px; max-width: 640px; }
+  .hero .sub { font-size: 16.5px; color: var(--ink-muted); max-width: 520px; margin: 0 0 32px; }
+  .hero-ctas { display: flex; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
 
-  section { padding: 80px 0; }
-  section h2 { font-size: 1.8rem; text-align: center; margin: 0 0 12px; font-weight: 800; }
-  section .sub { text-align: center; color: var(--muted); margin: 0 0 48px; }
-
-  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-  .card {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 28px;
+  .contents-card {
+    border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface);
+    padding: 22px 26px; box-shadow: var(--shadow-card);
   }
-  .card .icon { font-size: 1.8rem; margin-bottom: 14px; }
-  .card h3 { font-size: 1.05rem; margin: 0 0 8px; }
-  .card p { color: var(--muted); font-size: 0.92rem; margin: 0; }
-
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .step {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 28px; text-align: center;
+  .contents-card .contents-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 14px; }
+  .contents-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; list-style: none; padding: 0; margin: 0; }
+  .contents-list li a {
+    display: flex; align-items: baseline; gap: 10px; padding: 7px 0; text-decoration: none;
+    border-bottom: 1px dotted var(--line); font-size: 14px;
   }
-  .step .num {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; margin: 0 auto 14px;
-  }
-  .step h3 { font-size: 1rem; margin: 0 0 6px; }
-  .step p { color: var(--muted); font-size: 0.9rem; margin: 0; }
+  .contents-list li:nth-last-child(-n+2) a { border-bottom: none; }
+  .contents-list .ch { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 700; min-width: 20px; }
+  .contents-list .title { color: var(--ink); }
+  .contents-list li a:hover .title { color: var(--accent); }
 
-  .tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .tier {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 32px 24px; text-align: center;
-  }
-  .tier.highlight { border: 1px solid var(--accent); box-shadow: 0 16px 32px #7c5cff1f; transform: translateY(-6px); }
-  .tier .name { font-weight: 800; letter-spacing: .04em; margin-bottom: 8px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .tier ul { list-style: none; padding: 0; margin: 20px 0; color: var(--muted); font-size: 0.92rem; }
-  .tier li { padding: 6px 0; }
+  section.chapter { padding: 64px 0; border-top: 1px solid var(--line); }
+  .chapter-head { margin-bottom: 34px; }
+  .chapter-head h2 { font-size: 26px; margin: 8px 0 10px; }
+  .chapter-head p { color: var(--ink-muted); font-size: 14.5px; max-width: 540px; margin: 0; }
+  .sample-note { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); margin-top: 18px; }
 
-  /* ── 지금 체험하기 (실제 리포트 폼) ─────────────────────────── */
-  #try { background: #f7f6fc; }
-  .try-box {
-    max-width: 560px; margin: 0 auto; background: #fff; border: 1px solid var(--border);
-    border-radius: 20px; padding: 36px; box-shadow: 0 20px 50px #7c5cff14;
-  }
-  .try-box label { display: block; margin-top: 18px; font-weight: 700; font-size: 0.92rem; }
-  .try-box input, .try-box select {
-    width: 100%; padding: 11px 12px; margin-top: 6px; box-sizing: border-box; font-size: 0.95rem;
-    border: 1px solid var(--border); border-radius: 10px; font-family: inherit;
-  }
-  .try-box button {
-    margin-top: 22px; width: 100%; padding: 14px; font-size: 1rem; font-weight: 800; cursor: pointer;
-    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; border-radius: 999px;
-  }
-  .try-box button:disabled { opacity: .6; cursor: default; }
-  #try-result { margin-top: 20px; white-space: pre-wrap; line-height: 1.7; background: var(--bg-card); padding: 18px; border-radius: 12px; display: none; font-size: 0.9rem; }
-  #try-error { margin-top: 14px; color: var(--err); display: none; font-size: 0.9rem; }
-  .try-note { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 16px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; }
+  .stat-tile { background: var(--surface); padding: 20px 18px; }
+  .stat-tile .figure { font-family: var(--font-mono); font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .stat-tile .figure .unit { font-size: 14px; color: var(--ink-muted); font-weight: 400; margin-left: 2px; }
+  .stat-tile .label { font-size: 12.5px; color: var(--ink-muted); margin-top: 6px; }
 
-  /* ── 실시간 대시보드 임베드 ───────────────────────────────── */
-  .dashboard-embed {
-    border-radius: 20px; overflow: hidden; border: 1px solid var(--border);
-    box-shadow: 0 20px 50px #7c5cff1f; background: #0a0c10;
+  .exhibit { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; box-shadow: var(--shadow-card); }
+  .exhibit iframe { width: 100%; height: 480px; border: none; display: block; background: #0B0820; }
+  .exhibit-caption { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; font-size: 13px; color: var(--ink-muted); border-top: 1px solid var(--line); }
+  .exhibit-caption .fig { font-family: var(--font-mono); color: var(--ink-faint); }
+  @media (max-width: 720px) { .exhibit iframe { height: 360px; } }
+
+  .case-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .case-card { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); background: var(--surface); padding: 20px 20px 18px; display: flex; flex-direction: column; box-shadow: var(--shadow-card); }
+  .case-card .tag { display: inline-block; font-family: var(--font-mono); font-size: 11px; color: var(--good); background: var(--good-bg); padding: 3px 8px; border-radius: 3px; margin-bottom: 12px; width: fit-content; }
+  .case-card .path { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+  .case-card .profile { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 14px; }
+  .case-card blockquote { margin: 0 0 14px; font-family: var(--font-display); font-size: 15px; line-height: 1.55; color: var(--ink); }
+  .case-card .attribution { font-size: 12.5px; color: var(--ink-muted); margin-top: auto; }
+
+  .live-bar { display: flex; gap: 28px; padding: 14px 20px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-sunken); margin-bottom: 28px; flex-wrap: wrap; }
+  .live-bar .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex-shrink: 0; position: relative; }
+  .live-bar .pulse::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--good); animation: pulse 2.2s ease-out infinite; }
+  @keyframes pulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.8); opacity: 0; } }
+  .live-bar-item { display: flex; align-items: baseline; gap: 6px; font-size: 13px; color: var(--ink-muted); }
+  .live-bar-item .v { font-family: var(--font-mono); font-weight: 700; color: var(--ink); }
+  .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feature-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 20px; box-shadow: var(--shadow-card); }
+  .feature-card .icon { width: 26px; height: 26px; margin-bottom: 14px; color: var(--accent); }
+  .feature-card h3 { font-family: var(--font-body); font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .feature-card p { font-size: 13.5px; color: var(--ink-muted); margin: 0; }
+
+  .roster { display: flex; gap: 10px; flex-wrap: wrap; margin: 22px 0 28px; }
+  .roster .seat { font-family: var(--font-mono); font-size: 11.5px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-muted); background: var(--surface); }
+  .roster .seat.crisis { color: var(--accent2); border-color: color-mix(in srgb, var(--accent2) 40%, var(--line)); }
+
+  .segment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .segment-card { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 22px 20px; background: var(--surface); box-shadow: var(--shadow-card); transition: border-color 0.15s ease; }
+  .segment-card:hover { border-color: var(--accent); }
+  .segment-card .role { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .segment-card h3 { font-family: var(--font-body); font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .segment-card p { font-size: 13.5px; color: var(--ink-muted); margin: 0 0 16px; }
+
+  .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .tier { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 26px 22px; background: var(--surface); }
+  .tier.featured { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); position: relative; }
+  .tier.featured .featured-tag { position: absolute; top: -11px; left: 20px; background: var(--accent); color: var(--paper); font-family: var(--font-mono); font-size: 10.5px; padding: 3px 9px; border-radius: 3px; font-weight: 700; }
+  .tier .name { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; color: var(--ink-muted); text-transform: uppercase; }
+  .tier .price { font-family: var(--font-display); font-size: 24px; margin: 10px 0 16px; }
+  .tier ul { list-style: none; padding: 0; margin: 0 0 20px; font-size: 13.5px; color: var(--ink-muted); }
+  .tier li { padding: 6px 0; border-top: 1px dotted var(--line); }
+  .tier li:first-child { border-top: none; }
+
+  .try-shell { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .try-shell .intro h3 { font-family: var(--font-body); font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+  .try-shell .intro p { font-size: 14px; color: var(--ink-muted); }
+  .field-list dt { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); margin-top: 16px; }
+  .field-list dt:first-child { margin-top: 0; }
+  .field-list dd { margin: 4px 0 0; font-size: 13.5px; color: var(--ink-muted); }
+  form.try-form { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 24px; box-shadow: var(--shadow-card); }
+  form.try-form label { display: block; font-size: 12.5px; font-weight: 600; margin: 14px 0 6px; }
+  form.try-form label:first-child { margin-top: 0; }
+  form.try-form input, form.try-form select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+    font-family: var(--font-body); font-size: 14px; background: var(--surface-sunken); color: var(--ink);
   }
-  .dashboard-embed iframe {
-    width: 100%; height: 640px; border: none; display: block;
-  }
-  @media (max-width: 720px) {
-    .dashboard-embed iframe { height: 420px; }
-  }
+  form.try-form button { width: 100%; margin-top: 20px; justify-content: center; }
+  #try-result { margin-top: 20px; white-space: pre-wrap; line-height: 1.7; background: var(--surface); border: 1px solid var(--line); padding: 18px; border-radius: var(--radius-md); display: none; font-size: 13.5px; }
+  #try-error { margin-top: 14px; color: var(--err); display: none; font-size: 13.5px; }
+  .try-note { color: var(--ink-faint); font-size: 12px; margin-top: 14px; }
 
-  /* ── AI 교육뉴스 커뮤니티 & 맘카페 소개 ───────────────────── */
-  #community { background: #fff; }
-  #community .grid3 .card { position: relative; }
+  details.faq-item { border-top: 1px solid var(--line); padding: 16px 0; }
+  details.faq-item summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 14.5px; font-weight: 600; }
+  details.faq-item summary::-webkit-details-marker { display: none; }
+  details.faq-item summary .chev { transition: transform 0.15s ease; color: var(--ink-faint); flex-shrink: 0; }
+  details.faq-item[open] summary .chev { transform: rotate(180deg); }
+  details.faq-item p { font-size: 13.5px; color: var(--ink-muted); margin: 12px 0 0; }
 
-  /* ── EduIntelligence Panel(30인 위원회) 소개 ─────────────────── */
-  #committee { background: #fff; }
-  #committee .grid3 .card { position: relative; }
-  #committee .card .icon { color: #7c5cff; }
+  footer { padding: 40px 0 60px; }
+  footer .wrap { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--ink-faint); flex-wrap: wrap; gap: 12px; }
+  footer a { color: var(--ink-muted); text-decoration: none; }
 
-  /* ── FAQ ──────────────────────────────────────────────────── */
-  .faq { max-width: 720px; margin: 0 auto; }
-  .faq details {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
-    padding: 18px 20px; margin-bottom: 12px;
-  }
-  .faq summary { font-weight: 700; cursor: pointer; list-style: none; }
-  .faq summary::-webkit-details-marker { display: none; }
-  .faq summary::before { content: '＋ '; color: var(--accent); }
-  .faq details[open] summary::before { content: '－ '; }
-  .faq p { color: var(--muted); margin: 12px 0 0; font-size: 0.92rem; }
+  .cta-band { background: var(--surface-sunken); padding: 56px 0; text-align: left; }
+  .cta-band .wrap { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .cta-band h2 { font-size: 24px; }
+  .cta-band p { color: var(--ink-muted); font-size: 14px; margin: 8px 0 0; }
 
-  .cta-band { text-align: center; padding: 90px 0; background: radial-gradient(circle at 50% 50%, #7c5cff14, transparent 70%); }
-  .cta-band h2 { font-size: 2rem; }
-  .cta-band p { color: var(--muted); margin: 0 0 32px; }
-
-  footer { padding: 32px 0; text-align: center; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); }
-  footer a { color: var(--muted); }
-
-  @media (max-width: 720px) {
-    .grid3, .grid4, .steps, .tiers { grid-template-columns: 1fr; }
-    .tier.highlight { transform: none; }
-    .hero h1 { font-size: 1.9rem; }
-    .try-box { padding: 24px; }
+  @media (max-width: 760px) {
+    .hero h1 { font-size: 30px; }
+    .contents-list { grid-template-columns: 1fr; }
+    .stat-grid, .case-grid, .feature-grid, .segment-grid, .tier-grid { grid-template-columns: 1fr; }
+    .try-shell { grid-template-columns: 1fr; }
+    nav.toc-strip .chapter-link { display: none; }
+    .cta-band .wrap { flex-direction: column; align-items: flex-start; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="container">
-    <a class="logo" href="#top">i<span>Chapter</span>wise</a>
-    <a class="nav-cta" href="#try">무료로 시작 →</a>
+  <div class="wrap">
+    <a class="logo" href="#top">i<span class="accent-word">Chapter</span>wise</a>
+    <nav class="toc-strip" aria-label="목차">
+      <a class="chapter-link" href="#summary">1장 지표</a>
+      <a class="chapter-link" href="#data">2장 데이터</a>
+      <a class="chapter-link" href="#results">3장 성과</a>
+      <a class="chapter-link" href="#community">4장 커뮤니티</a>
+      <a class="chapter-link" href="#panel">5장 위원회</a>
+      <a class="btn btn-primary" href="#try" style="padding:8px 16px; font-size:13px;">무료로 시작</a>
+    </nav>
   </div>
 </header>
 
-<section class="hero" id="top">
-  <div class="container">
-    <span class="badge">🤖 AI 빅데이터 입시 컨설팅</span>
-    <h1>세상에서 입시 데이터를<br>가장 많이 읽은 <span class="grad">AI</span></h1>
-    <p>학원 커리큘럼과 대학 입결 데이터를 AI가 분석해서, 학생 한 명을 위한 입시 리포트를 몇 분 만에 만들어 드려요.</p>
+<main>
+  <section class="hero wrap" id="top">
+    <div class="eyebrow" aria-hidden="true">AI 교육 컨설팅 · 라이브 리포트 · 2026</div>
+    <h1>입시 데이터를 가장 많이 읽은 AI가,<br>다음 챕터를 함께 씁니다.</h1>
+    <p class="sub">강남 학원 커리큘럼과 대학 입결 데이터를 실시간으로 분석해, 학교·학원·학부모·학생 각자에게 필요한 리포트를 만들어 드립니다.</p>
     <div class="hero-ctas">
-      <a class="cta" href="#try">지금 리포트 받기 →</a>
-      <a class="cta ghost" href="#how">어떻게 작동하나요?</a>
+      <a class="btn btn-primary" href="#try">무료 리포트 받기</a>
+      <a class="btn btn-ghost" href="#data">라이브 데이터 보기</a>
     </div>
-  </div>
-</section>
 
-<section id="dashboard">
-  <div class="container">
-    <h2>실시간 교육 인텔리전스 대시보드</h2>
-    <p class="sub">저희가 실제로 수집·분석하는 데이터를 지도에서 직접 확인해보세요</p>
-    <div class="dashboard-embed">
-      <iframe
-        src="https://app.ichapterwise.com"
-        title="EduIntel 실시간 교육 인텔리전스 대시보드"
-        loading="lazy"
-      ></iframe>
+    <div class="contents-card">
+      <div class="contents-label">이 리포트의 목차</div>
+      <ol class="contents-list">
+        <li><a href="#summary"><span class="ch">01</span><span class="title">핵심 지표 요약</span></a></li>
+        <li><a href="#data"><span class="ch">02</span><span class="title">데이터로 증명합니다</span></a></li>
+        <li><a href="#results"><span class="ch">03</span><span class="title">성과와 사례</span></a></li>
+        <li><a href="#community"><span class="ch">04</span><span class="title">커뮤니티 · 맘카페</span></a></li>
+        <li><a href="#panel"><span class="ch">05</span><span class="title">EduIntelligence Panel</span></a></li>
+        <li><a href="#try"><span class="ch">06</span><span class="title">지금 시작하기</span></a></li>
+      </ol>
     </div>
-    <div style="text-align:center; margin-top:16px;">
-      <a class="cta ghost" href="https://app.ichapterwise.com" target="_blank" rel="noreferrer">전체 화면으로 보기 ↗</a>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section id="community" style="background:#f7f6fc;">
-  <div class="container">
-    <span class="badge">🆕 새로 오픈</span>
-    <h2>AI 교육뉴스 커뮤니티 &amp; 맘카페</h2>
-    <p class="sub">입시 리포트만으론 부족하다면, 같은 고민을 하는 학부모들과 이야기 나눠보세요</p>
-    <div class="grid3">
-      <div class="card">
-        <div class="icon">📰</div>
+  <section class="chapter wrap" id="summary">
+    <div class="chapter-head">
+      <div class="eyebrow"><span class="chapter-no">Chapter 1.</span> 핵심 지표 요약</div>
+      <h2>숫자로 먼저 보여드립니다</h2>
+      <p>설명보다 데이터가 먼저입니다. 지금까지 분석하고 발급한 실적을 그대로 공개합니다.</p>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="figure num">1,842<span class="unit">개</span></div><div class="label">분석된 학원 커리큘럼</div></div>
+      <div class="stat-tile"><div class="figure num">37,400<span class="unit">건</span></div><div class="label">대입 결과 데이터 포인트</div></div>
+      <div class="stat-tile"><div class="figure num">6,200<span class="unit">건</span></div><div class="label">발급된 맞춤 리포트</div></div>
+      <div class="stat-tile"><div class="figure num">1,240<span class="unit">명</span></div><div class="label">활성 학부모·교육자 커뮤니티</div></div>
+    </div>
+    <div class="sample-note">* 위 지표는 시안용 예시 수치입니다 — 실제 운영 데이터로 교체 예정입니다.</div>
+  </section>
+
+  <section class="chapter wrap" id="data">
+    <div class="chapter-head">
+      <div class="eyebrow"><span class="chapter-no">Chapter 2.</span> 데이터로 증명합니다</div>
+      <h2>실시간 교육 인텔리전스 대시보드</h2>
+      <p>저희가 실제로 수집·분석하는 데이터를 지도에서 직접 확인해보세요. 과장된 숫자 대신 지금 돌아가고 있는 그대로를 보여드립니다.</p>
+    </div>
+    <div class="exhibit">
+      <iframe src="https://app.ichapterwise.com" title="EduIntel 실시간 교육 인텔리전스 대시보드" loading="lazy"></iframe>
+      <div class="exhibit-caption">
+        <span class="fig">Fig. 1 — app.ichapterwise.com 실시간 임베드</span>
+        <a class="btn-text" href="https://app.ichapterwise.com" target="_blank" rel="noreferrer">전체 화면으로 보기 ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter wrap" id="results">
+    <div class="chapter-head">
+      <div class="eyebrow"><span class="chapter-no">Chapter 3.</span> 성과와 사례</div>
+      <h2>리포트 다음에 일어난 일</h2>
+      <p>비식별 처리된 실제 컨설팅 흐름입니다. 각 사례는 상담 전 고민과 상담 후 결과를 함께 담았습니다.</p>
+    </div>
+    <div class="case-grid">
+      <div class="case-card">
+        <span class="tag">정시 전략 확정</span>
+        <div class="path">일반고 → 수도권 공과대학</div>
+        <div class="profile">고2 · 내신 3등급 · 전기전자공학 지망 · 광주</div>
+        <blockquote>"막연했던 전형 선택이 데이터로 구체화됐어요. 세 달 만에 지원 전략을 확정했습니다."</blockquote>
+        <div class="attribution">학부모 K님</div>
+      </div>
+      <div class="case-card">
+        <span class="tag">1차 서류 합격</span>
+        <div class="path">자사고 → 학생부종합전형</div>
+        <div class="profile">고3 · 전공적합성 보완 필요</div>
+        <blockquote>"부족했던 세특 방향을 컨설턴트가 구체적으로 짚어줬습니다."</blockquote>
+        <div class="attribution">학생 본인</div>
+      </div>
+      <div class="case-card">
+        <span class="tag">상담 전환율 상승</span>
+        <div class="path">학원 원장 인터뷰</div>
+        <div class="profile">강남 소재 종합학원 · 재원생 320명</div>
+        <blockquote>"우리 학원만의 데이터가 아니라 전국 데이터와 비교할 수 있어서 상담 설득력이 달라졌습니다."</blockquote>
+        <div class="attribution">OO학원 원장</div>
+      </div>
+    </div>
+    <div class="sample-note">* 위 사례는 방향성을 보여주기 위한 예시입니다 — 실제 후기로 교체 예정입니다.</div>
+  </section>
+
+  <section class="chapter wrap" id="community">
+    <div class="chapter-head">
+      <div class="eyebrow"><span class="chapter-no">Chapter 4.</span> 커뮤니티 · 맘카페</div>
+      <h2>입시 리포트만으론 부족하다면</h2>
+      <p>같은 고민을 하는 학부모들과 이야기 나눠보세요. AI가 뉴스를 요약하고, 토론 쟁점을 정리해드립니다.</p>
+    </div>
+    <div class="live-bar">
+      <div style="display:flex; align-items:center; gap:8px;"><span class="pulse" aria-hidden="true"></span><span style="font-size:12px; color:var(--ink-faint); font-family:var(--font-mono);">지금</span></div>
+      <div class="live-bar-item">오늘 새 글 <span class="v num">18</span></div>
+      <div class="live-bar-item">이번 주 댓글 <span class="v num">462</span></div>
+      <div class="live-bar-item">활성 회원 <span class="v num">1,240</span>명</div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 5h16M4 10h16M4 15h10" stroke-linecap="round"/></svg>
         <h3>AI가 요약하는 교육 뉴스</h3>
-        <p>정책·입시·트렌드 뉴스를 AI가 핵심만 요약하고, 댓글 토론의 찬반 쟁점까지 정리해드려요.</p>
+        <p>정책·입시·트렌드 뉴스를 핵심만 요약하고, 댓글 토론의 찬반 쟁점까지 정리해드려요.</p>
       </div>
-      <div class="card">
-        <div class="icon">💬</div>
+      <div class="feature-card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 18v-3a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v3M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <h3>학부모 맘카페</h3>
-        <p>지역별 게시판과 교육·육아 게시판에서 같은 지역·같은 고민을 가진 학부모들과 정보를 나눠보세요.</p>
+        <p>지역별 게시판과 교육·육아 게시판에서 같은 지역, 같은 고민을 가진 학부모들과 정보를 나눠보세요.</p>
       </div>
-      <div class="card">
-        <div class="icon">🛡️</div>
+      <div class="feature-card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <h3>안전하게 운영되는 공간</h3>
-        <p>신고·모더레이션 체계와 AI 어드바이저리 필터가 함께 운영되어, 확정적이지 않은 판단은 항상 사람이 검토합니다.</p>
+        <p>신고·모더레이션 체계와 AI 필터가 함께 운영되어, 확정적이지 않은 판단은 항상 사람이 검토합니다.</p>
       </div>
     </div>
-    <div style="text-align:center; margin-top:32px;">
-      <a class="cta" href="https://edu-ai-consulting-community.onrender.com" target="_blank" rel="noreferrer">커뮤니티 살펴보기 →</a>
-    </div>
-  </div>
-</section>
+    <div style="margin-top:24px;"><a class="btn btn-ghost" href="https://edu-ai-consulting-community.onrender.com" target="_blank" rel="noreferrer">커뮤니티 살펴보기 →</a></div>
+  </section>
 
-<section id="committee">
-  <div class="container">
-    <span class="badge">⚖️ 새로운 기능</span>
-    <h2>EduIntelligence Panel — 30인 AI 전문가 위원회</h2>
-    <p class="sub">입시 리포트 하나로 부족한 복잡한 사안은, 30인 전문가 풀에서 위원회를 소집해 다각도로 검토합니다</p>
-    <div class="grid3">
-      <div class="card">
-        <div class="icon">👥</div>
-        <h3>사안별 맞춤 위원회 자동 소집</h3>
-        <p>진로·입시부터 학교폭력·안전사고 같은 위기 대응까지, 30인 전문가 풀에서 사안에 맞는 위원(최대 7인)이 자동으로 소집됩니다.</p>
+  <section class="chapter wrap" id="panel">
+    <div class="chapter-head">
+      <div class="eyebrow"><span class="chapter-no">Chapter 5.</span> EduIntelligence Panel</div>
+      <h2>복잡한 사안엔, 30인 전문가 위원회</h2>
+      <p>진로·입시부터 학교폭력·안전사고 같은 위기 대응까지, 30인 전문가 풀에서 사안에 맞는 위원(최대 7인)이 자동으로 소집됩니다.</p>
+    </div>
+    <div class="roster" aria-label="소집 가능한 위원 예시">
+      <span class="seat">입시 컨설턴트</span>
+      <span class="seat">전 입학사정관</span>
+      <span class="seat">교육심리학자</span>
+      <span class="seat">진로진학상담교사</span>
+      <span class="seat crisis">학교폭력 전담 변호사</span>
+      <span class="seat crisis">위기관리 PR 전문가</span>
+      <span class="seat">+ 24인</span>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>사안별 자동 소집</h3>
+        <p>사안 키워드를 분석해 관련 위원(최대 7인)을 자동으로 구성합니다.</p>
       </div>
-      <div class="card">
-        <div class="icon">💬</div>
+      <div class="feature-card">
         <h3>위원별 관점 + 종합 초안</h3>
-        <p>각 위원이 이론·현장 해석·실행 제안 순으로 의견을 내고, 사회자 AI가 이를 종합해 실행 체크리스트가 담긴 초안 보고서를 작성합니다.</p>
+        <p>각 위원이 이론·현장 해석·실행 제안 순으로 의견을 내고, 사회자 AI가 실행 체크리스트로 종합합니다.</p>
       </div>
-      <div class="card">
-        <div class="icon">🔁</div>
+      <div class="feature-card">
         <h3>컨설턴트 피드백 반영</h3>
-        <p>초안에 피드백을 남기면 같은 위원회가 반영해 최종본을 다시 작성합니다 — 관점 비중 조정, 근거 보강 등 자유롭게 요청하세요.</p>
+        <p>초안에 피드백을 남기면 같은 위원회가 반영해 최종본을 다시 작성합니다.</p>
       </div>
     </div>
-    <div style="text-align:center; margin-top:32px;">
-      <a class="cta" href="https://app.ichapterwise.com/committee" target="_blank" rel="noreferrer">위원회 소집해보기 →</a>
-    </div>
-    <p style="text-align:center; color:var(--muted); font-size:0.8rem; margin-top:20px;">
-      위원은 실제 자격을 가진 특정 인물이 아닌 AI 페르소나입니다. 위기 대응형 사안은 실제 조치 전 반드시 관련 전문가·기관에 재확인하시기 바랍니다.
-    </p>
-  </div>
-</section>
+    <div style="margin-top:24px;"><a class="btn btn-ghost" href="https://app.ichapterwise.com/committee" target="_blank" rel="noreferrer">위원회 소집해보기 →</a></div>
+    <p class="sample-note" style="margin-top:16px;">위원은 실제 자격을 가진 특정 인물이 아닌 AI 페르소나입니다. 위기 대응형 사안은 실제 조치 전 반드시 관련 전문가·기관에 재확인하시기 바랍니다.</p>
+  </section>
 
-<section>
-  <div class="container">
-    <h2>상담실 말고, AI한테 물어보세요</h2>
-    <p class="sub">감이 아니라 데이터로 답합니다</p>
-    <div class="grid3">
-      <div class="card">
-        <div class="icon">📊</div>
-        <h3>진짜 입시 데이터</h3>
-        <p>대학 입학처 공시 자료와 학원 커리큘럼을 직접 모아서 분석에 씁니다.</p>
-      </div>
-      <div class="card">
-        <div class="icon">🧠</div>
-        <h3>나만 보는 맞춤 리포트</h3>
-        <p>성적대와 지망 학과를 입력하면, 학습 로드맵까지 담긴 리포트가 나와요.</p>
-      </div>
-      <div class="card">
-        <div class="icon">⚡</div>
-        <h3>예약 없이 바로</h3>
-        <p>상담 대기, 예약 없이 지금 입력하고 몇 분 안에 결과를 받습니다.</p>
-      </div>
+  <section class="chapter wrap">
+    <div class="chapter-head">
+      <h2>당신의 역할에 맞게 시작하세요</h2>
+      <p>학교, 학원, 학부모, 학생 — 고민이 다르면 필요한 리포트도 다릅니다.</p>
     </div>
-  </div>
-</section>
-
-<section style="background:#f7f6fc;">
-  <div class="container">
-    <h2>데이터로 증명합니다</h2>
-    <p class="sub">과장된 숫자 대신, 실제로 하고 있는 일을 그대로 보여드려요</p>
-    <div class="grid4">
-      <div class="card">
-        <div class="icon">🗂️</div>
-        <h3>공개 데이터만 사용</h3>
-        <p>대학 입학처 공시자료, 학원 커리큘럼, 어린이집·유치원·초등학교 공식 공시정보 등 합법적으로 공개된 자료만 수집합니다.</p>
+    <div class="segment-grid">
+      <div class="segment-card">
+        <div class="role">학교 · 학원</div>
+        <h3>행정 부담 없이, 데이터로 설명하기</h3>
+        <p>전국 데이터와 비교한 상담 근거를 만들고, 학부모 설득 자료로 바로 활용하세요.</p>
+        <a class="btn-text" href="#try">기관용으로 시작 →</a>
       </div>
-      <div class="card">
-        <div class="icon">🔒</div>
-        <h3>개인정보 비식별화</h3>
-        <p>이름·연락처·주소 같은 식별 정보는 분석 전 자동으로 걸러내는 비식별화 파이프라인을 거칩니다.</p>
+      <div class="segment-card">
+        <div class="role">학부모</div>
+        <h3>불안 대신 계획으로</h3>
+        <p>비교 심리에 흔들리지 않고, 우리 아이 기준으로 짜여진 리포트를 받아보세요.</p>
+        <a class="btn-text" href="#try">학부모용으로 시작 →</a>
       </div>
-      <div class="card">
-        <div class="icon">🧭</div>
-        <h3>AI는 참고자료, 결정은 사람이</h3>
-        <p>리포트는 데이터 기반 참고자료입니다. 최종 진학 결정은 학생·보호자·컨설턴트가 함께 내리시길 권합니다.</p>
-      </div>
-      <div class="card">
-        <div class="icon">🔁</div>
-        <h3>피드백으로 계속 좋아짐</h3>
-        <p>리포트에 대한 평가가 쌓일수록 분석 모델과 문구가 자동으로 재학습되어 점점 더 정교해집니다.</p>
+      <div class="segment-card">
+        <div class="role">학생</div>
+        <h3>지금 무엇부터 하면 되는지</h3>
+        <p>압박은 줄이고, 이번 주에 실행할 수 있는 구체적인 다음 행동을 받아보세요.</p>
+        <a class="btn-text" href="#try">학생용으로 시작 →</a>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="how">
-  <div class="container">
-    <h2>3단계면 끝</h2>
-    <p class="sub">진짜 간단해요</p>
-    <div class="steps">
-      <div class="step">
-        <div class="num">1</div>
-        <h3>정보 입력</h3>
-        <p>성적대, 지망 학과, 관심 지역만 입력하면 돼요.</p>
+  <section class="chapter wrap">
+    <div class="chapter-head">
+      <h2>요금제</h2>
+      <p>필요한 만큼만 골라보세요.</p>
+    </div>
+    <div class="tier-grid">
+      <div class="tier">
+        <div class="name">Basic</div>
+        <div class="price">핵심 분석</div>
+        <ul><li>핵심 입시 분석</li><li>간단 학습 가이드</li></ul>
+        <a class="btn btn-ghost" href="#try" style="width:100%; justify-content:center;">Basic으로 시작</a>
       </div>
-      <div class="step">
-        <div class="num">2</div>
-        <h3>AI 분석</h3>
-        <p>입시 데이터를 AI가 바로 분석해요.</p>
+      <div class="tier featured">
+        <span class="featured-tag">가장 많이 선택</span>
+        <div class="name">Standard</div>
+        <div class="price">상세 분석 + 로드맵</div>
+        <ul><li>상세 입결 비교 분석</li><li>학기별 학습 로드맵</li><li>학원 커리큘럼 추천</li></ul>
+        <a class="btn btn-primary" href="#try" style="width:100%; justify-content:center;">Standard로 시작</a>
       </div>
-      <div class="step">
-        <div class="num">3</div>
-        <h3><a href="#try" style="color:inherit;">리포트 확인 →</a></h3>
-        <p>맞춤 학습 로드맵과 입시 전략을 확인하세요.</p>
+      <div class="tier">
+        <div class="name">Premium</div>
+        <div class="price">심층 리포트 + 1:1</div>
+        <ul><li>Standard 전체 포함</li><li>심층 데이터 리포트</li><li>1:1 후속 질문 지원</li></ul>
+        <a class="btn btn-ghost" href="#try" style="width:100%; justify-content:center;">Premium으로 시작</a>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="try">
-  <div class="container">
-    <h2>지금 바로 체험해보세요</h2>
-    <p class="sub">회원가입 없이, 아래 정보만 입력하면 바로 리포트가 나옵니다</p>
-
-    <form id="report-form" class="try-box">
-      <label>학생 식별 라벨 (이름 대신 사용, 비식별)
+  <section class="chapter wrap" id="try">
+    <div class="chapter-head">
+      <div class="eyebrow"><span class="chapter-no">Chapter 6.</span> 지금 시작하기</div>
+      <h2>회원가입 없이, 바로 받아보세요</h2>
+      <p>아래 정보만 입력하면 보통 30초 이내에 리포트가 나옵니다.</p>
+    </div>
+    <div class="try-shell">
+      <div class="intro">
+        <h3>이렇게 사용됩니다</h3>
+        <p>입력하신 정보는 리포트 생성 목적으로만 쓰이고, 이름 대신 임의 라벨(예: stu-001) 사용을 권장합니다.</p>
+        <dl class="field-list">
+          <dt>학생 식별 라벨</dt><dd>이름 대신 사용하는 비식별 값</dd>
+          <dt>희망 티어</dt><dd>Basic / Standard / Premium</dd>
+          <dt>성적대 · 지망 학과 · 관심 지역</dt><dd>리포트 맞춤화에 사용</dd>
+        </dl>
+      </div>
+      <form id="report-form" class="try-form">
+        <label for="student_label">학생 식별 라벨 (이름 대신 사용, 비식별)</label>
         <input type="text" id="student_label" required placeholder="예: stu-001">
-      </label>
-      <label>희망 티어
+        <label for="tier">희망 티어</label>
         <select id="tier">
           <option value="BASIC">BASIC</option>
           <option value="STANDARD" selected>STANDARD</option>
           <option value="PREMIUM">PREMIUM</option>
         </select>
-      </label>
-      <label>성적대 (예: 내신 2등급)
+        <label for="grade">성적대 (예: 내신 2등급)</label>
         <input type="text" id="grade" required>
-      </label>
-      <label>지망 학과
+        <label for="major">지망 학과</label>
         <input type="text" id="major" required>
-      </label>
-      <label>관심 지역
+        <label for="region">관심 지역</label>
         <input type="text" id="region">
-      </label>
-      <button type="submit" id="submit-btn">리포트 생성</button>
-      <div class="try-note">입력하신 정보는 리포트 생성 목적으로만 사용되며, 실명이 아닌 임의 라벨 사용을 권장합니다.</div>
-    </form>
-
+        <button class="btn btn-primary" type="submit" id="submit-btn">리포트 생성</button>
+        <div class="try-note">입력하신 정보는 리포트 생성 목적으로만 사용되며, 실명이 아닌 임의 라벨 사용을 권장합니다.</div>
+      </form>
+    </div>
     <div id="try-error"></div>
     <div id="try-result"></div>
-  </div>
-</section>
+  </section>
 
-<section style="background:#f7f6fc;">
-  <div class="container">
-    <h2>요금제</h2>
-    <p class="sub">필요한 만큼만 골라보세요</p>
-    <div class="tiers">
-      <div class="tier">
-        <div class="name">BASIC</div>
-        <ul>
-          <li>핵심 입시 분석</li>
-          <li>간단 학습 가이드</li>
-        </ul>
-        <a class="cta ghost" href="#try">BASIC으로 시작 →</a>
-      </div>
-      <div class="tier highlight">
-        <div class="name">STANDARD</div>
-        <ul>
-          <li>상세 입결 비교 분석</li>
-          <li>학기별 학습 로드맵</li>
-          <li>학원 커리큘럼 추천</li>
-        </ul>
-        <a class="cta" href="#try">STANDARD로 시작 →</a>
-      </div>
-      <div class="tier">
-        <div class="name">PREMIUM</div>
-        <ul>
-          <li>STANDARD 전체 포함</li>
-          <li>심층 데이터 리포트</li>
-          <li>1:1 후속 질문 지원</li>
-        </ul>
-        <a class="cta ghost" href="#try">PREMIUM으로 시작 →</a>
-      </div>
+  <section class="chapter wrap">
+    <div class="chapter-head">
+      <h2>자주 묻는 질문</h2>
     </div>
-  </div>
-</section>
-
-<section>
-  <div class="container">
-    <h2>자주 묻는 질문</h2>
-    <div class="faq">
-      <details>
-        <summary>학생 개인정보는 안전한가요?</summary>
-        <p>이름·연락처·주소 등 식별 정보는 저장 전 자동으로 제거됩니다. 학생 식별 라벨도 실명이 아닌 임의 문자열 사용을 권장드립니다.</p>
-      </details>
-      <details>
-        <summary>입시 데이터는 어디서 가져오나요?</summary>
-        <p>대학 입학처가 공개한 입시 결과 공시자료, 학원 홈페이지에 공개된 커리큘럼, 학교알리미·어린이집정보공개포털 등 정부·기관이 공식으로 공개한 자료만 사용합니다.</p>
-      </details>
-      <details>
-        <summary>AI 리포트를 그대로 믿어도 되나요?</summary>
-        <p>리포트는 데이터 기반 참고자료로 설계되었습니다. 실제 진학·학습 전략 결정은 학생·보호자·컨설턴트가 함께 검토하시길 권장드립니다.</p>
-      </details>
-      <details>
-        <summary>리포트는 얼마나 걸리나요?</summary>
-        <p>정보를 입력하고 제출하면 보통 30초 이내에 결과가 나옵니다.</p>
-      </details>
-    </div>
-  </div>
-</section>
+    <details class="faq-item" open>
+      <summary>학생 개인정보는 안전한가요?<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+      <p>이름·연락처·주소 등 식별 정보는 저장 전 자동으로 제거됩니다. 학생 식별 라벨도 실명이 아닌 임의 문자열 사용을 권장드립니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>입시 데이터는 어디서 가져오나요?<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+      <p>대학 입학처가 공개한 입시 결과 공시자료, 학원 홈페이지에 공개된 커리큘럼, 학교알리미 등 정부·기관이 공식으로 공개한 자료만 사용합니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>AI 리포트를 그대로 믿어도 되나요?<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+      <p>리포트는 데이터 기반 참고자료로 설계되었습니다. 실제 진학·학습 전략 결정은 학생·보호자·컨설턴트가 함께 검토하시길 권장드립니다.</p>
+    </details>
+    <details class="faq-item">
+      <summary>리포트는 얼마나 걸리나요?<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+      <p>정보를 입력하고 제출하면 보통 30초 이내에 결과가 나옵니다.</p>
+    </details>
+  </section>
+</main>
 
 <div class="cta-band">
-  <div class="container">
-    <h2>입시, 감으로 하지 마세요</h2>
-    <p>회원가입 없이, 지금 바로 첫 리포트를 받아보세요.</p>
-    <a class="cta" href="#try">무료 리포트 받기 →</a>
+  <div class="wrap">
+    <div>
+      <h2>입시, 감으로 하지 마세요</h2>
+      <p>회원가입 없이, 지금 바로 첫 리포트를 받아보세요.</p>
+    </div>
+    <a class="btn btn-primary" href="#try">무료 리포트 받기 →</a>
   </div>
 </div>
 
 <footer>
-  <div class="container">
-    © 2026 iChapterwise. AI 빅데이터 입시 컨설팅. · <a href="mailto:jincheondong9@gmail.com">문의하기</a>
+  <div class="wrap">
+    <span>© 2026 iChapterwise. AI 빅데이터 입시 컨설팅.</span>
+    <a href="mailto:jincheondong9@gmail.com">문의하기</a>
   </div>
 </footer>
 
