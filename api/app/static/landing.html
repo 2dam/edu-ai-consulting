@@ -65,13 +65,15 @@
     position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--paper) 85%, transparent);
     backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
   }
-  header .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 20px; }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; gap: 20px; }
   .logo { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 19px; font-weight: 700; text-decoration: none; letter-spacing: -0.01em; flex-shrink: 0; }
-  .logo img { height: 38px; width: auto; }
+  .logo img { height: 50px; width: auto; image-rendering: -webkit-optimize-contrast; }
   .logo .accent-word { background: linear-gradient(120deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  nav.toc-strip { display: flex; gap: 16px; align-items: center; }
-  nav.toc-strip a.chapter-link { font-size: 12.5px; color: var(--ink-muted); text-decoration: none; font-family: var(--font-mono); }
+  nav.toc-strip { display: flex; gap: 11px; align-items: center; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  nav.toc-strip::-webkit-scrollbar { display: none; }
+  nav.toc-strip a.chapter-link { font-size: 11px; color: var(--ink-muted); text-decoration: none; font-family: var(--font-mono); white-space: nowrap; flex-shrink: 0; }
   nav.toc-strip a.chapter-link:hover { color: var(--accent); }
+  nav.toc-strip .btn { flex-shrink: 0; }
 
   .hero { padding: 72px 0 40px; }
   .hero h1 { font-size: 40px; line-height: 1.28; margin: 18px 0 20px; max-width: 640px; }
@@ -188,10 +190,11 @@
     <nav class="toc-strip" aria-label="목차">
       <a class="chapter-link" href="#summary">Chap.1 지표</a>
       <a class="chapter-link" href="#data">Chap.2 데이터</a>
+      <a class="chapter-link" href="#reputation">학원평판</a>
       <a class="chapter-link" href="#results">Chap.3 성과</a>
       <a class="chapter-link" href="#community">Chap.4 커뮤니티</a>
       <a class="chapter-link" href="#panel">Chap.5 위원회</a>
-      <a class="chapter-link" href="#reputation">Chap.6 학원평판</a>
+      <a class="chapter-link" href="#qcrm">Chap.6 QCRM진단</a>
       <a class="btn btn-primary" href="#try" style="padding:8px 16px; font-size:13px;">무료로 시작</a>
     </nav>
   </div>
@@ -236,6 +239,30 @@
         <a class="btn-text" href="https://app.ichapterwise.com" target="_blank" rel="noreferrer">전체 화면으로 보기 ↗</a>
       </div>
     </div>
+  </section>
+
+  <section class="chapter wrap" id="reputation">
+    <div class="chapter-head">
+      <div class="eyebrow">Academy Reputation Intelligence</div>
+      <h2>학원 평판을, 숫자와 근거로</h2>
+      <p>학부모·학생 설문, 재등록률·출결 같은 운영지표, SNS 공개 게시물 감성분석을 종합해 카테고리별 평판 점수와 데이터 신뢰도를 함께 보여줍니다.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>다각도 평판 점수</h3>
+        <p>학부모설문·학생행동·온라인평판을 규칙 기반으로 종합하고, 표본이 적으면 신뢰도 점수로 솔직하게 알려줍니다.</p>
+      </div>
+      <div class="feature-card">
+        <h3>경쟁 학원 익명 비교</h3>
+        <p>지역·과목·규모·상위 20% 평균과 비교합니다. 개별 경쟁 학원의 수치는 표본이 충분할 때만, 집계값으로만 공개합니다.</p>
+      </div>
+      <div class="feature-card">
+        <h3>추세 예측 + AI 인사이트</h3>
+        <p>평판 이력이 쌓이면 추세를 근거로 예측하고, Claude가 긍정·위험 요인과 개선 권고를 서술형으로 정리합니다.</p>
+      </div>
+    </div>
+    <div style="margin-top:24px;"><a class="btn btn-ghost" href="https://app.ichapterwise.com/reputation" target="_blank" rel="noreferrer">학원 평판 대시보드 보기 →</a></div>
+    <p class="sample-note" style="margin-top:16px;">내부 컨설턴트 전용 도구로, 접근 코드가 있어야 이용할 수 있습니다. 점수는 참고용 지표이며 공식 평가나 법적 효력을 갖지 않습니다.</p>
   </section>
 
   <section class="chapter wrap" id="results">
@@ -335,28 +362,28 @@
     <p class="sample-note" style="margin-top:16px;">위원은 실제 자격을 가진 특정 인물이 아닌 AI 페르소나입니다. 위기 대응형 사안은 실제 조치 전 반드시 관련 전문가·기관에 재확인하시기 바랍니다.</p>
   </section>
 
-  <section class="chapter wrap" id="reputation">
+  <section class="chapter wrap" id="qcrm">
     <div class="chapter-head">
-      <div class="eyebrow"><span class="chapter-no">Chapter 6.</span> Academy Reputation Intelligence</div>
-      <h2>학원 평판을, 숫자와 근거로</h2>
-      <p>학부모·학생 설문, 재등록률·출결 같은 운영지표, SNS 공개 게시물 감성분석을 종합해 카테고리별 평판 점수와 데이터 신뢰도를 함께 보여줍니다.</p>
+      <div class="eyebrow"><span class="chapter-no">Chapter 6.</span> Mini QCRM Diagnosis</div>
+      <h2>학습 사고 상태를, 실시간으로 진단합니다</h2>
+      <p>양자 개념에서 영감을 받은 소형 진단 모델로, 학생의 학습 사고 상태를 6개 인지 요인으로 분해해 지금 무엇부터 개입해야 할지 짚어드립니다.</p>
     </div>
     <div class="feature-grid">
       <div class="feature-card">
-        <h3>다각도 평판 점수</h3>
-        <p>학부모설문·학생행동·온라인평판을 규칙 기반으로 종합하고, 표본이 적으면 신뢰도 점수로 솔직하게 알려줍니다.</p>
+        <h3>6개 인지 요인 진단</h3>
+        <p>개념 이해·문제 해석·전략 선택·계산 정확도·주의 조절·시간 관리를 종합해 학습 사고 상태 점수를 계산합니다.</p>
       </div>
       <div class="feature-card">
-        <h3>경쟁 학원 익명 비교</h3>
-        <p>지역·과목·규모·상위 20% 평균과 비교합니다. 개별 경쟁 학원의 수치는 표본이 충분할 때만, 집계값으로만 공개합니다.</p>
+        <h3>약한 연결고리부터 제안</h3>
+        <p>가장 약한 요인과 강한 요인을 짚어 우선 개입 지점을 표시하고, 바로 쓸 수 있는 추천 상담 액션을 제시합니다.</p>
       </div>
       <div class="feature-card">
-        <h3>추세 예측 + AI 인사이트</h3>
-        <p>평판 이력이 쌓이면 추세를 근거로 예측하고, Claude가 긍정·위험 요인과 개선 권고를 서술형으로 정리합니다.</p>
+        <h3>판단 보정 레이어</h3>
+        <p>개입안 적합도·추천 모드·신뢰도를 함께 보여줘, 지금 바로 적용할지 소규모로 먼저 시험할지 판단하게 돕습니다.</p>
       </div>
     </div>
-    <div style="margin-top:24px;"><a class="btn btn-ghost" href="https://app.ichapterwise.com/reputation" target="_blank" rel="noreferrer">학원 평판 대시보드 보기 →</a></div>
-    <p class="sample-note" style="margin-top:16px;">내부 컨설턴트 전용 도구로, 접근 코드가 있어야 이용할 수 있습니다. 점수는 참고용 지표이며 공식 평가나 법적 효력을 갖지 않습니다.</p>
+    <div style="margin-top:24px;"><a class="btn btn-ghost" href="https://app.ichapterwise.com" target="_blank" rel="noreferrer">EduIntel 대시보드에서 보기 →</a></div>
+    <p class="sample-note" style="margin-top:16px;">양자컴퓨팅 하드웨어가 아닌 양자 개념에서 영감을 받은 시뮬레이션이며, 표준화된 심리검사가 아닌 컨설팅 보조 도구입니다.</p>
   </section>
 
   <section class="chapter wrap">
