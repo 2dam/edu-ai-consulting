@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
+import AdminGate from '@/components/AdminGate'
+import { adminFetch } from '@/lib/adminAuth'
 
 type Academy = {
   id: number; external_id: string; name: string; region: string | null
@@ -63,7 +65,7 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
   )
 }
 
-export default function ReputationDashboardClient({ academyId }: { academyId: string }) {
+function ReputationDashboardContent({ academyId }: { academyId: string }) {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
   const [sources, setSources] = useState<Source[]>([])
   const [metrics, setMetrics] = useState<Metric[]>([])
@@ -85,12 +87,12 @@ export default function ReputationDashboardClient({ academyId }: { academyId: st
     setError('')
     try {
       const [dRes, sRes, mRes, mentionRes, benchRes, forecastRes] = await Promise.all([
-        fetch(`/api/reputation/academies/${academyId}/dashboard`),
-        fetch(`/api/reputation/academies/${academyId}/sources`),
-        fetch(`/api/reputation/academies/${academyId}/metrics`),
-        fetch(`/api/reputation/academies/${academyId}/mentions`),
-        fetch(`/api/reputation/academies/${academyId}/benchmark`),
-        fetch(`/api/reputation/academies/${academyId}/forecast`),
+        adminFetch(`academies/${academyId}/dashboard`),
+        adminFetch(`academies/${academyId}/sources`),
+        adminFetch(`academies/${academyId}/metrics`),
+        adminFetch(`academies/${academyId}/mentions`),
+        adminFetch(`academies/${academyId}/benchmark`),
+        adminFetch(`academies/${academyId}/forecast`),
       ])
       const d = await dRes.json()
       if (!dRes.ok) throw new Error(d?.detail || '학원 정보를 불러오지 못했습니다')
@@ -113,7 +115,7 @@ export default function ReputationDashboardClient({ academyId }: { academyId: st
     if (!newSourceUrl.trim() || busy) return
     setBusy(true)
     try {
-      const res = await fetch(`/api/reputation/academies/${academyId}/sources`, {
+      const res = await adminFetch(`academies/${academyId}/sources`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source_type: 'other', url: newSourceUrl }),
       })
@@ -132,7 +134,7 @@ export default function ReputationDashboardClient({ academyId }: { academyId: st
     setBusy(true)
     setError('')
     try {
-      const res = await fetch(`/api/reputation/academies/${academyId}/surveys`, {
+      const res = await adminFetch(`academies/${academyId}/surveys`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}),
       })
       const data = await res.json()
@@ -154,7 +156,7 @@ export default function ReputationDashboardClient({ academyId }: { academyId: st
     try {
       const formData = new FormData()
       formData.append('file', file)
-      const res = await fetch(`/api/reputation/academies/${academyId}/metrics/upload`, { method: 'POST', body: formData })
+      const res = await adminFetch(`academies/${academyId}/metrics/upload`, { method: 'POST', body: formData })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.detail || 'CSV 업로드 실패')
       setUploadResult(`가져옴 ${data.imported}건 · 갱신 ${data.updated}건${data.errors.length ? ` · 오류 ${data.errors.length}건` : ''}`)
@@ -172,7 +174,7 @@ export default function ReputationDashboardClient({ academyId }: { academyId: st
     setBusy(true)
     setError('')
     try {
-      const res = await fetch(`/api/reputation/academies/${academyId}/score/compute`, { method: 'POST' })
+      const res = await adminFetch(`academies/${academyId}/score/compute`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.detail || '점수 계산 실패')
       await loadAll()
@@ -189,7 +191,7 @@ export default function ReputationDashboardClient({ academyId }: { academyId: st
     setError('')
     setSyncResult('')
     try {
-      const res = await fetch(`/api/reputation/academies/${academyId}/mentions/sync`, { method: 'POST' })
+      const res = await adminFetch(`academies/${academyId}/mentions/sync`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.detail || '동기화 실패')
       setSyncResult(`신규 ${data.synced}건 반영`)
@@ -202,7 +204,7 @@ export default function ReputationDashboardClient({ academyId }: { academyId: st
   }
 
   async function downloadPdf() {
-    const res = await fetch(`/api/reputation/academies/${academyId}/report.pdf`)
+    const res = await adminFetch(`academies/${academyId}/report.pdf`)
     if (!res.ok) {
       setError('PDF 다운로드 실패 — 먼저 평판 점수를 계산해주세요')
       return
@@ -449,5 +451,13 @@ export default function ReputationDashboardClient({ academyId }: { academyId: st
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ReputationDashboardClient({ academyId }: { academyId: string }) {
+  return (
+    <AdminGate>
+      <ReputationDashboardContent academyId={academyId} />
+    </AdminGate>
   )
 }

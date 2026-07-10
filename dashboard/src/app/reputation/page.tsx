@@ -1,6 +1,8 @@
 'use client'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import AdminGate from '@/components/AdminGate'
+import { adminFetch } from '@/lib/adminAuth'
 
 type Academy = {
   id: number
@@ -22,7 +24,7 @@ const labelStyle: React.CSSProperties = {
   fontSize: 12, fontWeight: 700, color: '#5B5342', display: 'block', marginBottom: 6,
 }
 
-export default function ReputationListPage() {
+function ReputationListContent() {
   const [academies, setAcademies] = useState<Academy[]>([])
   const [q, setQ] = useState('')
   const [loading, setLoading] = useState(true)
@@ -37,7 +39,7 @@ export default function ReputationListPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`/api/reputation/academies${query ? `?q=${encodeURIComponent(query)}` : ''}`)
+      const res = await adminFetch(`academies${query ? `?q=${encodeURIComponent(query)}` : ''}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data?.detail || `목록을 불러오지 못했습니다 (${res.status})`)
       setAcademies(data)
@@ -55,7 +57,7 @@ export default function ReputationListPage() {
     setCreating(true)
     setError('')
     try {
-      const res = await fetch('/api/reputation/academies', {
+      const res = await adminFetch('academies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -179,5 +181,13 @@ export default function ReputationListPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ReputationListPage() {
+  return (
+    <AdminGate>
+      <ReputationListContent />
+    </AdminGate>
   )
 }

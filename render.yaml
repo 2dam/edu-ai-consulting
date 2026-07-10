@@ -31,6 +31,10 @@ services:
         value: https://ichapterwise.com
       - key: NEXT_PUBLIC_BACKEND_URL
         value: https://ichapterwise.com
+      # 학원 평판 관리자 페이지(/reputation) 게이트 — Render 대시보드에서 직접 값을 설정할 것.
+      # 미설정 시 /api/reputation/[...path] 프록시가 관리 엔드포인트를 전부 차단한다(안전 기본값).
+      - key: ADMIN_ACCESS_TOKEN
+        sync: false
 
   # AI 교육뉴스 커뮤니티·맘카페 프론트엔드 (Vite+React 정적 빌드).
   # 기존 dashboard/(OSINT용 Next.js 대시보드, app.ichapterwise.com)와는 별개 서비스.
