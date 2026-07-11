@@ -3,6 +3,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -271,8 +272,44 @@ _EDU_MEDIA_NAME_QUERIES = [
 ]
 
 
-def _is_whitelisted(url: str) -> bool:
-    return any(domain in url for domain in _EDU_MEDIA_DOMAINS)
+# 학부모 관련 기사는 입시전문매체(위 화이트리스트) 발행량이 적어 잘 안 걸린다 —
+# 실제 검색해보니 오마이뉴스·서울경제·이투데이 등 종합 일간지/매체에서 주로 나온다.
+# 그래서 별도로 신뢰할 수 있는 종합 언론사 화이트리스트를 둔다(연예/스포츠 매체 제외).
+_PARENTS_MEDIA_DOMAINS = {
+    "chosun.com", "joongang.co.kr", "joins.com", "donga.com",  # 조선/중앙/동아
+    "hani.co.kr", "khan.co.kr",  # 한겨레/경향
+    "yna.co.kr",  # 연합뉴스
+    "kbs.co.kr", "sbs.co.kr", "imbc.com", "mbc.co.kr",  # 지상파
+    "ohmynews.com", "sedaily.com", "etoday.co.kr",  # 오마이뉴스/서울경제/이투데이
+}
+
+
+def _matches_domain(url: str, domains: set[str]) -> bool:
+    # "khan.co.kr" in url 같은 부분 문자열 검사는 sports.khan.co.kr(연예/스포츠),
+    # realty.chosun.com(부동산) 같은 화이트리스트 매체의 무관한 서브도메인까지
+    # 통과시킨다 — 호스트 전체를 정확히 비교해서 본지 도메인만 남긴다.
+    host = urlparse(url).netloc
+    return any(host == d or host == f"www.{d}" for d in domains)
+
+
+def _search_news_by_domains(queries: list[str], domains: set[str], limit: int) -> dict:
+    """검색어 목록으로 네이버 뉴스를 동시 검색해 지정된 매체 화이트리스트만 걸러
+    최신순으로 반환. /education-news와 /parents-news가 검색어·화이트리스트만 다르게
+    해서 공유한다."""
+    with ThreadPoolExecutor(max_workers=len(queries)) as executor:
+        results = executor.map(lambda q: naver_news.search_news(q, display=10), queries)
+
+    seen_urls: set[str] = set()
+    merged: list[dict] = []
+    for items in results:
+        for item in items:
+            if item["url"] in seen_urls or not _matches_domain(item["url"], domains):
+                continue
+            seen_urls.add(item["url"])
+            merged.append(item)
+
+    merged.sort(key=lambda x: x["pub_date"] or "", reverse=True)
+    return {"items": merged[:limit], "total": len(merged)}
 
 
 @app.get("/education-news")
@@ -282,21 +319,24 @@ def education_news(limit: int = 20):
     NAVER_CLIENT_ID/SECRET 미설정 시 빈 목록 반환. 검색어가 13개라 순차 호출하면
     캐시가 비어있을 때 100초 이상 걸릴 수 있어 동시에 호출한다.
     """
-    all_queries = _EDUCATION_NEWS_QUERIES + _EDU_MEDIA_NAME_QUERIES
-    with ThreadPoolExecutor(max_workers=len(all_queries)) as executor:
-        results = executor.map(lambda q: naver_news.search_news(q, display=10), all_queries)
+    return _search_news_by_domains(_EDUCATION_NEWS_QUERIES + _EDU_MEDIA_NAME_QUERIES, _EDU_MEDIA_DOMAINS, limit)
 
-    seen_urls: set[str] = set()
-    merged: list[dict] = []
-    for items in results:
-        for item in items:
-            if item["url"] in seen_urls or not _is_whitelisted(item["url"]):
-                continue
-            seen_urls.add(item["url"])
-            merged.append(item)
 
-    merged.sort(key=lambda x: x["pub_date"] or "", reverse=True)
-    return {"items": merged[:limit], "total": len(merged)}
+_PARENTS_NEWS_QUERIES = ["학부모", "학부모 교육", "자녀교육", "학부모 상담"]
+
+
+@app.get("/parents-news")
+def parents_news(limit: int = 20):
+    """학부모On누리(www.parents.go.kr) 관련 최신 기사.
+
+    학부모On누리는 robots.txt가 모든 크롤러(구글·네이버·다음 자체 검색봇 제외)를 막고
+    있고 콘텐츠 Open API도 없어, 사이트 자체 콘텐츠를 직접 가져올 수 없다(이 프로젝트는
+    ROBOTSTXT_OBEY=True를 항상 지킨다 — crawler/edu_crawler/settings.py 참고). 대신
+    이미 연동돼 있는 네이버 뉴스 오픈API로 '학부모' 관련 종합 언론사 기사를 모아
+    비슷한 실시간 피드를 제공한다 — 학부모On누리 자체 게시물이 아니라 관련 뉴스임을
+    프런트에서 명확히 표시해야 한다.
+    """
+    return _search_news_by_domains(_PARENTS_NEWS_QUERIES, _PARENTS_MEDIA_DOMAINS, limit)
 
 
 # ── 예측 모델 ─────────────────────────────────────────────────────────────────
