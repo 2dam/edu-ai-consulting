@@ -68,6 +68,9 @@ async def lifespan(app: FastAPI):
             "CREATE INDEX IF NOT EXISTS ix_raw_records_item_type_created_at "
             "ON raw_records (item_type, created_at)"
         )
+        # 기존 테이블에 나중에 인덱스를 추가하면 SQLite 쿼리 플래너의 통계가 오래된 상태라
+        # 새 인덱스를 쓰지 않고 여전히 풀 스캔을 택할 수 있다 — ANALYZE로 통계를 갱신한다.
+        conn.exec_driver_sql("ANALYZE raw_records")
     from app.database import SessionLocal
     db = SessionLocal()
     try:

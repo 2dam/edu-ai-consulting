@@ -32,12 +32,13 @@ The engine returns learning-state probabilities, weakest links, strongest links,
 recommendations, a decision-adjustment layer for intervention fit, and a short
 consulting narrative.
 
-## Dashboard
+## Landing page
 
-The Next.js dashboard calls `/api/qcrm`, which proxies to the FastAPI backend.
-If the backend is not running, the dashboard shows a deterministic sample result
-so the UI can still be previewed.
+The interactive diagnosis lives in the landing page's Chapter 6
+("Mini QCRM Diagnosis"), served from `api/app/static/landing.html`. It calls
+`/qcrm-assessment` directly (same origin as the landing page, no dashboard
+proxy) and renders the readiness score, weakest/strongest links,
+recommendations, and decision-adjustment layer inline in that chapter.
 
-The result is displayed in the right-side `Mini QCRM Diagnosis` panel. The
-decision-adjustment layer appears inside the same panel as intervention fit and
-confidence, so it does not become a second diagnosis widget.
+The old floating `QcrmPanel` on the EduIntel map dashboard
+(`dashboard/src/app/page.tsx`) was removed since it duplicated this chapter.
