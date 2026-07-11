@@ -13,6 +13,7 @@ interface HUDProps {
   news: any[]
   onOpenFacilityPanel?: () => void
   cctvCount?: number
+  rightPanelExtra?: React.ReactNode
 }
 
 function Clock() {
@@ -41,7 +42,7 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
   )
 }
 
-export default function HUD({ regions, loopStatus, backendCount, activeLayers, onToggleLayer, selected, news, onOpenFacilityPanel, cctvCount = 0 }: HUDProps) {
+export default function HUD({ regions, loopStatus, backendCount, activeLayers, onToggleLayer, selected, news, onOpenFacilityPanel, cctvCount = 0, rightPanelExtra }: HUDProps) {
   const totalAcademies = regions.reduce((s, r) => s + r.academy_count, 0)
   const maxGap = Math.max(...regions.map(r => r.gap_index))
   const minGap = Math.min(...regions.map(r => r.gap_index))
@@ -73,19 +74,24 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
   return (
     <>
       {/* ── 상단 제목바 ──────────────────────────────────────────────── */}
+      {/* 예전엔 이 줄이 좁은 화면에서 글자 하나씩 줄바꿈되는 문제가 있었다 —
+          한글은 공백 없이도 아무 글자 사이에서 줄바꿈될 수 있어서, 폭이 부족하면
+          "한 / 국 / 교 / 육..." 식으로 세로로 무너진다. whiteSpace:nowrap으로
+          각 조각이 줄바꿈되지 않게 하고, 그래도 안 들어가면 가로 스크롤되게 한다. */}
       <div style={{
         ...panel,
         top: 16, left: '50%', transform: 'translateX(-50%)',
-        display: 'flex', alignItems: 'center', gap: 24, padding: '8px 20px',
+        display: 'flex', alignItems: 'center', gap: 16, padding: '8px 20px',
         borderColor: 'rgba(249,115,22,0.3)',
+        maxWidth: 'calc(100vw - 32px)', overflowX: 'auto' as const, whiteSpace: 'nowrap' as const,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e', animation: 'pulse 2s infinite' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e', animation: 'pulse 2s infinite', flexShrink: 0 }} />
           <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', color: '#f97316' }}>EDUINTEL</span>
           <span style={{ fontSize: 10, color: '#64748b' }}>/ 한국 교육 인텔리전스</span>
         </div>
-        <div style={{ fontSize: 11, color: '#64748b' }}><Clock /> KST</div>
-        <div style={{ fontSize: 10, color: '#64748b' }}>LIVE · {regions.length}개 지역 · {totalAcademies.toLocaleString()}개 학원</div>
+        <div style={{ fontSize: 11, color: '#64748b', flexShrink: 0 }}><Clock /> KST</div>
+        <div style={{ fontSize: 10, color: '#64748b', flexShrink: 0 }}>LIVE · {regions.length}개 지역 · {totalAcademies.toLocaleString()}개 학원</div>
         <a
           href="/committee"
           target="_blank"
@@ -93,7 +99,7 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
           style={{
             fontSize: 10, fontWeight: 700, color: '#a855f7', textDecoration: 'none',
             border: '1px solid rgba(168,85,247,0.4)', borderRadius: 4, padding: '3px 8px',
-            letterSpacing: '0.04em',
+            letterSpacing: '0.04em', flexShrink: 0,
           }}
         >🧑‍⚖️ EduIntelligence Panel</a>
       </div>
@@ -171,8 +177,15 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
         )}
       </div>
 
-      {/* ── 우측 패널: 선택 항목 상세 ────────────────────────────────── */}
-      <div style={{ ...panel, top: 64, right: 16, width: 240 }}>
+      {/* ── 우측 패널 스택: 선택 항목 상세 + 추가 패널(학부모On누리 등) ───
+          예전엔 각 패널이 top 값을 직접 계산해 서로 겹치는 문제가 있었다 —
+          flex column으로 감싸 자연스럽게 쌓이게 한다. */}
+      <div style={{
+        position: 'absolute', top: 64, right: 16, width: 240,
+        display: 'flex', flexDirection: 'column' as const, gap: 12,
+        maxHeight: 'calc(100vh - 100px)',
+      }}>
+      <div style={{ ...panel, position: 'static' as const }}>
         {selected ? (
           <>
             <div style={label}>선택된 항목</div>
@@ -220,6 +233,8 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
             </div>
           </>
         )}
+      </div>
+      {rightPanelExtra}
       </div>
 
       {/* ── 우하단: 실시간 뉴스 ─────────────────────────────────────── */}

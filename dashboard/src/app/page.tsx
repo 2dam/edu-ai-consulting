@@ -133,7 +133,8 @@ export default function Page() {
         />
       </div>
 
-      {/* HUD 오버레이 */}
+      {/* HUD 오버레이 — 학부모On누리 패널은 우측 flex column 안에 자연스럽게 쌓이도록
+          rightPanelExtra로 전달한다(따로 절대좌표를 계산하지 않음). */}
       <HUD
         regions={data.regions}
         loopStatus={data.loop_status}
@@ -144,6 +145,7 @@ export default function Page() {
         news={news}
         onOpenFacilityPanel={() => setFacilityPanelSignal(n => n + 1)}
         cctvCount={cctvPoints.length}
+        rightPanelExtra={<ParentsPortalPanel />}
       />
 
       {/* OSINT 분석 패널 */}
@@ -156,9 +158,6 @@ export default function Page() {
 
       {/* 실시간 교육 동영상 패널 */}
       <VideoPanel />
-
-      {/* 학부모On누리 연결 패널 (교육부 공식 학부모 포털) */}
-      <ParentsPortalPanel />
     </div>
   )
 }

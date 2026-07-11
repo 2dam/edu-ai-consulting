@@ -23,12 +23,13 @@ export default function ParentsPortalPanel() {
   }, [])
 
   return (
+    // 예전엔 이 패널이 position:absolute로 직접 top 값을 지정해서, 위에 있는
+    // "AI 루프 상태" 패널이 내용에 따라 키가 달라지면 서로 겹쳤다 — 이제
+    // HUD.tsx의 우측 flex column(rightPanelExtra)에 일반 흐름으로 들어가
+    // 자연스럽게 그 아래로 쌓인다.
     <div style={{
-      position: 'absolute',
-      right: 16,
-      top: 252,
-      width: 240,
-      maxHeight: 'calc(100vh - 512px)',
+      width: '100%',
+      maxHeight: 320,
       overflowY: 'auto',
       background: 'rgba(10,12,16,0.9)',
       border: '1px solid rgba(59,130,246,0.28)',
@@ -36,6 +37,7 @@ export default function ParentsPortalPanel() {
       backdropFilter: 'blur(12px)',
       padding: '13px 14px',
       color: '#e2e8f0',
+      boxSizing: 'border-box' as const,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
         <span style={{
