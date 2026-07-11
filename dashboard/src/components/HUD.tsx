@@ -180,14 +180,15 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
 
       {/* ── 우측 패널 스택: 선택 항목 상세 + 추가 패널(학부모On누리 등) ───
           예전엔 각 패널이 top 값을 직접 계산해 서로 겹치는 문제가 있었다 —
-          flex column으로 감싸 자연스럽게 쌓이게 한다. maxHeight는 우하단
-          "실시간 교육 뉴스" 패널(bottom:20, height 220 → 바닥에서 약 260px)과
-          겹치지 않도록 그만큼 비워두고, 그래도 넘치면 스택 자체가 스크롤되게
-          overflowY를 준다(내용이 화면 아래로 흘러넘쳐 뉴스 패널을 가리는 대신). */}
+          flex column으로 감싸 자연스럽게 쌓이게 한다. 아래쪽 여백(bottom)은
+          "실시간 교육 뉴스" 패널의 실제 현재 높이(펼침/접힘 상태)에 맞춰 계산한다.
+          예전엔 calc(100vh - 340px)로 화면 높이를 추측해서 예약했는데, 화면이
+          작으면 그만큼 과하게 예약돼 이 패널 전체가 밀려 안 보이는 문제가 있었다
+          — 뷰포트 높이 추측 대신 뉴스 패널의 실제 위치에 딱 맞춰 겹치지 않게 한다. */}
       <div style={{
         position: 'absolute', top: 64, right: 16, width: 240,
         display: 'flex', flexDirection: 'column' as const, gap: 12,
-        maxHeight: 'calc(100vh - 340px)',
+        bottom: 20 + (newsCollapsed ? 43 : 220) + 12,
         overflowY: 'auto' as const,
       }}>
       <div style={{ ...panel, position: 'static' as const }}>
