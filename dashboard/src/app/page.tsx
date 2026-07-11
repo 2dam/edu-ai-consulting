@@ -6,6 +6,7 @@ import { LAYERS, SAMPLE_EDUCATION_FACILITIES } from '@/lib/data'
 import HUD from '@/components/HUD'
 import OsintPanel from '@/components/OsintPanel'
 import VideoPanel from '@/components/VideoPanel'
+import ParentsPortalPanel from '@/components/ParentsPortalPanel'
 import type { MapHandle } from '@/components/Map'
 
 const Map = dynamic(
@@ -155,6 +156,9 @@ export default function Page() {
 
       {/* 실시간 교육 동영상 패널 */}
       <VideoPanel />
+
+      {/* 학부모On누리 연결 패널 (교육부 공식 학부모 포털) */}
+      <ParentsPortalPanel />
     </div>
   )
 }
