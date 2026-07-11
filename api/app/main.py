@@ -61,16 +61,9 @@ async def _loop_scheduler() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
-    # create_all은 이미 존재하는 테이블에는 새 인덱스를 추가하지 않으므로,
-    # 기존 운영 DB의 raw_records 테이블에도 성능 인덱스를 별도로 보정한다(멱등).
-    with engine.begin() as conn:
-        conn.exec_driver_sql(
-            "CREATE INDEX IF NOT EXISTS ix_raw_records_item_type_created_at "
-            "ON raw_records (item_type, created_at)"
-        )
-        # 기존 테이블에 나중에 인덱스를 추가하면 SQLite 쿼리 플래너의 통계가 오래된 상태라
-        # 새 인덱스를 쓰지 않고 여전히 풀 스캔을 택할 수 있다 — ANALYZE로 통계를 갱신한다.
-        conn.exec_driver_sql("ANALYZE raw_records")
+    # 운영 DB의 raw_records가 수만 건 규모라 CREATE INDEX/ANALYZE를 앱 시작(lifespan) 경로에
+    # 동기로 넣었더니 기동 자체가 헬스체크 타임아웃을 넘겨버려 502를 유발했다 — 되돌림.
+    # 인덱스 보정은 별도 1회성 스크립트로 오프라인에서 실행할 것(앱 기동 경로에 넣지 않는다).
     from app.database import SessionLocal
     db = SessionLocal()
     try:
