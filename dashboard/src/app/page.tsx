@@ -25,6 +25,25 @@ const Map = dynamic(
   }
 ) as any
 
+// 백엔드 콜드스타트 등으로 첫 응답이 비어있을 때 몇 초 간격으로 재시도한다.
+// onData가 true를 반환하면(사용할 만한 데이터를 받으면) 멈추고, false면 다음 시도를 예약한다.
+function pollUntilReady(url: string, onData: (data: any) => boolean, maxAttempts = 4, delayMs = 4000) {
+  let attempt = 0
+  const tick = () => {
+    attempt++
+    fetch(url)
+      .then(r => r.json())
+      .then(d => {
+        const done = onData(d)
+        if (!done && attempt < maxAttempts) setTimeout(tick, delayMs)
+      })
+      .catch(() => {
+        if (attempt < maxAttempts) setTimeout(tick, delayMs)
+      })
+  }
+  tick()
+}
+
 export default function Page() {
   const mapRef = useRef<MapHandle>(null)
 
@@ -56,15 +75,25 @@ export default function Page() {
   }, [])
 
   useEffect(() => {
-    fetch('/api/news').then(r => r.json()).then(d => setNews(d.items)).catch(console.error)
+    // Render 무료/스타터 플랜은 트래픽이 없으면 백엔드가 슬립 상태로 들어가서,
+    // 페이지 로드 시점의 첫 요청이 콜드스타트(15~30초+)에 걸려 실패하는 경우가 있다.
+    // 아래 두 요청(뉴스·시설 평가정보)은 원래 1회성이라 그 순간 실패하면 새로고침 전까지
+    // 계속 빈 상태/예시 데이터로 남는다 — 응답이 비어있으면 몇 초 간격으로 재시도한다.
+    pollUntilReady('/api/news', (d) => {
+      const items = d.items || []
+      setNews(items)
+      return items.length > 0
+    })
     fetch('/api/dropout').then(r => r.json()).then(d => setDropoutRisks(d.dropout_risks)).catch(console.error)
     fetch('/api/qcrm').then(r => r.json()).then(setQcrmResult).catch(console.error)
     fetch('/api/universities').then(r => r.json()).then(d => setUniversities(d.universities)).catch(console.error)
     fetch('/api/cctv').then(r => r.json()).then(d => setCctvPoints(d.items)).catch(console.error)
-    fetch('/api/education-facilities').then(r => r.json()).then(d => {
+    pollUntilReady('/api/education-facilities', (d) => {
+      const items = d.items || []
       // 실제 수집 데이터가 있을 때만 예시 데이터를 대체한다.
-      if (d.items && d.items.length > 0) setEducationFacilities(d.items)
-    }).catch(console.error)
+      if (items.length > 0) { setEducationFacilities(items); return true }
+      return false
+    })
   }, [])
 
   const toggleLayer = useCallback((id: LayerId) => {
