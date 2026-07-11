@@ -122,6 +122,25 @@
   .feature-card h3 { font-family: var(--font-body); font-size: 15px; font-weight: 600; margin-bottom: 6px; }
   .feature-card p { font-size: 13.5px; color: var(--ink-muted); margin: 0; }
 
+  .qcrm-tool { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 22px; box-shadow: var(--shadow-card); }
+  .qcrm-sliders { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 28px; margin-bottom: 18px; }
+  .qcrm-field label { font-size: 12.5px; font-weight: 600; display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .qcrm-field .qcrm-val { font-family: var(--font-mono); color: var(--accent); font-weight: 700; }
+  .qcrm-field input[type="range"] { width: 100%; accent-color: var(--accent); }
+  #qcrm-submit-btn { width: 100%; justify-content: center; }
+  #qcrm-error { margin-top: 14px; color: var(--err); display: none; font-size: 13.5px; }
+  #qcrm-result { margin-top: 20px; display: none; border-top: 1px solid var(--line); padding-top: 18px; }
+  .qcrm-readiness { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+  .qcrm-readiness .score { font-family: var(--font-display); font-size: 34px; }
+  .qcrm-readiness .level { font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; border-radius: 12px; }
+  .qcrm-section-title { font-size: 11px; font-family: var(--font-mono); color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin: 14px 0 8px; }
+  .qcrm-links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .qcrm-chip { font-size: 12.5px; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--line); }
+  .qcrm-recs { margin: 0; padding-left: 18px; font-size: 13.5px; color: var(--ink-muted); }
+  .qcrm-recs li { margin-bottom: 6px; }
+  .qcrm-decision { font-size: 13px; color: var(--ink-muted); }
+  @media (max-width: 600px) { .qcrm-sliders { grid-template-columns: 1fr; } }
+
   .roster { display: flex; gap: 10px; flex-wrap: wrap; margin: 22px 0 28px; }
   .roster .seat { font-family: var(--font-mono); font-size: 11.5px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-muted); background: var(--surface); }
   .roster .seat.crisis { color: var(--accent2); border-color: color-mix(in srgb, var(--accent2) 40%, var(--line)); }
@@ -394,7 +413,37 @@
         <p>개입안 적합도·추천 모드·신뢰도를 함께 보여줘, 지금 바로 적용할지 소규모로 먼저 시험할지 판단하게 돕습니다.</p>
       </div>
     </div>
-    <div style="margin-top:24px;"><a class="btn btn-ghost" href="https://app.ichapterwise.com" target="_blank" rel="noreferrer">EduIntel 대시보드에서 보기 →</a></div>
+    <div class="qcrm-tool">
+      <div class="qcrm-sliders">
+        <div class="qcrm-field">
+          <label for="qcrm_concept_mastery">개념 이해 <span class="qcrm-val" id="qcrm_concept_mastery_val">62</span></label>
+          <input type="range" id="qcrm_concept_mastery" min="0" max="100" value="62">
+        </div>
+        <div class="qcrm-field">
+          <label for="qcrm_problem_interpretation">문제 해석 <span class="qcrm-val" id="qcrm_problem_interpretation_val">56</span></label>
+          <input type="range" id="qcrm_problem_interpretation" min="0" max="100" value="56">
+        </div>
+        <div class="qcrm-field">
+          <label for="qcrm_strategy_selection">전략 선택 <span class="qcrm-val" id="qcrm_strategy_selection_val">48</span></label>
+          <input type="range" id="qcrm_strategy_selection" min="0" max="100" value="48">
+        </div>
+        <div class="qcrm-field">
+          <label for="qcrm_calculation_accuracy">계산 정확도 <span class="qcrm-val" id="qcrm_calculation_accuracy_val">68</span></label>
+          <input type="range" id="qcrm_calculation_accuracy" min="0" max="100" value="68">
+        </div>
+        <div class="qcrm-field">
+          <label for="qcrm_attention_control">주의 조절 <span class="qcrm-val" id="qcrm_attention_control_val">52</span></label>
+          <input type="range" id="qcrm_attention_control" min="0" max="100" value="52">
+        </div>
+        <div class="qcrm-field">
+          <label for="qcrm_time_management">시간 관리 <span class="qcrm-val" id="qcrm_time_management_val">46</span></label>
+          <input type="range" id="qcrm_time_management" min="0" max="100" value="46">
+        </div>
+      </div>
+      <button class="btn btn-primary" type="button" id="qcrm-submit-btn">진단하기</button>
+      <div id="qcrm-error"></div>
+      <div id="qcrm-result"></div>
+    </div>
     <p class="sample-note" style="margin-top:16px;">양자컴퓨팅 하드웨어가 아닌 양자 개념에서 영감을 받은 시뮬레이션이며, 표준화된 심리검사가 아닌 컨설팅 보조 도구입니다.</p>
   </section>
 
@@ -575,6 +624,73 @@
     } finally {
       btn.disabled = false;
       btn.textContent = '리포트 생성';
+    }
+  });
+
+  // Mini QCRM Diagnosis — Chapter 6에서 직접 진단(백엔드 /qcrm-assessment 호출)
+  const QCRM_FIELDS = ['concept_mastery', 'problem_interpretation', 'strategy_selection', 'calculation_accuracy', 'attention_control', 'time_management'];
+  QCRM_FIELDS.forEach((f) => {
+    const input = document.getElementById('qcrm_' + f);
+    const val = document.getElementById('qcrm_' + f + '_val');
+    input.addEventListener('input', () => { val.textContent = input.value; });
+  });
+
+  const QCRM_LEVEL_COLOR = { stable: '#3FCB93', developing: '#eab308', needs_support: '#FF8A80' };
+  const QCRM_LEVEL_LABEL = { stable: '안정', developing: '발전 중', needs_support: '지원 필요' };
+  const qcrmBtn = document.getElementById('qcrm-submit-btn');
+  const qcrmError = document.getElementById('qcrm-error');
+  const qcrmResult = document.getElementById('qcrm-result');
+
+  qcrmBtn.addEventListener('click', async () => {
+    qcrmError.style.display = 'none';
+    qcrmResult.style.display = 'none';
+    qcrmBtn.disabled = true;
+    qcrmBtn.textContent = '진단 중...';
+
+    const profile = {};
+    QCRM_FIELDS.forEach((f) => { profile[f] = Number(document.getElementById('qcrm_' + f).value) / 100; });
+
+    try {
+      const res = await fetch('/qcrm-assessment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile, iterations: 3 })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `요청 실패 (${res.status})`);
+      }
+      const data = await res.json();
+      const color = QCRM_LEVEL_COLOR[data.readiness_level] || '#9B84FF';
+      const levelLabel = QCRM_LEVEL_LABEL[data.readiness_level] || data.readiness_level;
+      const weakest = data.weakest_links.map((l) => `<span class="qcrm-chip" style="border-color:${color}66;color:${color}">${l.label} ${Math.round(l.score * 100)}</span>`).join('');
+      const strongest = data.strongest_links.map((l) => `<span class="qcrm-chip">${l.label} ${Math.round(l.score * 100)}</span>`).join('');
+      const recs = data.recommendations.map((r) => `<li>${r}</li>`).join('');
+      const adj = data.decision_adjustment || {};
+      const adjustmentBlock = adj.recommendation_level
+        ? `<div class="qcrm-section-title">판단 보정</div><div class="qcrm-decision">개입안 적합도 ${Math.round((adj.adjusted_success_probability || 0) * 100)}% · 추천 모드 ${adj.recommendation_level} · 신뢰도 ${Math.round((adj.confidence || 0) * 100)}%</div>`
+        : '';
+      qcrmResult.innerHTML = `
+        <div class="qcrm-readiness">
+          <span class="score">${Math.round(data.readiness_score * 100)}</span>
+          <span class="level" style="background:${color}22;color:${color}">${levelLabel}</span>
+        </div>
+        <div class="qcrm-section-title">우선 개입 지점</div>
+        <div class="qcrm-links">${weakest}</div>
+        <div class="qcrm-section-title">강점</div>
+        <div class="qcrm-links">${strongest}</div>
+        <div class="qcrm-section-title">추천 상담 액션</div>
+        <ol class="qcrm-recs">${recs}</ol>
+        ${adjustmentBlock}
+      `;
+      qcrmResult.style.display = 'block';
+      qcrmResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err) {
+      qcrmError.textContent = '오류: ' + err.message;
+      qcrmError.style.display = 'block';
+    } finally {
+      qcrmBtn.disabled = false;
+      qcrmBtn.textContent = '진단하기';
     }
   });
 </script>
