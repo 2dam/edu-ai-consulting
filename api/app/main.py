@@ -61,6 +61,13 @@ async def _loop_scheduler() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    # create_all은 이미 존재하는 테이블에는 새 인덱스를 추가하지 않으므로,
+    # 기존 운영 DB의 raw_records 테이블에도 성능 인덱스를 별도로 보정한다(멱등).
+    with engine.begin() as conn:
+        conn.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS ix_raw_records_item_type_created_at "
+            "ON raw_records (item_type, created_at)"
+        )
     from app.database import SessionLocal
     db = SessionLocal()
     try:

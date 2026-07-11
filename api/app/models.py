@@ -1,14 +1,23 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Index, Integer, String, Text
 
 from app.database import Base
 
 
 class RawRecord(Base):
-    """크롤러가 수집한 원시 데이터 (사업계획서 3.1항 5개 유형 공통 저장소)."""
+    """크롤러가 수집한 원시 데이터 (사업계획서 3.1항 5개 유형 공통 저장소).
+
+    item_type으로 필터한 뒤 created_at으로 정렬하는 조회(/education-facilities 등)가
+    시설 데이터 수천~만 건 규모에서 수 초~수십 초까지 걸려 타임아웃/502로 이어지는
+    문제가 있었다 — item_type 단일 인덱스만으로는 정렬 단계에서 풀 소트가 필요했기
+    때문. 복합 인덱스로 정렬까지 인덱스로 처리되게 한다. 기존 운영 DB에는 이 인덱스가
+    자동 반영되지 않으므로(create_all은 신규 테이블만 생성) main.py의 lifespan에서
+    CREATE INDEX IF NOT EXISTS로 한 번 더 보정한다.
+    """
 
     __tablename__ = "raw_records"
+    __table_args__ = (Index("ix_raw_records_item_type_created_at", "item_type", "created_at"),)
 
     id = Column(Integer, primary_key=True, index=True)
     item_type = Column(String(64), index=True)
