@@ -176,6 +176,9 @@ def list_records(item_type: str | None = None, limit: int = 50, db: Session = De
 
 # ── 어린이집·유치원·초등학교 기초자료 (컨설팅 대상 확장) ─────────────────────
 
+_EDUCATION_FACILITIES_MAX_LIMIT = 3000  # 수만 건을 한 번에 메모리로 올리다 인스턴스 OOM을 유발한 적이 있어 서버 측에서 상한을 강제한다.
+
+
 @app.get("/education-facilities")
 def list_education_facilities(
     facility_type: str | None = None,
@@ -187,6 +190,7 @@ def list_education_facilities(
 
     facility_type: daycare | kindergarten | elementary
     """
+    limit = min(limit, _EDUCATION_FACILITIES_MAX_LIMIT)
     records = (
         db.query(RawRecord)
         .filter(RawRecord.item_type == "EducationFacilityItem")

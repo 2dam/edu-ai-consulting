@@ -4,7 +4,8 @@ import { BACKEND_URL } from '@/lib/backend'
 // 어린이집·유치원·초등학교 기초자료 (crawler/early_education_spider 수집분).
 export async function GET() {
   try {
-    const res = await fetch(`${BACKEND_URL}/education-facilities?limit=20000`, {
+    // 서버(백엔드)도 3000으로 상한을 두고 있다 — 과거에 대량 조회가 인스턴스 OOM을 유발한 적이 있다.
+    const res = await fetch(`${BACKEND_URL}/education-facilities?limit=3000`, {
       cache: 'no-store',
       signal: AbortSignal.timeout(30000),
     })
