@@ -43,6 +43,7 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
 }
 
 export default function HUD({ regions, loopStatus, backendCount, activeLayers, onToggleLayer, selected, news, onOpenFacilityPanel, cctvCount = 0, rightPanelExtra }: HUDProps) {
+  const [newsCollapsed, setNewsCollapsed] = useState(false)
   const totalAcademies = regions.reduce((s, r) => s + r.academy_count, 0)
   const maxGap = Math.max(...regions.map(r => r.gap_index))
   const minGap = Math.min(...regions.map(r => r.gap_index))
@@ -179,11 +180,15 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
 
       {/* ── 우측 패널 스택: 선택 항목 상세 + 추가 패널(학부모On누리 등) ───
           예전엔 각 패널이 top 값을 직접 계산해 서로 겹치는 문제가 있었다 —
-          flex column으로 감싸 자연스럽게 쌓이게 한다. */}
+          flex column으로 감싸 자연스럽게 쌓이게 한다. maxHeight는 우하단
+          "실시간 교육 뉴스" 패널(bottom:20, height 220 → 바닥에서 약 260px)과
+          겹치지 않도록 그만큼 비워두고, 그래도 넘치면 스택 자체가 스크롤되게
+          overflowY를 준다(내용이 화면 아래로 흘러넘쳐 뉴스 패널을 가리는 대신). */}
       <div style={{
         position: 'absolute', top: 64, right: 16, width: 240,
         display: 'flex', flexDirection: 'column' as const, gap: 12,
-        maxHeight: 'calc(100vh - 100px)',
+        maxHeight: 'calc(100vh - 340px)',
+        overflowY: 'auto' as const,
       }}>
       <div style={{ ...panel, position: 'static' as const }}>
         {selected ? (
@@ -238,9 +243,22 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
       </div>
 
       {/* ── 우하단: 실시간 뉴스 ─────────────────────────────────────── */}
-      <div style={{ ...panel, bottom: 20, right: 16, width: 240, maxHeight: 220, overflowY: 'auto' }}>
-        <div style={label}>📡 실시간 교육 뉴스</div>
-        {news.map((item, i) => (
+      <div style={{
+        ...panel, bottom: 20, right: 16, width: 240,
+        maxHeight: newsCollapsed ? 'none' : 220, overflowY: newsCollapsed ? 'visible' : 'auto',
+      }}>
+        <button
+          onClick={() => setNewsCollapsed(c => !c)}
+          style={{
+            display: 'flex', alignItems: 'center', width: '100%',
+            background: 'transparent', border: 0, padding: 0, margin: 0, cursor: 'pointer',
+            marginBottom: newsCollapsed ? 0 : 6,
+          }}
+        >
+          <span style={label}>📡 실시간 교육 뉴스</span>
+          <span style={{ marginLeft: 'auto', fontSize: 10, color: '#64748b' }}>{newsCollapsed ? '▼' : '▲'}</span>
+        </button>
+        {!newsCollapsed && news.map((item, i) => (
           <a
             key={i}
             href={item.url && item.url !== '#' ? item.url : undefined}

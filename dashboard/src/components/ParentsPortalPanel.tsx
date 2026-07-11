@@ -13,6 +13,7 @@ type NewsItem = { title: string; source: string; time: string; url: string }
 export default function ParentsPortalPanel() {
   const [items, setItems] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [collapsed, setCollapsed] = useState(false)
 
   useEffect(() => {
     fetch('/api/parents-news')
@@ -26,11 +27,12 @@ export default function ParentsPortalPanel() {
     // 예전엔 이 패널이 position:absolute로 직접 top 값을 지정해서, 위에 있는
     // "AI 루프 상태" 패널이 내용에 따라 키가 달라지면 서로 겹쳤다 — 이제
     // HUD.tsx의 우측 flex column(rightPanelExtra)에 일반 흐름으로 들어가
-    // 자연스럽게 그 아래로 쌓인다.
+    // 자연스럽게 그 아래로 쌓인다. 접기 기능도 추가해 지도를 가리고 싶지
+    // 않을 때 헤더만 남기고 숨길 수 있게 했다.
     <div style={{
       width: '100%',
-      maxHeight: 320,
-      overflowY: 'auto',
+      maxHeight: collapsed ? 'none' : 320,
+      overflowY: collapsed ? 'visible' : 'auto',
       background: 'rgba(10,12,16,0.9)',
       border: '1px solid rgba(59,130,246,0.28)',
       borderRadius: 8,
@@ -39,60 +41,73 @@ export default function ParentsPortalPanel() {
       color: '#e2e8f0',
       boxSizing: 'border-box' as const,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+      <button
+        onClick={() => setCollapsed(c => !c)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+          background: 'transparent', border: 0, padding: 0, margin: 0, cursor: 'pointer',
+          marginBottom: collapsed ? 0 : 4,
+        }}
+      >
         <span style={{
           width: 7, height: 7, borderRadius: '50%', background: '#3b82f6', flexShrink: 0,
         }} />
         <span style={{ fontSize: 10, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           학부모On누리
         </span>
-      </div>
-      <div style={{ fontSize: 9.5, color: '#64748b', lineHeight: 1.5, marginBottom: 10 }}>
-        학부모On누리 자체 게시물이 아닌, 관련 교육 전문매체 뉴스입니다(네이버 뉴스 API).
-      </div>
+        <span style={{ marginLeft: 'auto', fontSize: 10, color: '#64748b' }}>{collapsed ? '▼' : '▲'}</span>
+      </button>
 
-      {loading ? (
-        <div style={{ fontSize: 11, color: '#64748b' }}>불러오는 중...</div>
-      ) : items.length === 0 ? (
-        <div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.6 }}>표시할 기사가 없습니다.</div>
-      ) : (
-        items.map((item, i) => (
+      {!collapsed && (
+        <>
+          <div style={{ fontSize: 9.5, color: '#64748b', lineHeight: 1.5, marginBottom: 10 }}>
+            학부모On누리 자체 게시물이 아닌, 관련 교육 전문매체 뉴스입니다(네이버 뉴스 API).
+          </div>
+
+          {loading ? (
+            <div style={{ fontSize: 11, color: '#64748b' }}>불러오는 중...</div>
+          ) : items.length === 0 ? (
+            <div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.6 }}>표시할 기사가 없습니다.</div>
+          ) : (
+            items.map((item, i) => (
+              <a
+                key={i}
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                style={{ display: 'block', textDecoration: 'none', color: 'inherit', marginBottom: 10 }}
+              >
+                <div style={{ fontSize: 11, lineHeight: 1.4, color: '#e2e8f0', marginBottom: 2 }}>
+                  {item.title}
+                </div>
+                <div style={{ fontSize: 9.5, color: '#64748b' }}>
+                  {item.source} · {item.time}
+                </div>
+              </a>
+            ))
+          )}
+
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '10px 0' }} />
           <a
-            key={i}
-            href={item.url}
+            href={PARENTS_PORTAL_URL}
             target="_blank"
             rel="noreferrer"
-            style={{ display: 'block', textDecoration: 'none', color: 'inherit', marginBottom: 10 }}
+            style={{
+              display: 'block',
+              textAlign: 'center' as const,
+              color: '#0a0c10',
+              background: '#3b82f6',
+              borderRadius: 6,
+              padding: '6px 10px',
+              fontSize: 10.5,
+              fontWeight: 800,
+              textDecoration: 'none',
+            }}
           >
-            <div style={{ fontSize: 11, lineHeight: 1.4, color: '#e2e8f0', marginBottom: 2 }}>
-              {item.title}
-            </div>
-            <div style={{ fontSize: 9.5, color: '#64748b' }}>
-              {item.source} · {item.time}
-            </div>
+            학부모On누리 공식 사이트 ↗
           </a>
-        ))
+        </>
       )}
-
-      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '10px 0' }} />
-      <a
-        href={PARENTS_PORTAL_URL}
-        target="_blank"
-        rel="noreferrer"
-        style={{
-          display: 'block',
-          textAlign: 'center' as const,
-          color: '#0a0c10',
-          background: '#3b82f6',
-          borderRadius: 6,
-          padding: '6px 10px',
-          fontSize: 10.5,
-          fontWeight: 800,
-          textDecoration: 'none',
-        }}
-      >
-        학부모On누리 공식 사이트 ↗
-      </a>
     </div>
   )
 }
