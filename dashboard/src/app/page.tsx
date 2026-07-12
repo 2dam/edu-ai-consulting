@@ -1,7 +1,7 @@
 'use client'
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { AcademyNode, GangnamAcademy, LayerId, CctvPoint, EducationFacility } from '@/lib/data'
+import type { AcademyNode, LayerId, CctvPoint, EducationFacility } from '@/lib/data'
 import { LAYERS, SAMPLE_EDUCATION_FACILITIES } from '@/lib/data'
 import HUD from '@/components/HUD'
 import OsintPanel from '@/components/OsintPanel'
@@ -49,8 +49,7 @@ export default function Page() {
 
   const [data, setData] = useState<{
     regions: AcademyNode[]
-    gangnam_academies: GangnamAcademy[]
-    backend_record_count: number
+    backend_region_count: number
     loop_status: any
   } | null>(null)
   const [news, setNews] = useState<any[]>([])
@@ -63,7 +62,7 @@ export default function Page() {
   const [activeLayers, setActiveLayers] = useState<Set<LayerId>>(
     new Set(LAYERS.filter(l => l.default).map(l => l.id))
   )
-  const [selected, setSelected] = useState<AcademyNode | GangnamAcademy | null>(null)
+  const [selected, setSelected] = useState<AcademyNode | null>(null)
   const [facilityPanelSignal, setFacilityPanelSignal] = useState(0)
 
   useEffect(() => {
@@ -123,7 +122,6 @@ export default function Page() {
         <Map
           ref={mapRef}
           regions={data.regions}
-          gangnamAcademies={data.gangnam_academies}
           activeLayers={activeLayers}
           onSelect={setSelected}
           dropoutRisks={dropoutRisks}
@@ -138,7 +136,7 @@ export default function Page() {
       <HUD
         regions={data.regions}
         loopStatus={data.loop_status}
-        backendCount={data.backend_record_count}
+        backendCount={data.backend_region_count}
         activeLayers={activeLayers}
         onToggleLayer={toggleLayer}
         selected={selected}

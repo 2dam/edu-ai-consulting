@@ -10,9 +10,8 @@ interface OsintPanelProps {
   openFacilityPanelSignal?: number
 }
 
-type Tool = 'search' | 'gap-calc' | 'score-dist' | 'report' | 'facility-rating'
+type Tool = 'search' | 'gap-calc' | 'report' | 'facility-rating'
 
-const SUBJECTS = ['전체', '수학', '영어', '국어', '과학', '사회']
 const FACILITY_TYPE_FILTERS: Array<FacilityType | '전체'> = ['전체', 'daycare', 'kindergarten', 'elementary', 'academy', 'university']
 
 export default function OsintPanel({ regions, onFlyTo, educationFacilities = [], openFacilityPanelSignal }: OsintPanelProps) {
@@ -22,7 +21,6 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [],
   const [searchResults, setSearchResults] = useState<AcademyNode[]>([])
   const [compareA, setCompareA] = useState('gangnam')
   const [compareB, setCompareB] = useState('mokpo')
-  const [subject, setSubject] = useState('전체')
   const [reportRegion, setReportRegion] = useState('gangnam')
   const [reportText, setReportText] = useState('')
   const [loading, setLoading] = useState(false)
@@ -48,7 +46,6 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [],
   const regionA = regions.find(r => r.id === compareA)
   const regionB = regions.find(r => r.id === compareB)
   const gapDiff = regionA && regionB ? ((regionA.gap_index - regionB.gap_index) * 100).toFixed(1) : null
-  const scoreDiff = regionA && regionB ? regionA.avg_score_rank - regionB.avg_score_rank : null
   const academyDiff = regionA && regionB ? regionA.academy_count - regionB.academy_count : null
 
   const facilityCountByType = educationFacilities.reduce((acc, f) => {
@@ -79,7 +76,6 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [],
             region: r.region,
             name: r.name,
             academy_count: r.academy_count,
-            avg_score_rank: r.avg_score_rank,
             gap_index: r.gap_index,
           },
           context_item_types: ['CurriculumItem', 'SnsPostItem'],
@@ -89,11 +85,11 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [],
         const data = await res.json()
         setReportText(data.report_text)
       } else {
-        setReportText(`[백엔드 미연결] ${r.name} 지역 분석:\n\n교육격차 지수 ${(r.gap_index * 100).toFixed(0)}/100, 학원 수 ${r.academy_count.toLocaleString()}개, 수능 성적 백분위 ${r.avg_score_rank}위.\n\nOPENAI_API_KEY 설정 후 실제 AI 리포트를 생성할 수 있습니다.`)
+        setReportText(`[백엔드 미연결] ${r.name} 지역 분석:\n\n교육격차 지수 ${(r.gap_index * 100).toFixed(0)}/100, 학원 수 ${r.academy_count.toLocaleString()}개.\n\nOPENAI_API_KEY 설정 후 실제 AI 리포트를 생성할 수 있습니다.`)
       }
     } catch {
       const r2 = regions.find(x => x.id === reportRegion)!
-      setReportText(`[오프라인 모드] ${r2.name}\n\n격차지수: ${(r2.gap_index*100).toFixed(0)}/100\n학원 수: ${r2.academy_count.toLocaleString()}개\n수능 성적 백분위: 상위 ${100-r2.avg_score_rank}%\n\n백엔드 서버를 실행하면 AI 분석이 가능합니다.`)
+      setReportText(`[오프라인 모드] ${r2.name}\n\n격차지수: ${(r2.gap_index*100).toFixed(0)}/100\n학원 수: ${r2.academy_count.toLocaleString()}개\n\n백엔드 서버를 실행하면 AI 분석이 가능합니다.`)
     }
     setLoading(false)
   }
@@ -191,7 +187,6 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [],
             {([
               ['search', '🔍 학원·지역 검색'],
               ['gap-calc', '📊 격차 계산기'],
-              ['score-dist', '📈 성적 분포'],
               ['facility-rating', '🧸 시설 평가정보'],
               ['report', '🤖 AI 리포트'],
             ] as [Tool, string][]).map(([id, label]) => (
@@ -258,7 +253,7 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [],
                     <div>
                       <div style={{ fontWeight: 600, marginBottom: 4 }}>{r.region} {r.name}</div>
                       <div style={{ color: '#64748b', fontSize: 10 }}>
-                        학원 {r.academy_count.toLocaleString()}개 · 수능 상위 {100-r.avg_score_rank}%
+                        학원 {r.academy_count.toLocaleString()}개 · 격차지수 {(r.gap_index * 100).toFixed(0)}
                       </div>
                     </div>
                     <div style={{
@@ -291,14 +286,12 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [],
                 {regionA && regionB && (
                   <div>
                     <CompareRow label="교육격차 지수" a={`${(regionA.gap_index*100).toFixed(0)}/100`} b={`${(regionB.gap_index*100).toFixed(0)}/100`} diff={`${Number(gapDiff)>0?'+':''}${gapDiff}점`} worse={Number(gapDiff) > 0} />
-                    <CompareRow label="수능 성적 백분위" a={`상위 ${100-regionA.avg_score_rank}%`} b={`상위 ${100-regionB.avg_score_rank}%`} diff={`${scoreDiff! > 0 ? '+' : ''}${scoreDiff}p`} worse={scoreDiff! > 0} />
                     <CompareRow label="학원 수" a={`${regionA.academy_count.toLocaleString()}개`} b={`${regionB.academy_count.toLocaleString()}개`} diff={`${academyDiff! > 0 ? '+' : ''}${academyDiff!.toLocaleString()}개`} worse={academyDiff! > 0} />
 
                     <div style={{ marginTop: 14, padding: 12, background: 'rgba(239,68,68,0.08)', borderRadius: 8, border: '1px solid rgba(239,68,68,0.2)' }}>
                       <div style={{ fontSize: 11, color: '#ef4444', marginBottom: 6, fontWeight: 600 }}>격차 분석 요약</div>
                       <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.7 }}>
-                        {regionA.name}은 {regionB.name}보다 학원이 <strong style={{color:'#f97316'}}>{academyDiff!.toLocaleString()}개</strong> 많으며,
-                        수능 성적이 <strong style={{color:'#f97316'}}>{scoreDiff}백분위</strong> 높습니다.
+                        {regionA.name}은 {regionB.name}보다 학원이 <strong style={{color:'#f97316'}}>{academyDiff!.toLocaleString()}개</strong> 많습니다.
                         교육격차 지수 차이는 <strong style={{color:'#ef4444'}}>{gapDiff}점</strong>으로,
                         이는 {regionB.name} 학생이 동등한 입시 정보를 얻기 위해
                         <strong style={{color:'#a855f7'}}> AI 컨설팅이 핵심 보완재</strong>임을 시사합니다.
@@ -306,44 +299,6 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [],
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* ── 성적 분포 차트 ────────────────────────────────────── */}
-            {activeTool === 'score-dist' && (
-              <div>
-                <div style={{ marginBottom: 12, display: 'flex', gap: 6, flexWrap: 'wrap' as const }}>
-                  {SUBJECTS.map(s2 => (
-                    <button
-                      key={s2}
-                      onClick={() => setSubject(s2)}
-                      style={{
-                        padding: '4px 10px', fontSize: 10, borderRadius: 12, cursor: 'pointer',
-                        background: subject === s2 ? '#f97316' : 'rgba(255,255,255,0.06)',
-                        color: subject === s2 ? '#000' : '#94a3b8',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        fontWeight: subject === s2 ? 700 : 400,
-                      }}
-                    >{s2}</button>
-                  ))}
-                </div>
-                <div style={{ fontSize: 10, color: '#64748b', marginBottom: 10 }}>전국 지역별 수능 성적 백분위 (높을수록 좋음)</div>
-                <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 5 }}>
-                  {[...regions].sort((a, b) => b.avg_score_rank - a.avg_score_rank).map(r => {
-                    const subjectMod: Record<string, number> = { '수학': 0.98, '영어': 1.01, '국어': 0.99, '과학': 0.97, '사회': 1.0, '전체': 1.0 }
-                    const score = Math.min(99, Math.round(r.avg_score_rank * (subjectMod[subject] || 1)))
-                    const color = score > 90 ? '#ef4444' : score > 75 ? '#f97316' : score > 60 ? '#eab308' : '#3b82f6'
-                    return (
-                      <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 52, fontSize: 10, color: '#94a3b8', textAlign: 'right' as const, flexShrink: 0 }}>{r.name}</div>
-                        <div style={{ flex: 1, height: 14, background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: 3, transition: 'width 0.6s ease' }} />
-                        </div>
-                        <div style={{ width: 28, fontSize: 10, color, fontFamily: 'monospace', flexShrink: 0 }}>{score}</div>
-                      </div>
-                    )
-                  })}
-                </div>
               </div>
             )}
 

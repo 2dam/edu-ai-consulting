@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import type { AcademyNode, GangnamAcademy, LayerId } from '@/lib/data'
+import type { AcademyNode, LayerId } from '@/lib/data'
 import { LAYERS } from '@/lib/data'
 
 interface HUDProps {
@@ -9,7 +9,7 @@ interface HUDProps {
   backendCount: number
   activeLayers: Set<LayerId>
   onToggleLayer: (id: LayerId) => void
-  selected: AcademyNode | GangnamAcademy | null
+  selected: AcademyNode | null
   news: any[]
   onOpenFacilityPanel?: () => void
   cctvCount?: number
@@ -195,36 +195,26 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
         {selected ? (
           <>
             <div style={label}>선택된 항목</div>
-            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>
-              {'academy_count' in selected ? selected.name : selected.name}
-            </div>
-            {'academy_count' in selected ? (
-              <>
-                <div style={divider} />
-                <Row label="지역" value={`${selected.region} · ${selected.name}`} />
-                <Row label="학원 수" value={`${selected.academy_count.toLocaleString()}개`} color="#f97316" />
-                <Row label="수능 성적 백분위" value={`상위 ${100 - selected.avg_score_rank}%`} color={selected.avg_score_rank > 85 ? '#ef4444' : '#22c55e'} />
-                <Row label="교육격차 지수" value={`${(selected.gap_index * 100).toFixed(0)} / 100`} color={selected.gap_index > 0.7 ? '#ef4444' : '#eab308'} />
-                <Row label="등급" value={<span>{tierBadge(selected.tier)}</span>} />
-                <div style={divider} />
-                <div style={{ fontSize: 10, color: '#64748b' }}>
-                  격차지수 {(selected.gap_index * 100).toFixed(0)}은 강남(92) 대비{' '}
-                  <span style={{ color: '#ef4444' }}>{((0.92 - selected.gap_index) * 100).toFixed(0)}점</span> 낮음
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={divider} />
-                <Row label="과목" value={'subject' in selected ? selected.subject : ''} />
-                <Row label="등급" value={<span>{'tier' in selected ? tierBadge(selected.tier) : ''}</span>} />
-                {'website' in selected && selected.website && (
-                  <a href={selected.website} target="_blank" rel="noreferrer"
-                    style={{ display: 'block', marginTop: 8, fontSize: 10, color: '#3b82f6' }}>
-                    홈페이지 →
-                  </a>
-                )}
-              </>
-            )}
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>{selected.name}</div>
+            <div style={divider} />
+            <Row label="지역" value={`${selected.region} · ${selected.name}`} />
+            <Row label="학원 수" value={`${selected.academy_count.toLocaleString()}개`} color="#f97316" />
+            <Row label="교육격차 지수" value={`${(selected.gap_index * 100).toFixed(0)} / 100`} color={selected.gap_index > 0.7 ? '#ef4444' : '#eab308'} />
+            <Row label="등급" value={<span>{tierBadge(selected.tier)}</span>} />
+            {(() => {
+              const gangnam = regions.find(r => r.id === 'gangnam')
+              if (!gangnam || gangnam.id === selected.id) return null
+              const diff = (gangnam.gap_index - selected.gap_index) * 100
+              return (
+                <>
+                  <div style={divider} />
+                  <div style={{ fontSize: 10, color: '#64748b' }}>
+                    격차지수 {(selected.gap_index * 100).toFixed(0)}은 강남({(gangnam.gap_index * 100).toFixed(0)}) 대비{' '}
+                    <span style={{ color: diff > 0 ? '#ef4444' : '#22c55e' }}>{Math.abs(diff).toFixed(0)}점</span> {diff > 0 ? '낮음' : '높음'}
+                  </div>
+                </>
+              )
+            })()}
           </>
         ) : (
           <>

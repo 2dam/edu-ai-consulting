@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
-import type { AcademyNode, GangnamAcademy, LayerId, CctvPoint, EducationFacility } from '@/lib/data'
+import type { AcademyNode, LayerId, CctvPoint, EducationFacility } from '@/lib/data'
 import { KOREA_CENTER } from '@/lib/data'
 
 export interface MapHandle {
@@ -9,11 +9,10 @@ export interface MapHandle {
 
 interface MapProps {
   regions: AcademyNode[]
-  gangnamAcademies: GangnamAcademy[]
   activeLayers: Set<LayerId>
-  onSelect: (item: AcademyNode | GangnamAcademy | null) => void
+  onSelect: (item: AcademyNode | null) => void
   dropoutRisks?: Record<string, { risk_probability: number; predicted_label: string; top_factor: string | null }>
-  universities?: Array<{ id: string; name: string; short: string; lat: number; lng: number; rank: number; cutoff_avg: number; region: string }>
+  universities?: Array<{ id: string; name: string; short: string; lat: number; lng: number; rank?: number; cutoff_avg?: number; region: string }>
   cctvPoints?: CctvPoint[]
   educationFacilities?: EducationFacility[]
 }
@@ -33,7 +32,7 @@ function tierColor(tier: 'S' | 'A' | 'B' | 'C'): string {
 }
 
 const Map = forwardRef<MapHandle, MapProps>(function Map(
-  { regions, gangnamAcademies, activeLayers, onSelect, dropoutRisks = {}, universities = [], cctvPoints = [], educationFacilities = [] },
+  { regions, activeLayers, onSelect, dropoutRisks = {}, universities = [], cctvPoints = [], educationFacilities = [] },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -84,7 +83,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         const p = e.features[0].properties
         new maplibre.Popup({ closeButton: false })
           .setLngLat(e.lngLat)
-          .setHTML(`<b>${p.name}</b><br>위험도: <b style="color:${p.risk > 0.5 ? '#ef4444' : '#22c55e'}">${(p.risk * 100).toFixed(0)}%</b><br>주요 요인: ${p.factor || '—'}`)
+          .setHTML(`<b>${p.name}</b><br>위험도: <b style="color:${p.risk > 0.5 ? '#ef4444' : '#22c55e'}">${(p.risk * 100).toFixed(0)}%</b><br>주요 요인: ${p.factor || '—'}<br><span style="font-size:10px;color:#a855f7">⚠ 합성 데이터로 학습된 시범 모델 — 실제 학생 데이터 아님</span>`)
           .addTo(map)
       })
     }
@@ -130,9 +129,14 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       })
       map.on('click', 'university-circles', (e: any) => {
         const p = e.features[0].properties
+        // 실제 입시결과(경쟁률·컷오프) 데이터가 없는 대학이 대부분이라, 있을 때만 표시하고
+        // 없으면 그 줄 자체를 생략한다(가짜 숫자를 보여주거나 "데이터 없음"이라 우기지 않음).
+        const cutoffLine = p.cutoff_avg != null && p.rank != null
+          ? `<br>정시 커트라인 평균: <b style="color:#3b82f6">${p.cutoff_avg}점</b><br>전국 ${p.rank}위`
+          : ''
         new maplibre.Popup({ closeButton: false })
           .setLngLat(e.lngLat)
-          .setHTML(`<b>${p.name}</b><br>정시 커트라인 평균: <b style="color:#3b82f6">${p.cutoff_avg}점</b><br>전국 ${p.rank}위`)
+          .setHTML(`<b>${p.name}</b>${cutoffLine}`)
           .addTo(map)
       })
     }
@@ -221,71 +225,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       map.on('mouseleave', 'academy-circles', () => { map.getCanvas().style.cursor = '' })
     }
 
-    // ── 3. 강남 8학군 영역 ───────────────────────────────────────────────
-    if (!map.getSource('gangnam-zone') && activeLayers.has('gangnam-zone')) {
-      map.addSource('gangnam-zone', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[
-              [127.020, 37.475], [127.085, 37.475],
-              [127.085, 37.535], [127.020, 37.535],
-              [127.020, 37.475],
-            ]],
-          },
-          properties: {},
-        },
-      })
-      map.addLayer({
-        id: 'gangnam-zone-fill',
-        type: 'fill',
-        source: 'gangnam-zone',
-        paint: { 'fill-color': '#eab308', 'fill-opacity': 0.06 },
-      })
-      map.addLayer({
-        id: 'gangnam-zone-line',
-        type: 'line',
-        source: 'gangnam-zone',
-        paint: { 'line-color': '#eab308', 'line-width': 1.5, 'line-dasharray': [4, 3] },
-      })
-    }
-
-    // ── 4. 강남 학원 마커 ────────────────────────────────────────────────
-    if (!map.getSource('gangnam-academies')) {
-      map.addSource('gangnam-academies', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: gangnamAcademies.map(a => ({
-            type: 'Feature',
-            geometry: { type: 'Point', coordinates: [a.lng, a.lat] },
-            properties: { ...a },
-          })),
-        },
-      })
-      map.addLayer({
-        id: 'gangnam-academy-dots',
-        type: 'circle',
-        source: 'gangnam-academies',
-        paint: {
-          'circle-radius': 7,
-          'circle-color': '#f97316',
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#fff',
-          'circle-opacity': 0.9,
-        },
-        layout: { visibility: activeLayers.has('gangnam-zone') ? 'visible' : 'none' },
-      })
-      map.on('click', 'gangnam-academy-dots', (e: any) => {
-        const props = e.features[0].properties
-        const acad = gangnamAcademies.find(a => a.id === props.id)
-        if (acad) onSelect(acad)
-      })
-    }
-
-    // ── 5. 스캔 펄스 애니메이션 (강남 중심) ─────────────────────────────
+    // ── 4. 스캔 펄스 애니메이션 (강남 중심) ─────────────────────────────
     if (!map.getSource('pulse')) {
       map.addSource('pulse', {
         type: 'geojson',
@@ -312,7 +252,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       }
       animate()
     }
-  }, [regions, gangnamAcademies, activeLayers, onSelect])
+  }, [regions, activeLayers, onSelect])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -358,9 +298,6 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     toggle('gap-heatmap-layer', activeLayers.has('gap-heatmap'))
     toggle('academy-circles', activeLayers.has('academy-density'))
     toggle('academy-labels', activeLayers.has('academy-density'))
-    toggle('gangnam-academy-dots', activeLayers.has('gangnam-zone'))
-    toggle('gangnam-zone-fill', activeLayers.has('gangnam-zone'))
-    toggle('gangnam-zone-line', activeLayers.has('gangnam-zone'))
     toggle('dropout-circles', activeLayers.has('dropout-risk'))
     toggle('university-circles', activeLayers.has('universities'))
     toggle('university-labels', activeLayers.has('universities'))

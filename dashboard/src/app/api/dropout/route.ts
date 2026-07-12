@@ -44,15 +44,19 @@ export async function GET() {
             risk_probability: data.dropout_risk_probability,
             predicted_label: data.predicted_label,
             top_factor: data.feature_contributions?.[0]?.feature || null,
+            // 백엔드가 실제 학생 데이터가 없어 합성 데이터로 학습했는지 알려주는 플래그 —
+            // 예전엔 API 응답엔 있었지만 프론트로 전달 안 돼서 화면엔 전혀 안 보였다.
+            is_synthetic_training_data: data.is_synthetic_training_data ?? true,
           }
         }
       } catch {
-        // 백엔드 미연결 시 피처 기반 단순 추정
+        // 백엔드 미연결 시 피처 기반 단순 추정 — 이것도 당연히 합성 데이터 기반.
         const avg = (features.attendance_rate * 40 + features.motivation_score / 5 * 40 + features.midterm_score / 100 * 20)
         results[regionId] = {
           risk_probability: Math.max(0.02, Math.min(0.95, 1 - avg / 100)),
           predicted_label: avg < 50 ? 'at_risk' : 'on_track',
           top_factor: features.attendance_rate < 0.85 ? '출석률' : '동기점수',
+          is_synthetic_training_data: true,
         }
       }
     })
