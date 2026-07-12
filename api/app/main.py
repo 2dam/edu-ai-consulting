@@ -9,6 +9,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import ai_engine, cctv, feedback_loop, imputation, naver_news, predictive_model, psychology_engine, qcrm_engine, youtube
@@ -184,29 +185,34 @@ _EDUCATION_FACILITIES_MAX_LIMIT = 3000  # 수만 건을 한 번에 메모리로 
 def list_education_facilities(
     facility_type: str | None = None,
     region: str | None = None,
+    district: str | None = None,
     limit: int = 200,
     db: Session = Depends(get_db),
 ):
     """crawler/early_education_spider 가 수집한 어린이집·유치원·초등학교 기초자료 조회.
 
-    facility_type: daycare | kindergarten | elementary
+    facility_type: daycare | kindergarten | elementary | academy | university
+
+    facility_type/region/district는 limit을 적용하기 전에 SQL(json_extract) 레벨에서
+    걸러낸다 — 예전엔 "최근 limit건을 가져온 뒤 Python에서 필터"하는 방식이라, 특정
+    facility_type의 크롤이 대량으로 몰리면(예: 유치원 8만건 적재) 그보다 오래된 다른
+    타입(학원·초등 등)이 최근 limit건 안에 아예 안 들어와 조회 결과에서 통째로 사라지는
+    버그가 있었다.
     """
     limit = min(limit, _EDUCATION_FACILITIES_MAX_LIMIT)
-    records = (
-        db.query(RawRecord)
-        .filter(RawRecord.item_type == "EducationFacilityItem")
-        .order_by(RawRecord.created_at.desc())
-        .limit(limit)
-        .all()
-    )
+    query = db.query(RawRecord).filter(RawRecord.item_type == "EducationFacilityItem")
+    if facility_type:
+        query = query.filter(func.json_extract(RawRecord.data, "$.facility_type") == facility_type)
+    if region:
+        query = query.filter(func.json_extract(RawRecord.data, "$.region") == region)
+    if district:
+        query = query.filter(func.json_extract(RawRecord.data, "$.district") == district)
+    records = query.order_by(RawRecord.created_at.desc()).limit(limit).all()
+
     results = []
     summary: dict[str, int] = {}
     for r in records:
         data = r.data or {}
-        if facility_type and data.get("facility_type") != facility_type:
-            continue
-        if region and data.get("region") != region:
-            continue
         results.append({"id": r.id, "data": data, "created_at": r.created_at})
         ft = data.get("facility_type", "unknown")
         summary[ft] = summary.get(ft, 0) + 1
