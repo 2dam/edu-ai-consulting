@@ -220,6 +220,53 @@ def list_education_facilities(
     return {"items": results, "total": len(results), "summary_by_type": summary}
 
 
+@app.get("/region-stats")
+def region_stats(db: Session = Depends(get_db)):
+    """전국 시군구별 시설 유형 카운트 집계.
+
+    대시보드의 "격차 계산기"가 지역별 academy_count/gap_index를 하드코딩된 가짜 숫자
+    대신 실제 크롤링 데이터로 보여주는 데 쓴다. 로우 전체를 Python으로 끌어오지 않고
+    SQL GROUP BY로 DB가 집계하게 한다 — 오늘 겪은 OOM(수만 건을 메모리로 올려 인스턴스
+    재시작)이 재발하지 않도록.
+    """
+    region_col = func.json_extract(RawRecord.data, "$.region").label("region")
+    district_col = func.json_extract(RawRecord.data, "$.district").label("district")
+    ftype_col = func.json_extract(RawRecord.data, "$.facility_type").label("facility_type")
+    rows = (
+        db.query(region_col, district_col, ftype_col, func.count().label("cnt"))
+        .filter(RawRecord.item_type == "EducationFacilityItem")
+        .group_by(region_col, district_col, ftype_col)
+        .all()
+    )
+
+    by_district: dict[tuple[str, str], dict[str, int]] = {}
+    for region, district, ftype, cnt in rows:
+        key = (region or "", district or "")
+        by_district.setdefault(key, {})[ftype or "unknown"] = cnt
+
+    districts = []
+    academy_counts = []
+    for (region, district), counts in by_district.items():
+        academy_count = counts.get("academy", 0)
+        academy_counts.append(academy_count)
+        districts.append(
+            {"region": region, "district": district, "counts": counts, "academy_count": academy_count}
+        )
+
+    # 학원 수 기반 상대 지수(0~1) — 인구 대비 정규화가 아니라 전국 시군구 중 상대적
+    # 위치만 나타낸다. 정밀한 지표인 척하지 않는다.
+    lo = min(academy_counts) if academy_counts else 0
+    hi = max(academy_counts) if academy_counts else 0
+    span = (hi - lo) or 1
+    for d in districts:
+        d["gap_index"] = round((d["academy_count"] - lo) / span, 4)
+
+    return {
+        "districts": districts,
+        "note": "gap_index는 학원 수 기반 상대 지수(min-max 정규화)이며 인구 대비 정규화는 아님",
+    }
+
+
 # ── 전국 공공 CCTV (국가교통정보센터 ITS, 도로 구간만) ────────────────────────
 
 @app.get("/cctv", response_model=CctvResponse)
