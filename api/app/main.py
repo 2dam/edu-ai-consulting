@@ -2,6 +2,7 @@ import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -14,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from app import ai_engine, cctv, feedback_loop, imputation, naver_news, predictive_model, psychology_engine, qcrm_engine, youtube
 from app import models_community  # noqa: F401 - Base.metadata에 커뮤니티 테이블을 등록시키기 위한 import
+from app.models_community import Comment, CommunityPost, User
 from app import models_reputation  # noqa: F401 - Base.metadata에 학원 평판 테이블을 등록시키기 위한 import
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
@@ -264,6 +266,40 @@ def region_stats(db: Session = Depends(get_db)):
     return {
         "districts": districts,
         "note": "gap_index는 학원 수 기반 상대 지수(min-max 정규화)이며 인구 대비 정규화는 아님",
+    }
+
+
+@app.get("/site-stats")
+def site_stats(db: Session = Depends(get_db)):
+    """랜딩페이지("숫자로 먼저 보여드립니다" 섹션)가 쓰는 실제 운영 지표.
+
+    전부 단순 COUNT 쿼리 — 무거운 집계 없음. 예전엔 이 숫자들이 landing.html에
+    하드코딩된 시안용 예시치("1,842개 학원 커리큘럼" 등)였다.
+    """
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_ago = now - timedelta(days=7)
+
+    facility_records = (
+        db.query(func.count(RawRecord.id)).filter(RawRecord.item_type == "EducationFacilityItem").scalar()
+    )
+    curriculum_items = db.query(func.count(RawRecord.id)).filter(RawRecord.item_type == "CurriculumItem").scalar()
+    admission_data_points = (
+        db.query(func.count(RawRecord.id)).filter(RawRecord.item_type == "AdmissionResultItem").scalar()
+    )
+    reports_issued = db.query(func.count(ConsultingReport.id)).scalar()
+    active_members = db.query(func.count(User.id)).scalar()
+    posts_today = db.query(func.count(CommunityPost.id)).filter(CommunityPost.created_at >= today_start).scalar()
+    comments_this_week = db.query(func.count(Comment.id)).filter(Comment.created_at >= week_ago).scalar()
+
+    return {
+        "facility_records": facility_records or 0,
+        "curriculum_items": curriculum_items or 0,
+        "admission_data_points": admission_data_points or 0,
+        "reports_issued": reports_issued or 0,
+        "active_members": active_members or 0,
+        "posts_today": posts_today or 0,
+        "comments_this_week": comments_this_week or 0,
     }
 
 

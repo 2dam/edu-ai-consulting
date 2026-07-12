@@ -249,12 +249,11 @@
       <p>설명보다 데이터가 먼저입니다. 지금까지 분석하고 발급한 실적을 그대로 공개합니다.</p>
     </div>
     <div class="stat-grid">
-      <div class="stat-tile"><div class="figure num">1,842<span class="unit">개</span></div><div class="label">분석된 학원 커리큘럼</div></div>
-      <div class="stat-tile"><div class="figure num">37,400<span class="unit">건</span></div><div class="label">대입 결과 데이터 포인트</div></div>
-      <div class="stat-tile"><div class="figure num">6,200<span class="unit">건</span></div><div class="label">발급된 맞춤 리포트</div></div>
-      <div class="stat-tile"><div class="figure num">1,240<span class="unit">명</span></div><div class="label">활성 학부모·교육자 커뮤니티</div></div>
+      <div class="stat-tile"><div class="figure num" id="stat-curriculum">—</div><div class="label">분석된 학원 커리큘럼</div></div>
+      <div class="stat-tile"><div class="figure num" id="stat-admission">—</div><div class="label">대입 결과 데이터 포인트</div></div>
+      <div class="stat-tile"><div class="figure num" id="stat-reports">—</div><div class="label">발급된 맞춤 리포트</div></div>
+      <div class="stat-tile"><div class="figure num" id="stat-members">—</div><div class="label">활성 학부모·교육자 커뮤니티</div></div>
     </div>
-    <div class="sample-note">* 위 지표는 시안용 예시 수치입니다 — 실제 운영 데이터로 교체 예정입니다.</div>
   </section>
 
   <section class="chapter wrap" id="data">
@@ -299,33 +298,32 @@
   <section class="chapter wrap" id="results">
     <div class="chapter-head">
       <div class="eyebrow"><span class="chapter-no">Chapter 3.</span> 성과와 사례</div>
-      <h2>리포트 다음에 일어난 일</h2>
-      <p>비식별 처리된 실제 컨설팅 흐름입니다. 각 사례는 상담 전 고민과 상담 후 결과를 함께 담았습니다.</p>
+      <h2>실제 운영 현황으로 보여드립니다</h2>
+      <p>아직 후기를 지어내지 않습니다. 지금까지 실제로 수집·발급·운영한 데이터를 그대로 요약합니다.</p>
     </div>
     <div class="case-grid">
       <div class="case-card">
-        <span class="tag">정시 전략 확정</span>
-        <div class="path">일반고 → 수도권 공과대학</div>
-        <div class="profile">고2 · 내신 3등급 · 전기전자공학 지망 · 광주</div>
-        <blockquote>"막연했던 전형 선택이 데이터로 구체화됐어요. 세 달 만에 지원 전략을 확정했습니다."</blockquote>
-        <div class="attribution">학부모 K님</div>
+        <span class="tag">시설 데이터</span>
+        <div class="path">전국 어린이집·유치원·초등·학원·대학</div>
+        <div class="profile">나이스·유치원알리미·어린이집정보공개포털 등 공식 출처 기반</div>
+        <blockquote id="case-facility-count">시설 데이터 집계 중…</blockquote>
+        <div class="attribution">실시간 집계</div>
       </div>
       <div class="case-card">
-        <span class="tag">1차 서류 합격</span>
-        <div class="path">자사고 → 학생부종합전형</div>
-        <div class="profile">고3 · 전공적합성 보완 필요</div>
-        <blockquote>"부족했던 세특 방향을 컨설턴트가 구체적으로 짚어줬습니다."</blockquote>
-        <div class="attribution">학생 본인</div>
+        <span class="tag">AI 리포트</span>
+        <div class="path">발급 현황</div>
+        <div class="profile">학생 프로필 기반 맞춤 입시 리포트</div>
+        <blockquote id="case-reports">리포트 집계 중…</blockquote>
+        <div class="attribution">실시간 집계</div>
       </div>
       <div class="case-card">
-        <span class="tag">상담 전환율 상승</span>
-        <div class="path">학원 원장 인터뷰</div>
-        <div class="profile">강남 소재 종합학원 · 재원생 320명</div>
-        <blockquote>"우리 학원만의 데이터가 아니라 전국 데이터와 비교할 수 있어서 상담 설득력이 달라졌습니다."</blockquote>
-        <div class="attribution">OO학원 원장</div>
+        <span class="tag">커뮤니티</span>
+        <div class="path">학부모·교육자 커뮤니티</div>
+        <div class="profile">지역 게시판 · 실시간 교육뉴스</div>
+        <blockquote id="case-community">커뮤니티 집계 중…</blockquote>
+        <div class="attribution">실시간 집계</div>
       </div>
     </div>
-    <div class="sample-note">* 위 사례는 방향성을 보여주기 위한 예시입니다 — 실제 후기로 교체 예정입니다.</div>
   </section>
 
   <section class="chapter wrap" id="community">
@@ -336,9 +334,9 @@
     </div>
     <div class="live-bar">
       <div style="display:flex; align-items:center; gap:8px;"><span class="pulse" aria-hidden="true"></span><span style="font-size:12px; color:var(--ink-faint); font-family:var(--font-mono);">지금</span></div>
-      <div class="live-bar-item">오늘 새 글 <span class="v num">18</span></div>
-      <div class="live-bar-item">이번 주 댓글 <span class="v num">462</span></div>
-      <div class="live-bar-item">활성 회원 <span class="v num">1,240</span>명</div>
+      <div class="live-bar-item">오늘 새 글 <span class="v num" id="live-posts-today">—</span></div>
+      <div class="live-bar-item">이번 주 댓글 <span class="v num" id="live-comments-week">—</span></div>
+      <div class="live-bar-item">활성 회원 <span class="v num" id="live-members">—</span>명</div>
     </div>
     <div class="feature-grid">
       <div class="feature-card">
@@ -582,6 +580,41 @@
 </footer>
 
 <script>
+  // Chapter 1/3/4 실제 운영 지표 — /site-stats(단순 COUNT 쿼리)를 그대로 반영한다.
+  // 예전엔 이 자리에 하드코딩된 시안용 예시 수치가 있었다.
+  (async () => {
+    const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('ko-KR') : '—');
+    try {
+      const res = await fetch('/site-stats');
+      if (!res.ok) throw new Error(`site-stats ${res.status}`);
+      const s = await res.json();
+
+      document.getElementById('stat-curriculum').innerHTML = fmt(s.curriculum_items) + '<span class="unit">개</span>';
+      document.getElementById('stat-admission').innerHTML = fmt(s.admission_data_points) + '<span class="unit">건</span>';
+      document.getElementById('stat-reports').innerHTML = fmt(s.reports_issued) + '<span class="unit">건</span>';
+      document.getElementById('stat-members').innerHTML = fmt(s.active_members) + '<span class="unit">명</span>';
+
+      document.getElementById('case-facility-count').textContent =
+        `전국 ${fmt(s.facility_records)}건의 시설 정보를 실제로 수집·적재했습니다.`;
+      document.getElementById('case-reports').textContent =
+        `지금까지 ${fmt(s.reports_issued)}건의 AI 리포트를 발급했습니다.`;
+      document.getElementById('case-community').textContent =
+        `커뮤니티 활성 회원 ${fmt(s.active_members)}명, 이번 주 댓글 ${fmt(s.comments_this_week)}건이 오갔습니다.`;
+
+      document.getElementById('live-posts-today').textContent = fmt(s.posts_today);
+      document.getElementById('live-comments-week').textContent = fmt(s.comments_this_week);
+      document.getElementById('live-members').textContent = fmt(s.active_members);
+    } catch (err) {
+      console.error('site-stats fetch failed', err);
+      ['stat-curriculum', 'stat-admission', 'stat-reports', 'stat-members'].forEach((id) => {
+        document.getElementById(id).textContent = '—';
+      });
+      ['case-facility-count', 'case-reports', 'case-community'].forEach((id) => {
+        document.getElementById(id).textContent = '집계 데이터를 불러오지 못했습니다.';
+      });
+    }
+  })();
+
   const form = document.getElementById('report-form');
   const btn = document.getElementById('submit-btn');
   const result = document.getElementById('try-result');
