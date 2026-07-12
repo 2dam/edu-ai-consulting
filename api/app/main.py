@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
@@ -222,6 +223,10 @@ def list_education_facilities(
     return {"items": results, "total": len(results), "summary_by_type": summary}
 
 
+_region_stats_cache: dict = {"data": None, "computed_at": 0.0}
+_REGION_STATS_CACHE_TTL = 600  # 초 — 아래 참고
+
+
 @app.get("/region-stats")
 def region_stats(db: Session = Depends(get_db)):
     """전국 시군구별 시설 유형 카운트 집계.
@@ -230,7 +235,17 @@ def region_stats(db: Session = Depends(get_db)):
     대신 실제 크롤링 데이터로 보여주는 데 쓴다. 로우 전체를 Python으로 끌어오지 않고
     SQL GROUP BY로 DB가 집계하게 한다 — 오늘 겪은 OOM(수만 건을 메모리로 올려 인스턴스
     재시작)이 재발하지 않도록.
+
+    긴급: 배포 직후 raw_records가 12만 건대로 커진 상태에서 대시보드가 30초마다
+    이 엔드포인트를 호출하면서(여러 탭 동시 접속 시 더 심함) json_extract GROUP BY가
+    반복 실행돼 SQLite 락 경합으로 서버 전체가 응답 불가(health check까지 타임아웃)에
+    빠졌다. 결과가 자주 바뀌는 데이터가 아니므로 프로세스 메모리에 캐싱해 실제 집계는
+    캐시가 만료됐을 때만 한 번 실행되게 한다.
     """
+    now = time.monotonic()
+    if _region_stats_cache["data"] is not None and now - _region_stats_cache["computed_at"] < _REGION_STATS_CACHE_TTL:
+        return _region_stats_cache["data"]
+
     region_col = func.json_extract(RawRecord.data, "$.region").label("region")
     district_col = func.json_extract(RawRecord.data, "$.district").label("district")
     ftype_col = func.json_extract(RawRecord.data, "$.facility_type").label("facility_type")
@@ -263,10 +278,13 @@ def region_stats(db: Session = Depends(get_db)):
     for d in districts:
         d["gap_index"] = round((d["academy_count"] - lo) / span, 4)
 
-    return {
+    result = {
         "districts": districts,
         "note": "gap_index는 학원 수 기반 상대 지수(min-max 정규화)이며 인구 대비 정규화는 아님",
     }
+    _region_stats_cache["data"] = result
+    _region_stats_cache["computed_at"] = now
+    return result
 
 
 @app.get("/site-stats")
