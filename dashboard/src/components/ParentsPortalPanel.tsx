@@ -24,11 +24,9 @@ export default function ParentsPortalPanel() {
   }, [])
 
   return (
-    // 예전엔 이 패널이 position:absolute로 직접 top 값을 지정해서, 위에 있는
-    // "AI 루프 상태" 패널이 내용에 따라 키가 달라지면 서로 겹쳤다 — 이제
-    // HUD.tsx의 우측 flex column(rightPanelExtra)에 일반 흐름으로 들어가
-    // 자연스럽게 그 아래로 쌓인다. 접기 기능도 추가해 지도를 가리고 싶지
-    // 않을 때 헤더만 남기고 숨길 수 있게 했다.
+    // HUD.tsx의 좌측 flex column(leftPanelExtra)에 일반 흐름으로 들어가
+    // "시스템 현황"과 "데이터 레이어" 패널 사이에 자연스럽게 쌓인다. 접기
+    // 기능도 추가해 지도를 가리고 싶지 않을 때 헤더만 남기고 숨길 수 있게 했다.
     <div style={{
       width: '100%',
       maxHeight: collapsed ? 'none' : 320,

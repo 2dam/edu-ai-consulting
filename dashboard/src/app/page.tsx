@@ -139,8 +139,8 @@ export default function Page() {
         />
       </div>
 
-      {/* HUD 오버레이 — 학부모On누리 패널은 우측 flex column 안에 자연스럽게 쌓이도록
-          rightPanelExtra로 전달한다(따로 절대좌표를 계산하지 않음). */}
+      {/* HUD 오버레이 — 학부모On누리 패널은 좌측 flex column(시스템 현황과 데이터
+          레이어 사이)에 자연스럽게 쌓이도록 leftPanelExtra로 전달한다. */}
       <HUD
         regions={data.regions}
         loopStatus={data.loop_status}
@@ -151,18 +151,16 @@ export default function Page() {
         news={news}
         onOpenFacilityPanel={() => setFacilityPanelSignal(n => n + 1)}
         cctvCount={cctvPoints.length}
+        leftPanelExtra={<ParentsPortalPanel />}
         rightPanelExtra={
-          <>
-            <ConsultingIntelPanel
-              regions={data.regions}
-              facilities={educationFacilities}
-              onOpenOsint={command => setOsintCommandSignal({
-                seq: Date.now(),
-                ...command,
-              })}
-            />
-            <ParentsPortalPanel />
-          </>
+          <ConsultingIntelPanel
+            regions={data.regions}
+            facilities={educationFacilities}
+            onOpenOsint={command => setOsintCommandSignal({
+              seq: Date.now(),
+              ...command,
+            })}
+          />
         }
       />
 

@@ -14,6 +14,7 @@ interface HUDProps {
   onOpenFacilityPanel?: () => void
   cctvCount?: number
   rightPanelExtra?: React.ReactNode
+  leftPanelExtra?: React.ReactNode
 }
 
 function Clock() {
@@ -42,7 +43,7 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
   )
 }
 
-export default function HUD({ regions, loopStatus, backendCount, activeLayers, onToggleLayer, selected, news, onOpenFacilityPanel, cctvCount = 0, rightPanelExtra }: HUDProps) {
+export default function HUD({ regions, loopStatus, backendCount, activeLayers, onToggleLayer, selected, news, onOpenFacilityPanel, cctvCount = 0, rightPanelExtra, leftPanelExtra }: HUDProps) {
   const [newsCollapsed, setNewsCollapsed] = useState(false)
   const totalAcademies = regions.reduce((s, r) => s + r.academy_count, 0)
   const maxGap = Math.max(...regions.map(r => r.gap_index))
@@ -105,8 +106,15 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
         >🧑‍⚖️ EduIntelligence Panel</a>
       </div>
 
-      {/* ── 좌측 패널: 통계 ──────────────────────────────────────────── */}
-      <div style={{ ...panel, top: 64, left: 16, width: 220 }}>
+      {/* ── 좌측 패널 스택: 통계 + 추가 패널(학부모On누리 등) + 레이어 컨트롤 ───
+          우측 패널 스택과 같은 이유로 flex column을 쓴다 — 각 패널이 절대좌표로
+          top/bottom을 직접 계산하면 내용 높이가 바뀔 때 서로 겹친다. */}
+      <div style={{
+        position: 'absolute', top: 64, left: 16, width: 220, bottom: 20,
+        display: 'flex', flexDirection: 'column' as const, gap: 12,
+        overflowY: 'auto' as const,
+      }}>
+      <div style={{ ...panel, position: 'static' as const }}>
         <div style={label}>시스템 현황</div>
         <StatBar label="수집된 데이터" value={backendCount} max={5000} color="#f97316" />
         <StatBar label="전국 학원 수" value={totalAcademies} max={100000} color="#3b82f6" />
@@ -133,8 +141,9 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
         </div>
       </div>
 
-      {/* ── 좌하단: 레이어 컨트롤 ────────────────────────────────────── */}
-      <div style={{ ...panel, bottom: 20, left: 16, width: 220 }}>
+      {leftPanelExtra}
+
+      <div style={{ ...panel, position: 'static' as const }}>
         <div style={label}>데이터 레이어</div>
         {LAYERS.map(layer => (
           <div key={layer.id}>
@@ -176,6 +185,7 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
             🧸 어린이집·유치원·학원 평가정보 보기 →
           </button>
         )}
+      </div>
       </div>
 
       {/* ── 우측 패널 스택: 선택 항목 상세 + 추가 패널(학부모On누리 등) ───
