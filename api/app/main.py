@@ -69,6 +69,8 @@ async def lifespan(app: FastAPI):
     # 운영 DB의 raw_records가 수만 건 규모라 CREATE INDEX/ANALYZE를 앱 시작(lifespan) 경로에
     # 동기로 넣었더니 기동 자체가 헬스체크 타임아웃을 넘겨버려 502를 유발했다 — 되돌림.
     # 인덱스 보정은 별도 1회성 스크립트로 오프라인에서 실행할 것(앱 기동 경로에 넣지 않는다).
+    # facility_type/region/district 컬럼 승격(ADD COLUMN + 백필 + 인덱스)도 같은 이유로
+    # backfill_facility_columns.py로 뺐다 — 새 DB는 모델 정의에 컬럼이 이미 있어 문제없다.
     from app.database import SessionLocal
     db = SessionLocal()
     try:
@@ -145,6 +147,11 @@ def ingest(payload: IngestPayload, db: Session = Depends(get_db)):
         item_type=payload.item_type,
         data=payload.data,
         source_url=payload.data.get("source_url", ""),
+        # facility_type/region/district를 적재 시점에 실제 컬럼으로도 채워둔다 — 조회 시
+        # json_extract 풀스캔 대신 인덱스를 타게 하기 위함(백필은 backfill_facility_columns.py).
+        facility_type=payload.data.get("facility_type"),
+        region=payload.data.get("region"),
+        district=payload.data.get("district"),
     )
     db.add(record)
     db.commit()
@@ -159,6 +166,9 @@ def ingest_batch(payloads: list[IngestPayload], db: Session = Depends(get_db)):
             item_type=p.item_type,
             data=p.data,
             source_url=p.data.get("source_url", ""),
+            facility_type=p.data.get("facility_type"),
+            region=p.data.get("region"),
+            district=p.data.get("district"),
         )
         for p in payloads
     ]
@@ -182,6 +192,9 @@ def list_records(item_type: str | None = None, limit: int = 50, db: Session = De
 # ── 어린이집·유치원·초등학교 기초자료 (컨설팅 대상 확장) ─────────────────────
 
 _EDUCATION_FACILITIES_MAX_LIMIT = 3000  # 수만 건을 한 번에 메모리로 올리다 인스턴스 OOM을 유발한 적이 있어 서버 측에서 상한을 강제한다.
+_EDUCATION_FACILITIES_CACHE_TTL = 60  # 초 — 크롤러가 계속 새로 적재하므로 /region-stats(600초)보다 짧게 둔다.
+_education_facilities_cache: dict[tuple, dict] = {}
+_EDUCATION_FACILITIES_CACHE_MAX_KEYS = 200  # 쿼리 파라미터 조합이 비정상적으로 늘어나는 걸 대비한 안전장치.
 
 
 @app.get("/education-facilities")
@@ -196,20 +209,29 @@ def list_education_facilities(
 
     facility_type: daycare | kindergarten | elementary | academy | university
 
-    facility_type/region/district는 limit을 적용하기 전에 SQL(json_extract) 레벨에서
-    걸러낸다 — 예전엔 "최근 limit건을 가져온 뒤 Python에서 필터"하는 방식이라, 특정
-    facility_type의 크롤이 대량으로 몰리면(예: 유치원 8만건 적재) 그보다 오래된 다른
-    타입(학원·초등 등)이 최근 limit건 안에 아예 안 들어와 조회 결과에서 통째로 사라지는
-    버그가 있었다.
+    facility_type/region/district는 limit을 적용하기 전에 SQL 레벨에서 걸러낸다 — 예전엔
+    "최근 limit건을 가져온 뒤 Python에서 필터"하는 방식이라, 특정 facility_type의 크롤이
+    대량으로 몰리면(예: 유치원 8만건 적재) 그보다 오래된 다른 타입(학원·초등 등)이 최근
+    limit건 안에 아예 안 들어와 조회 결과에서 통째로 사라지는 버그가 있었다.
+
+    예전엔 json_extract(data, '$.facility_type')로 걸러 raw_records 12만 건대를 매번
+    풀스캔했다 — facility_type/region/district를 실제 컬럼으로 승격해 인덱스를 태우고
+    (backfill_facility_columns.py), 짧은 TTL 캐시로 HUD 대시보드의 동시 방문 부하까지 흡수한다.
     """
     limit = min(limit, _EDUCATION_FACILITIES_MAX_LIMIT)
+    cache_key = (facility_type, region, district, limit)
+    now = time.monotonic()
+    cached = _education_facilities_cache.get(cache_key)
+    if cached is not None and now - cached["computed_at"] < _EDUCATION_FACILITIES_CACHE_TTL:
+        return cached["data"]
+
     query = db.query(RawRecord).filter(RawRecord.item_type == "EducationFacilityItem")
     if facility_type:
-        query = query.filter(func.json_extract(RawRecord.data, "$.facility_type") == facility_type)
+        query = query.filter(RawRecord.facility_type == facility_type)
     if region:
-        query = query.filter(func.json_extract(RawRecord.data, "$.region") == region)
+        query = query.filter(RawRecord.region == region)
     if district:
-        query = query.filter(func.json_extract(RawRecord.data, "$.district") == district)
+        query = query.filter(RawRecord.district == district)
     matching_total = query.count()
     records = query.order_by(RawRecord.created_at.desc()).limit(limit).all()
 
@@ -221,12 +243,16 @@ def list_education_facilities(
         ft = data.get("facility_type", "unknown")
         summary[ft] = summary.get(ft, 0) + 1
 
-    return {
+    result = {
         "items": results,
         "total": len(results),
         "matching_total": matching_total,
         "summary_by_type": summary,
     }
+    if len(_education_facilities_cache) >= _EDUCATION_FACILITIES_CACHE_MAX_KEYS:
+        _education_facilities_cache.clear()
+    _education_facilities_cache[cache_key] = {"data": result, "computed_at": now}
+    return result
 
 
 _region_stats_cache: dict = {"data": None, "computed_at": 0.0}
@@ -281,15 +307,15 @@ def region_stats(db: Session = Depends(get_db)):
     if _region_stats_cache["data"] is not None and now - _region_stats_cache["computed_at"] < _REGION_STATS_CACHE_TTL:
         return _region_stats_cache["data"]
 
-    region_expr = func.json_extract(RawRecord.data, "$.region")
-    district_expr = func.json_extract(RawRecord.data, "$.district")
+    # 예전엔 json_extract(data, '$.region') 등으로 걸러 raw_records를 풀스캔했다 — 실제
+    # 컬럼으로 승격된 facility_type/region/district를 쓰면 인덱스를 태운다(백필: backfill_facility_columns.py).
     grouped = (
-        db.query(region_expr, district_expr, func.count(RawRecord.id))
+        db.query(RawRecord.region, RawRecord.district, func.count(RawRecord.id))
         .filter(
             RawRecord.item_type == "EducationFacilityItem",
-            func.json_extract(RawRecord.data, "$.facility_type") == "academy",
+            RawRecord.facility_type == "academy",
         )
-        .group_by(region_expr, district_expr)
+        .group_by(RawRecord.region, RawRecord.district)
         .all()
     )
     by_region_and_district: dict[tuple[str | None, str | None], int] = {}
@@ -338,6 +364,11 @@ def region_stats(db: Session = Depends(get_db)):
     return result
 
 
+_site_stats_cache: dict = {"data": None, "computed_at": 0.0}
+_SITE_STATS_CACHE_TTL = 120  # 초 — 랜딩페이지 지표라 실시간성이 중요하지 않다. COUNT 7개가 방문마다
+# 몰리는 걸 흡수해 DB 커넥션 풀 고갈(QueuePool timeout)에 조금이라도 덜 기여하게 한다.
+
+
 @app.get("/site-stats")
 def site_stats(db: Session = Depends(get_db)):
     """랜딩페이지("숫자로 먼저 보여드립니다" 섹션)가 쓰는 실제 운영 지표.
@@ -345,6 +376,10 @@ def site_stats(db: Session = Depends(get_db)):
     전부 단순 COUNT 쿼리 — 무거운 집계 없음. 예전엔 이 숫자들이 landing.html에
     하드코딩된 시안용 예시치("1,842개 학원 커리큘럼" 등)였다.
     """
+    now_monotonic = time.monotonic()
+    if _site_stats_cache["data"] is not None and now_monotonic - _site_stats_cache["computed_at"] < _SITE_STATS_CACHE_TTL:
+        return _site_stats_cache["data"]
+
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_ago = now - timedelta(days=7)
@@ -361,7 +396,7 @@ def site_stats(db: Session = Depends(get_db)):
     posts_today = db.query(func.count(CommunityPost.id)).filter(CommunityPost.created_at >= today_start).scalar()
     comments_this_week = db.query(func.count(Comment.id)).filter(Comment.created_at >= week_ago).scalar()
 
-    return {
+    result = {
         "facility_records": facility_records or 0,
         "curriculum_items": curriculum_items or 0,
         "admission_data_points": admission_data_points or 0,
@@ -370,6 +405,9 @@ def site_stats(db: Session = Depends(get_db)):
         "posts_today": posts_today or 0,
         "comments_this_week": comments_this_week or 0,
     }
+    _site_stats_cache["data"] = result
+    _site_stats_cache["computed_at"] = now_monotonic
+    return result
 
 
 # ── 전국 공공 CCTV (국가교통정보센터 ITS, 도로 구간만) ────────────────────────

@@ -17,11 +17,21 @@ class RawRecord(Base):
     """
 
     __tablename__ = "raw_records"
-    __table_args__ = (Index("ix_raw_records_item_type_created_at", "item_type", "created_at"),)
+    __table_args__ = (
+        Index("ix_raw_records_item_type_created_at", "item_type", "created_at"),
+        # facility_type/region/district는 예전엔 data(JSON) 안에서 json_extract로 걸러서
+        # /education-facilities, /region-stats가 12만 건대 raw_records를 매번 풀스캔했다.
+        # 실제 컬럼으로 승격해 인덱스를 태우도록 바꾼다 — 기존 운영 DB는 create_all이
+        # 컬럼을 추가해주지 않으므로 main.py의 lifespan에서 ALTER TABLE + 백필로 보정한다.
+        Index("ix_raw_records_item_type_facility_type_created_at", "item_type", "facility_type", "created_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     item_type = Column(String(64), index=True)
     data = Column(JSON)
+    facility_type = Column(String(32), nullable=True)
+    region = Column(String(64), index=True, nullable=True)
+    district = Column(String(64), index=True, nullable=True)
     source_url = Column(String(512))
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
