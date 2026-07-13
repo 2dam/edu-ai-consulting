@@ -64,7 +64,10 @@ export default function VideoPanel() {
   const youtubeWatchUrl = video
     ? `https://www.youtube.com/watch?v=${video.video_id}`
     : youtubeSearchUrl
-  const embedUrl = video ? `https://www.youtube.com/embed/${video.video_id}?enablejsapi=1` : ''
+  const embedOrigin = typeof window === 'undefined' ? '' : encodeURIComponent(window.location.origin)
+  const embedUrl = video
+    ? `https://www.youtube.com/embed/${video.video_id}?enablejsapi=1${embedOrigin ? `&origin=${embedOrigin}` : ''}`
+    : ''
 
   useEffect(() => {
     if (!loaded) return
@@ -191,8 +194,9 @@ export default function VideoPanel() {
                   ref={iframeRef}
                   key={embedUrl}
                   src={embedUrl}
-                  allow="autoplay; encrypted-media"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
                   style={{ width: '100%', aspectRatio: '16 / 9', border: 'none', borderRadius: 8, background: '#000' }}
                 />
                 <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 8, lineHeight: 1.5 }}>

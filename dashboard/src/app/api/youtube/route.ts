@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 import { BACKEND_URL } from '@/lib/backend'
 
+export const dynamic = 'force-dynamic'
+
 // 실시간 교육 동영상 — 검색어에 맞는 최신 영상 1건 (YouTube Data API, FastAPI 백엔드 경유).
 export async function GET(request: Request) {
   const q = new URL(request.url).searchParams.get('q') || ''
   try {
     const res = await fetch(`${BACKEND_URL}/youtube-video?q=${encodeURIComponent(q)}`, {
-      next: { revalidate: 300 },
+      cache: 'no-store',
       signal: AbortSignal.timeout(20000),
     })
     if (res.ok) {

@@ -4,7 +4,8 @@ import { BACKEND_URL } from '@/lib/backend'
 
 export const dynamic = 'force-dynamic'
 
-const BACKEND_TIMEOUT_MS = 15000
+const BACKEND_TIMEOUT_MS = 20000
+const BACKEND_CANDIDATES = Array.from(new Set([BACKEND_URL, 'https://ichapterwise.com'].filter(Boolean)))
 
 // 나이스 학원교습소정보의 region은 전체 시도명("서울특별시")이거나 REGION_NODES가 쓰는
 // 축약형("서울")과 다르게 표기되는 경우가 있어(예: "전남광주통합특별시(광주)") 접미사를
@@ -20,12 +21,43 @@ interface RegionStatDistrict {
   gap_index: number
 }
 
+type BackendFetch<T> = { data: T; baseUrl: string }
+
+async function fetchFromBackend<T>(path: string): Promise<BackendFetch<T> | null> {
+  for (const baseUrl of BACKEND_CANDIDATES) {
+    try {
+      const res = await fetch(`${baseUrl}${path}`, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
+      })
+      if (!res.ok) {
+        console.error(`backend ${path} responded`, baseUrl, res.status)
+        continue
+      }
+      return { data: await res.json() as T, baseUrl }
+    } catch (err) {
+      console.error(`backend ${path} failed`, baseUrl, err)
+    }
+  }
+  return null
+}
+
 // REGION_NODES 20개 중 광역시/특별자치시급 노드(이름 자체가 그 시 전체를 가리킴)는
 // district 단위가 아니라 region 전체를 합산해야 한다 — 나머지(자치구, 도내 개별 시)는
 // district 문자열 정확히 일치로 매칭한다.
 const METRO_NODE_IDS = new Set([
   'busan', 'daegu', 'incheon', 'gwangju', 'daejeon', 'ulsan', 'sejong',
 ])
+
+const METRO_REGION_NAME: Record<string, string> = {
+  busan: '부산광역시',
+  daegu: '대구광역시',
+  incheon: '인천광역시',
+  gwangju: '광주광역시',
+  daejeon: '대전광역시',
+  ulsan: '울산광역시',
+  sejong: '세종특별자치시',
+}
 
 function mergeRegionStats(districts: RegionStatDistrict[]) {
   return REGION_NODES.map(node => {
@@ -61,26 +93,47 @@ function recomputeGapIndexAndTier(nodes: ReturnType<typeof mergeRegionStats>) {
   return withGap.map(n => ({ ...n, tier: tierOf(rankById.get(n.id)!) }))
 }
 
+async function buildRegionStatsFromFacilityCounts(): Promise<RegionStatDistrict[]> {
+  const results = await Promise.all(REGION_NODES.map(async node => {
+    const params = new URLSearchParams({
+      facility_type: 'academy',
+      limit: '1',
+    })
+    if (METRO_NODE_IDS.has(node.id)) params.set('region', METRO_REGION_NAME[node.id] || node.region)
+    else params.set('district', node.name)
+
+    const response = await fetchFromBackend<{ total?: number; matching_total?: number }>(
+      `/education-facilities?${params.toString()}`,
+    )
+    return {
+      region: node.region,
+      district: node.name,
+      academy_count: response?.data.matching_total ?? response?.data.total ?? 0,
+      gap_index: 0,
+    }
+  }))
+  return results
+}
+
 export async function GET() {
   let regionStats: RegionStatDistrict[] = []
   let loopStatus: any = null
+  let source = 'fallback-empty'
 
-  try {
-    const [statsRes, loopRes] = await Promise.all([
-      fetch(`${BACKEND_URL}/region-stats`, {
-        cache: 'no-store',
-        signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
-      }),
-      fetch(`${BACKEND_URL}/loop-status`, {
-        cache: 'no-store',
-        signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
-      }),
-    ])
-    if (statsRes.ok) regionStats = (await statsRes.json()).districts || []
-    if (loopRes.ok) loopStatus = await loopRes.json()
-  } catch {
-    // 백엔드 미연결 시 REGION_NODES의 0값 폴백만 반환(가짜 숫자를 지어내지 않는다)
+  const statsResult = await fetchFromBackend<{ districts?: RegionStatDistrict[] }>('/region-stats')
+  if (statsResult?.data.districts?.length) {
+    regionStats = statsResult.data.districts
+    source = `region-stats:${statsResult.baseUrl}`
+  } else {
+    const recoveredStats = await buildRegionStatsFromFacilityCounts()
+    if (recoveredStats.some(r => r.academy_count > 0)) {
+      regionStats = recoveredStats
+      source = 'education-facilities-counts'
+    }
   }
+
+  const loopResult = await fetchFromBackend<any>('/loop-status')
+  if (loopResult?.data) loopStatus = loopResult.data
 
   const merged = mergeRegionStats(regionStats)
   const nodes = recomputeGapIndexAndTier(merged)
@@ -88,6 +141,7 @@ export async function GET() {
   return NextResponse.json({
     regions: nodes,
     backend_region_count: regionStats.length,
+    source,
     loop_status: loopStatus,
     updated_at: new Date().toISOString(),
   })

@@ -210,6 +210,7 @@ def list_education_facilities(
         query = query.filter(func.json_extract(RawRecord.data, "$.region") == region)
     if district:
         query = query.filter(func.json_extract(RawRecord.data, "$.district") == district)
+    matching_total = query.count()
     records = query.order_by(RawRecord.created_at.desc()).limit(limit).all()
 
     results = []
@@ -220,11 +221,57 @@ def list_education_facilities(
         ft = data.get("facility_type", "unknown")
         summary[ft] = summary.get(ft, 0) + 1
 
-    return {"items": results, "total": len(results), "summary_by_type": summary}
+    return {
+        "items": results,
+        "total": len(results),
+        "matching_total": matching_total,
+        "summary_by_type": summary,
+    }
 
 
 _region_stats_cache: dict = {"data": None, "computed_at": 0.0}
 _REGION_STATS_CACHE_TTL = 600  # 초 — 아래 참고
+
+
+_REGION_STAT_TARGETS = [
+    ("서울특별시", "강남구"),
+    ("서울특별시", "서초구"),
+    ("서울특별시", "송파구"),
+    ("서울특별시", "마포구"),
+    ("서울특별시", "노원구"),
+    ("부산광역시", None),
+    ("대구광역시", None),
+    ("인천광역시", None),
+    ("광주광역시", None),
+    ("대전광역시", None),
+    ("울산광역시", None),
+    ("세종특별자치시", None),
+    (None, "수원시"),
+    (None, "창원시"),
+    (None, "청주시"),
+    (None, "전주시"),
+    (None, "춘천시"),
+    (None, "제주시"),
+    (None, "목포시"),
+    (None, "포항시"),
+]
+
+
+def _facility_count(
+    db: Session,
+    facility_type: str,
+    region: str | None = None,
+    district: str | None = None,
+) -> int:
+    query = db.query(func.count(RawRecord.id)).filter(
+        RawRecord.item_type == "EducationFacilityItem",
+        func.json_extract(RawRecord.data, "$.facility_type") == facility_type,
+    )
+    if region:
+        query = query.filter(func.json_extract(RawRecord.data, "$.region") == region)
+    if district:
+        query = query.filter(func.json_extract(RawRecord.data, "$.district") == district)
+    return int(query.scalar() or 0)
 
 
 @app.get("/region-stats")
@@ -246,28 +293,18 @@ def region_stats(db: Session = Depends(get_db)):
     if _region_stats_cache["data"] is not None and now - _region_stats_cache["computed_at"] < _REGION_STATS_CACHE_TTL:
         return _region_stats_cache["data"]
 
-    region_col = func.json_extract(RawRecord.data, "$.region").label("region")
-    district_col = func.json_extract(RawRecord.data, "$.district").label("district")
-    ftype_col = func.json_extract(RawRecord.data, "$.facility_type").label("facility_type")
-    rows = (
-        db.query(region_col, district_col, ftype_col, func.count().label("cnt"))
-        .filter(RawRecord.item_type == "EducationFacilityItem")
-        .group_by(region_col, district_col, ftype_col)
-        .all()
-    )
-
-    by_district: dict[tuple[str, str], dict[str, int]] = {}
-    for region, district, ftype, cnt in rows:
-        key = (region or "", district or "")
-        by_district.setdefault(key, {})[ftype or "unknown"] = cnt
-
     districts = []
     academy_counts = []
-    for (region, district), counts in by_district.items():
-        academy_count = counts.get("academy", 0)
+    for region, district in _REGION_STAT_TARGETS:
+        academy_count = _facility_count(db, "academy", region=region, district=district)
         academy_counts.append(academy_count)
         districts.append(
-            {"region": region, "district": district, "counts": counts, "academy_count": academy_count}
+            {
+                "region": region or "",
+                "district": district or region or "",
+                "counts": {"academy": academy_count},
+                "academy_count": academy_count,
+            }
         )
 
     # 학원 수 기반 상대 지수(0~1) — 인구 대비 정규화가 아니라 전국 시군구 중 상대적
@@ -280,7 +317,7 @@ def region_stats(db: Session = Depends(get_db)):
 
     result = {
         "districts": districts,
-        "note": "gap_index는 학원 수 기반 상대 지수(min-max 정규화)이며 인구 대비 정규화는 아님",
+        "note": "gap_index는 대시보드 주요 지역의 학원 수 기반 상대 지수(min-max 정규화)이며 인구 대비 정규화는 아님",
     }
     _region_stats_cache["data"] = result
     _region_stats_cache["computed_at"] = now
