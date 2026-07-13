@@ -95,6 +95,7 @@ export interface EducationFacility {
     facility_type: FacilityType
     name: string
     region: string
+    district?: string
     address: string
     establishment_type?: string
     capacity?: number | null

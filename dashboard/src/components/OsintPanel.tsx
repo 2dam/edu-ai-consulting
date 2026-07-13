@@ -8,13 +8,20 @@ interface OsintPanelProps {
   onFlyTo?: (lat: number, lng: number, zoom: number) => void
   educationFacilities?: EducationFacility[]
   openFacilityPanelSignal?: number
+  openCommandSignal?: {
+    seq: number
+    tool: Tool
+    regionId?: string
+    facilityType?: FacilityType | '전체'
+    query?: string
+  }
 }
 
 type Tool = 'search' | 'gap-calc' | 'report' | 'facility-rating'
 
 const FACILITY_TYPE_FILTERS: Array<FacilityType | '전체'> = ['전체', 'daycare', 'kindergarten', 'elementary', 'academy', 'university']
 
-export default function OsintPanel({ regions, onFlyTo, educationFacilities = [], openFacilityPanelSignal }: OsintPanelProps) {
+export default function OsintPanel({ regions, onFlyTo, educationFacilities = [], openFacilityPanelSignal, openCommandSignal }: OsintPanelProps) {
   const [open, setOpen] = useState(false)
   const [activeTool, setActiveTool] = useState<Tool>('search')
   const [searchQuery, setSearchQuery] = useState('')
@@ -33,6 +40,24 @@ export default function OsintPanel({ regions, onFlyTo, educationFacilities = [],
     setOpen(true)
     setActiveTool('facility-rating')
   }, [openFacilityPanelSignal])
+
+  useEffect(() => {
+    if (!openCommandSignal) return
+    setOpen(true)
+    setActiveTool(openCommandSignal.tool)
+    if (openCommandSignal.regionId) {
+      setCompareA(openCommandSignal.regionId)
+      setReportRegion(openCommandSignal.regionId)
+      const r = regions.find(item => item.id === openCommandSignal.regionId)
+      if (r) {
+        setSearchQuery(r.name)
+        setSearchResults([r])
+        onFlyTo?.(r.lat, r.lng, 12)
+      }
+    }
+    if (openCommandSignal.facilityType) setFacilityTypeFilter(openCommandSignal.facilityType)
+    if (openCommandSignal.query !== undefined) setFacilityQuery(openCommandSignal.query)
+  }, [openCommandSignal, onFlyTo, regions])
 
   const handleSearch = () => {
     const q = searchQuery.trim().toLowerCase()

@@ -65,6 +65,13 @@ export default function Page() {
   )
   const [selected, setSelected] = useState<AcademyNode | null>(null)
   const [facilityPanelSignal, setFacilityPanelSignal] = useState(0)
+  const [osintCommandSignal, setOsintCommandSignal] = useState<{
+    seq: number
+    tool: 'search' | 'gap-calc' | 'report' | 'facility-rating'
+    regionId?: string
+    facilityType?: EducationFacility['data']['facility_type'] | '전체'
+    query?: string
+  } | undefined>()
 
   useEffect(() => {
     const load = () => fetch('/api/education').then(r => r.json()).then(setData).catch(console.error)
@@ -146,7 +153,14 @@ export default function Page() {
         cctvCount={cctvPoints.length}
         rightPanelExtra={
           <>
-            <ConsultingIntelPanel regions={data.regions} facilities={educationFacilities} />
+            <ConsultingIntelPanel
+              regions={data.regions}
+              facilities={educationFacilities}
+              onOpenOsint={command => setOsintCommandSignal({
+                seq: Date.now(),
+                ...command,
+              })}
+            />
             <ParentsPortalPanel />
           </>
         }
@@ -158,6 +172,7 @@ export default function Page() {
         onFlyTo={flyTo}
         educationFacilities={educationFacilities}
         openFacilityPanelSignal={facilityPanelSignal}
+        openCommandSignal={osintCommandSignal}
       />
 
       {/* 실시간 교육 동영상 패널 */}
