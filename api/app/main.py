@@ -257,23 +257,6 @@ _REGION_STAT_TARGETS = [
 ]
 
 
-def _facility_count(
-    db: Session,
-    facility_type: str,
-    region: str | None = None,
-    district: str | None = None,
-) -> int:
-    query = db.query(func.count(RawRecord.id)).filter(
-        RawRecord.item_type == "EducationFacilityItem",
-        func.json_extract(RawRecord.data, "$.facility_type") == facility_type,
-    )
-    if region:
-        query = query.filter(func.json_extract(RawRecord.data, "$.region") == region)
-    if district:
-        query = query.filter(func.json_extract(RawRecord.data, "$.district") == district)
-    return int(query.scalar() or 0)
-
-
 @app.get("/region-stats")
 def region_stats(db: Session = Depends(get_db)):
     """전국 시군구별 시설 유형 카운트 집계.
@@ -288,15 +271,46 @@ def region_stats(db: Session = Depends(get_db)):
     반복 실행돼 SQLite 락 경합으로 서버 전체가 응답 불가(health check까지 타임아웃)에
     빠졌다. 결과가 자주 바뀌는 데이터가 아니므로 프로세스 메모리에 캐싱해 실제 집계는
     캐시가 만료됐을 때만 한 번 실행되게 한다.
+
+    추가 수정: 캐시 미스일 때도 여전히 _REGION_STAT_TARGETS(20개 지역)마다 별도
+    쿼리로 raw_records를 풀스캔했다 — 캐시가 만료된 순간 20번의 풀스캔이 몰려
+    응답 불가가 재발했다. GROUP BY 한 번으로 전체 지역/시군구 집계를 끝내고,
+    타겟 목록은 그 결과에서 조회만 하도록 바꿔 풀스캔을 20회 -> 1회로 줄인다.
     """
     now = time.monotonic()
     if _region_stats_cache["data"] is not None and now - _region_stats_cache["computed_at"] < _REGION_STATS_CACHE_TTL:
         return _region_stats_cache["data"]
 
+    region_expr = func.json_extract(RawRecord.data, "$.region")
+    district_expr = func.json_extract(RawRecord.data, "$.district")
+    grouped = (
+        db.query(region_expr, district_expr, func.count(RawRecord.id))
+        .filter(
+            RawRecord.item_type == "EducationFacilityItem",
+            func.json_extract(RawRecord.data, "$.facility_type") == "academy",
+        )
+        .group_by(region_expr, district_expr)
+        .all()
+    )
+    by_region_and_district: dict[tuple[str | None, str | None], int] = {}
+    by_region_total: dict[str, int] = {}
+    by_district_total: dict[str, int] = {}
+    for region, district, count in grouped:
+        by_region_and_district[(region, district)] = count
+        if region:
+            by_region_total[region] = by_region_total.get(region, 0) + count
+        if district:
+            by_district_total[district] = by_district_total.get(district, 0) + count
+
     districts = []
     academy_counts = []
     for region, district in _REGION_STAT_TARGETS:
-        academy_count = _facility_count(db, "academy", region=region, district=district)
+        if region and district:
+            academy_count = by_region_and_district.get((region, district), 0)
+        elif district:
+            academy_count = by_district_total.get(district, 0)
+        else:
+            academy_count = by_region_total.get(region, 0)
         academy_counts.append(academy_count)
         districts.append(
             {
