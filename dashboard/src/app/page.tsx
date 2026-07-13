@@ -7,6 +7,7 @@ import HUD from '@/components/HUD'
 import OsintPanel from '@/components/OsintPanel'
 import VideoPanel from '@/components/VideoPanel'
 import ParentsPortalPanel from '@/components/ParentsPortalPanel'
+import ConsultingIntelPanel from '@/components/ConsultingIntelPanel'
 import type { MapHandle } from '@/components/Map'
 
 const Map = dynamic(
@@ -143,7 +144,12 @@ export default function Page() {
         news={news}
         onOpenFacilityPanel={() => setFacilityPanelSignal(n => n + 1)}
         cctvCount={cctvPoints.length}
-        rightPanelExtra={<ParentsPortalPanel />}
+        rightPanelExtra={
+          <>
+            <ConsultingIntelPanel regions={data.regions} facilities={educationFacilities} />
+            <ParentsPortalPanel />
+          </>
+        }
       />
 
       {/* OSINT 분석 패널 */}
