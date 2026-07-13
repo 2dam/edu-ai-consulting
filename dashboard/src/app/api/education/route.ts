@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 import { REGION_NODES } from '@/lib/data'
 import { BACKEND_URL } from '@/lib/backend'
 
-const BACKEND_TIMEOUT_MS = 3500
+export const dynamic = 'force-dynamic'
+
+const BACKEND_TIMEOUT_MS = 15000
 
 // 나이스 학원교습소정보의 region은 전체 시도명("서울특별시")이거나 REGION_NODES가 쓰는
 // 축약형("서울")과 다르게 표기되는 경우가 있어(예: "전남광주통합특별시(광주)") 접미사를
@@ -66,11 +68,11 @@ export async function GET() {
   try {
     const [statsRes, loopRes] = await Promise.all([
       fetch(`${BACKEND_URL}/region-stats`, {
-        next: { revalidate: 300 },
+        cache: 'no-store',
         signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
       }),
       fetch(`${BACKEND_URL}/loop-status`, {
-        next: { revalidate: 30 },
+        cache: 'no-store',
         signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
       }),
     ])
