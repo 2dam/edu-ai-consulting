@@ -3,31 +3,12 @@ import { BACKEND_URL } from '@/lib/backend'
 
 // 학원 평판 API 전체를 한 파일에서 프록시한다 (committee/run/route.ts와 같은 포워딩 패턴을
 // 일반화). 관리 엔드포인트는 백엔드의 임시 인증(X-User-Id 헤더 + require_admin)에 맞춰
-// 고정 관리자 id를 실어 보낸다 — 공개 설문 엔드포인트(surveys/*)는 백엔드가 이 헤더를
-// 아예 보지 않으므로 그대로 둬도 무해하다.
-//
-// 주의: 이 프록시가 관리자 헤더를 "항상" 붙여 보내기 때문에, 별도 게이트가 없으면
-// /reputation 페이지 URL을 아는 누구나 관리자 API를 그대로 쓸 수 있다. 그래서 surveys/*가
-// 아닌 모든 경로는 ADMIN_ACCESS_TOKEN과 일치하는 X-Admin-Token 헤더가 있어야 통과한다.
+// 고정 관리자 id를 실어 보낸다.
 const ADMIN_USER_ID = process.env.ADMIN_USER_ID ?? '1'
 
 type Ctx = { params: Promise<{ path: string[] }> }
 
-function isPublicPath(path: string[]): boolean {
-  // 공개 설문 조회/응답(GET·POST /surveys/{token}[/responses])만 무인증 허용 — 백엔드의
-  // require_admin 미적용 범위와 정확히 일치시킨다.
-  return path[0] === 'surveys'
-}
-
 async function forward(request: NextRequest, path: string[]) {
-  if (!isPublicPath(path)) {
-    const adminToken = process.env.ADMIN_ACCESS_TOKEN
-    const provided = request.headers.get('x-admin-token')
-    if (!adminToken || provided !== adminToken) {
-      return NextResponse.json({ detail: '관리자 인증이 필요합니다' }, { status: 401 })
-    }
-  }
-
   const search = new URL(request.url).search
   const target = `${BACKEND_URL}/reputation/${path.join('/')}${search}`
 

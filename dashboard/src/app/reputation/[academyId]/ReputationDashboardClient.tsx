@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
-import AdminGate from '@/components/AdminGate'
 import { adminFetch } from '@/lib/adminAuth'
 
 type Academy = {
@@ -455,9 +454,5 @@ function ReputationDashboardContent({ academyId }: { academyId: string }) {
 }
 
 export default function ReputationDashboardClient({ academyId }: { academyId: string }) {
-  return (
-    <AdminGate>
-      <ReputationDashboardContent academyId={academyId} />
-    </AdminGate>
-  )
+  return <ReputationDashboardContent academyId={academyId} />
 }

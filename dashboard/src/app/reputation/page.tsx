@@ -1,7 +1,6 @@
 'use client'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import AdminGate from '@/components/AdminGate'
 import { adminFetch } from '@/lib/adminAuth'
 
 type Academy = {
@@ -185,9 +184,5 @@ function ReputationListContent() {
 }
 
 export default function ReputationListPage() {
-  return (
-    <AdminGate>
-      <ReputationListContent />
-    </AdminGate>
-  )
+  return <ReputationListContent />
 }
