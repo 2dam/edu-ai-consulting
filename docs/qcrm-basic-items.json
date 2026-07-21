@@ -1,0 +1,61 @@
+{
+  "diagnosis_type": "basic",
+  "title": "QCRM 기본진단",
+  "version": 1,
+  "items": [
+    {
+      "id": "basic-korean-01",
+      "subject": "국어",
+      "factor": "problem_interpretation",
+      "prompt": "‘도서관은 책을 보관하는 곳을 넘어 시민이 지식과 경험을 나누는 공간으로 변하고 있다.’ 이 문장의 핵심 내용을 한 문장으로 정리하세요.",
+      "key_condition": "도서관의 역할이 확장되고 있다",
+      "suggested_strategy": "핵심어 연결해 요약하기",
+      "expected_time_seconds": 60
+    },
+    {
+      "id": "basic-english-01",
+      "subject": "영어",
+      "factor": "strategy_selection",
+      "prompt": "Although Mina was tired, she finished the project before dinner. 문맥상 ‘Although’가 나타내는 관계를 설명하세요.",
+      "key_condition": "피곤했지만 프로젝트를 끝냈다",
+      "suggested_strategy": "앞뒤 내용의 대조 관계 찾기",
+      "expected_time_seconds": 60
+    },
+    {
+      "id": "basic-math-01",
+      "subject": "수학",
+      "factor": "calculation_accuracy",
+      "prompt": "(-3) × 4 + 18 ÷ 3의 값을 구하세요.",
+      "key_condition": "곱셈과 나눗셈을 먼저 계산한다",
+      "suggested_strategy": "계산 순서에 따라 단계별로 풀기",
+      "expected_time_seconds": 45
+    },
+    {
+      "id": "basic-social-01",
+      "subject": "사회",
+      "factor": "concept_mastery",
+      "prompt": "주민들이 지역 예산의 사용처를 직접 제안하고 결정 과정에 참여하는 제도는 민주주의의 어떤 원리를 보여주는지 쓰세요.",
+      "key_condition": "주민이 의사 결정 과정에 직접 참여한다",
+      "suggested_strategy": "사례를 민주주의 원리와 연결하기",
+      "expected_time_seconds": 60
+    },
+    {
+      "id": "basic-science-01",
+      "subject": "과학",
+      "factor": "attention_control",
+      "prompt": "식물의 성장에 빛의 양이 미치는 영향을 알아볼 때, 두 화분에서 빛의 양을 제외하고 같게 유지해야 하는 조건을 두 가지 쓰세요.",
+      "key_condition": "빛의 양만 다르게 하고 나머지는 같게 한다",
+      "suggested_strategy": "독립 변인과 통제 변인 구분하기",
+      "expected_time_seconds": 75
+    },
+    {
+      "id": "basic-integrated-01",
+      "subject": "통합",
+      "factor": "time_management",
+      "prompt": "국어 4문항, 영어 3문항, 수학 3문항을 20분 안에 풀어야 합니다. 검토 3분을 남길 때 문항당 평균 사용할 수 있는 시간을 구하세요.",
+      "key_condition": "실제 풀이 시간은 17분이고 총 10문항이다",
+      "suggested_strategy": "전체 시간을 문항 수로 나누기",
+      "expected_time_seconds": 60
+    }
+  ]
+}
