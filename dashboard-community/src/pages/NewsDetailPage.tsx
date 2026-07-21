@@ -4,10 +4,12 @@ import {
   addNewsComment,
   getDebateSummary,
   getNewsDetail,
+  getSentimentAnalysis,
   reportNews,
   summarizeNews,
   voteNews,
   type DebateSummary,
+  type SentimentAnalysis,
 } from "../api/news";
 import type { NewsPostDetail } from "../api/types";
 import { PostDetail } from "../components/post/PostDetail";
@@ -22,6 +24,9 @@ export function NewsDetailPage() {
   const [debate, setDebate] = useState<DebateSummary | null>(null);
   const [debateLoading, setDebateLoading] = useState(false);
   const [debateError, setDebateError] = useState<string | null>(null);
+  const [sentiment, setSentiment] = useState<SentimentAnalysis | null>(null);
+  const [sentimentLoading, setSentimentLoading] = useState(false);
+  const [sentimentError, setSentimentError] = useState<string | null>(null);
 
   useEffect(() => {
     getNewsDetail(newsId)
@@ -51,6 +56,19 @@ export function NewsDetailPage() {
       setDebateError("아직 댓글이 충분하지 않거나 요약에 실패했습니다.");
     } finally {
       setDebateLoading(false);
+    }
+  }
+
+  async function handleSentiment() {
+    setSentimentLoading(true);
+    setSentimentError(null);
+    try {
+      const result = await getSentimentAnalysis(newsId);
+      setSentiment(result);
+    } catch {
+      setSentimentError("여론 평가에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setSentimentLoading(false);
     }
   }
 
@@ -107,8 +125,45 @@ export function NewsDetailPage() {
               </ul>
             </div>
           )}
+
+          <h3 style={{ marginTop: 12 }}>여론 평가</h3>
+          {!sentiment && (
+            <button type="button" onClick={handleSentiment} disabled={sentimentLoading}>
+              {sentimentLoading ? "분석 중..." : "기사·댓글 여론 분석 보기"}
+            </button>
+          )}
+          {sentimentError && <p style={{ color: "#e11d48" }}>{sentimentError}</p>}
+          {sentiment && (
+            <div>
+              <p>
+                종합 여론:{" "}
+                <strong style={{ color: SENTIMENT_COLOR[sentiment.overall_label] }}>
+                  {SENTIMENT_LABEL_KO[sentiment.overall_label]}
+                </strong>{" "}
+                ({sentiment.total_analyzed}건 분석,{" "}
+                {sentiment.method === "finbert" ? "FinBERT" : "규칙 기반"})
+              </p>
+              <ul>
+                <li style={{ color: SENTIMENT_COLOR.positive }}>긍정 {sentiment.positive_count}건</li>
+                <li style={{ color: SENTIMENT_COLOR.neutral }}>중립 {sentiment.neutral_count}건</li>
+                <li style={{ color: SENTIMENT_COLOR.negative }}>부정 {sentiment.negative_count}건</li>
+              </ul>
+            </div>
+          )}
         </div>
       }
     />
   );
 }
+
+const SENTIMENT_LABEL_KO: Record<SentimentAnalysis["overall_label"], string> = {
+  positive: "긍정적",
+  neutral: "중립적",
+  negative: "부정적",
+};
+
+const SENTIMENT_COLOR: Record<SentimentAnalysis["overall_label"], string> = {
+  positive: "#16a34a",
+  neutral: "#6b7280",
+  negative: "#e11d48",
+};

@@ -11,8 +11,13 @@ requests>=2.32
 reportlab>=4.0
 python-multipart>=0.0.9
 # torch 는 선택적 의존성 — 관측치가 충분히 쌓이면(app/imputation.py 의
-# VAE_MIN_OBSERVATIONS 이상) 설치해서 VAE 인페인팅 경로를 활성화.
+# VAE_MIN_OBSERVATIONS 이상) 설치해서 VAE 인페인팅 경로를 활성화하거나,
+# transformers와 함께 설치해 여론 평가(app/sentiment_finbert.py, FinBERT 감정분석)를 활성화.
+# 미설치 시 여론 평가는 app/reputation_sentiment.py 규칙 기반 스코어러로 자동 폴백한다.
+# 최초 요청에서 모델(수백 MB)을 다운로드하므로 메모리/디스크가 제한된 배포 환경에서는
+# 신중히 켤 것 — FINBERT_MODEL_NAME 환경변수로 한국어 특화 모델로 교체 가능.
 # torch>=2.4
+# transformers>=4.44
 # shap 도 선택적 의존성 — 미설치 시 app/predictive_model.py 는 자동으로
 # RandomForest 변수 중요도(permutation importance)로 폴백.
 # shap>=0.46

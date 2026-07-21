@@ -4,7 +4,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app import ai_community
+from app import ai_community, sentiment_finbert
 from app.auth import get_current_user
 from app.community_common import apply_vote, build_comment_tree, create_comment, serialize_news_post
 from app.database import get_db
@@ -13,6 +13,7 @@ from app.schemas import IngestPayload
 from app.schemas_community import (
     CommentCreate,
     CommentOut,
+    CommentSentimentOut,
     DebateSummaryOut,
     NewsFeedPage,
     NewsImportRequest,
@@ -21,6 +22,7 @@ from app.schemas_community import (
     NewsSummaryOut,
     ReportCreate,
     ReportOut,
+    SentimentAnalysisOut,
     VoteRequest,
     VoteResult,
 )
@@ -205,6 +207,65 @@ def debate_summary(news_id: int, db: Session = Depends(get_db)):
     return DebateSummaryOut(
         news_post_id=news_id, comment_summary=comment_summary,
         agree=debate["agree"], disagree=debate["disagree"],
+    )
+
+
+@router.post("/{news_id}/sentiment", response_model=SentimentAnalysisOut)
+def analyze_sentiment(news_id: int, db: Session = Depends(get_db)):
+    """"여론 평가" — 기사 본문 + 공개 댓글을 FinBERT로 감정분석해 긍정/중립/부정 비율을 낸다.
+
+    FinBERT(transformers/torch)가 설치·로드되지 않은 환경에서는 app.reputation_sentiment의
+    규칙 기반 스코어러로 자동 폴백하므로 항상 응답한다 — 응답의 method 필드로 어느 쪽이
+    쓰였는지 구분할 수 있다."""
+    news = db.get(NewsPost, news_id)
+    if not news:
+        raise HTTPException(status_code=404, detail="뉴스를 찾을 수 없습니다")
+
+    comments = (
+        db.query(Comment)
+        .filter(
+            Comment.target_type == TargetType.NEWS_POST,
+            Comment.target_id == news_id,
+            Comment.moderation_status == ModerationStatus.VISIBLE,
+        )
+        .all()
+    )
+    bodies = [c.body for c in comments]
+
+    result = sentiment_finbert.summarize_opinions(news.body_text or "", bodies)
+
+    db.add(
+        AISummary(
+            summary_type="sentiment_analysis",
+            target_type=TargetType.NEWS_POST,
+            target_id=news_id,
+            content=json.dumps(
+                {
+                    "overall_label": result["overall_label"].value,
+                    "positive_count": result["positive_count"],
+                    "neutral_count": result["neutral_count"],
+                    "negative_count": result["negative_count"],
+                    "total_analyzed": result["total_analyzed"],
+                    "method": result["method"],
+                },
+                ensure_ascii=False,
+            ),
+            model_name=sentiment_finbert.MODEL_NAME if result["method"] == "finbert" else "rule_based",
+        )
+    )
+    db.commit()
+
+    return SentimentAnalysisOut(
+        news_post_id=news_id,
+        overall_label=result["overall_label"].value,
+        positive_count=result["positive_count"],
+        neutral_count=result["neutral_count"],
+        negative_count=result["negative_count"],
+        total_analyzed=result["total_analyzed"],
+        method=result["method"],
+        comment_sentiments=[
+            CommentSentimentOut(label=c["label"].value, score=c["score"]) for c in result["comment_sentiments"]
+        ],
     )
 
 

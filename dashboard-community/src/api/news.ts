@@ -17,6 +17,22 @@ export interface DebateSummary {
   disagree: string[];
 }
 
+export interface CommentSentiment {
+  label: "positive" | "neutral" | "negative";
+  score: number;
+}
+
+export interface SentimentAnalysis {
+  news_post_id: number;
+  overall_label: "positive" | "neutral" | "negative";
+  positive_count: number;
+  neutral_count: number;
+  negative_count: number;
+  total_analyzed: number;
+  method: "finbert" | "rule_based";
+  comment_sentiments: CommentSentiment[];
+}
+
 export function getNewsFeed(params: {
   category?: string;
   regionSlug?: string;
@@ -41,6 +57,10 @@ export function summarizeNews(id: number): Promise<NewsSummaryOut> {
 
 export function getDebateSummary(id: number): Promise<DebateSummary> {
   return api.post<DebateSummary>(`/news/${id}/debate-summary`);
+}
+
+export function getSentimentAnalysis(id: number): Promise<SentimentAnalysis> {
+  return api.post<SentimentAnalysis>(`/news/${id}/sentiment`);
 }
 
 export function addNewsComment(newsId: number, body: string, parentId?: number): Promise<CommentOut> {

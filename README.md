@@ -78,6 +78,7 @@ POST /news/ingest                      크롤러 전용 수집 엔드포인트 (
 POST /news/import-url                  단일 기사 수동 등록
 POST /news/{id}/summarize              AI 기사 요약 (summarize_news_article)
 POST /news/{id}/debate-summary         AI 댓글 토론 요약 (summarize_comment_thread + extract_debate_points)
+POST /news/{id}/sentiment              여론 평가 — 기사+댓글 감정분석 (FinBERT, 미설치 시 규칙 기반 폴백)
 POST /news/{id}/comments · /vote · /report   커뮤니티 게시글과 동일한 댓글/투표/신고
 
 GET  /mom-cafe/boards                  게시판 목록
@@ -98,6 +99,9 @@ PATCH /admin/news/posts/{id}/moderation           뉴스 모더레이션 (관리
 
 `api/.env` (기존 `OPENAI_API_KEY`, `DATABASE_URL`에서 추가/변경 없음 — 커뮤니티 모듈은
 같은 SQLite DB와 같은 OpenAI 클라이언트를 재사용합니다).
+`FINBERT_MODEL_NAME` (선택): 여론 평가에 쓸 Hugging Face 모델명, 기본값 `ProsusAI/finbert`.
+`transformers`/`torch`가 설치되어 있지 않으면 규칙 기반 감정분석으로 자동 폴백한다
+(`api/requirements.txt` 주석 참고).
 `dashboard-community/.env.development`: `VITE_API_BASE_URL` (기본 `http://localhost:8000`).
 
 ## 사용 예시 (리포트 생성)
