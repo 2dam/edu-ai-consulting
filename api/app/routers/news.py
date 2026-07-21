@@ -4,7 +4,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app import ai_community, sentiment_finbert
+from app import ai_community, naver_news, sentiment_finbert
 from app.auth import get_current_user
 from app.community_common import apply_vote, build_comment_tree, create_comment, serialize_news_post
 from app.database import get_db
@@ -15,6 +15,8 @@ from app.schemas_community import (
     CommentOut,
     CommentSentimentOut,
     DebateSummaryOut,
+    IssueSentimentOut,
+    IssueSentimentSample,
     NewsFeedPage,
     NewsImportRequest,
     NewsPostDetail,
@@ -50,6 +52,44 @@ def get_feed(
     total = query.count()
     posts = query.order_by(NewsPost.created_at.desc()).offset(offset).limit(limit).all()
     return NewsFeedPage(items=[serialize_news_post(p) for p in posts], total=total, limit=limit, offset=offset)
+
+
+@router.get("/issue-sentiment", response_model=IssueSentimentOut)
+def issue_sentiment(keyword: str = Query(..., min_length=1, max_length=50)):
+    """이슈(키워드)별 여론 평가 — 랜딩페이지 공개 위젯 전용, 로그인 불필요.
+
+    네이버 뉴스 검색 오픈API(app.naver_news, 이미 /education-news 등에서 쓰는 실시간
+    외부 연동)로 해당 키워드의 최신 기사를 가져와 제목을 FinBERT로 감정분석한다.
+    NAVER_CLIENT_ID/SECRET 미설정 시 naver_news.search_news가 빈 목록을 반환하므로
+    이 경우 404로 안내한다(main.py의 /education-news와 동일한 폴백 관례)."""
+    articles = naver_news.search_news(keyword, display=15)
+    if not articles:
+        raise HTTPException(status_code=404, detail="관련 뉴스를 찾지 못했습니다. 다른 키워드로 시도해보세요.")
+
+    results = sentiment_finbert.analyze_batch([a["title"] for a in articles])
+
+    counts = {"positive": 0, "neutral": 0, "negative": 0}
+    for r in results:
+        counts[r["label"].value] += 1
+    overall_label = max(counts, key=counts.get)
+    method = "finbert" if any(r["method"] == "finbert" for r in results) else "rule_based"
+
+    return IssueSentimentOut(
+        keyword=keyword,
+        overall_label=overall_label,
+        positive_count=counts["positive"],
+        neutral_count=counts["neutral"],
+        negative_count=counts["negative"],
+        total_analyzed=len(results),
+        method=method,
+        samples=[
+            IssueSentimentSample(
+                title=a["title"], url=a["url"], source=a.get("source"),
+                label=r["label"].value, score=r["score"],
+            )
+            for a, r in zip(articles, results)
+        ],
+    )
 
 
 @router.get("/{news_id}", response_model=NewsPostDetail)

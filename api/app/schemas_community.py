@@ -200,6 +200,25 @@ class SentimentAnalysisOut(BaseModel):
     comment_sentiments: list[CommentSentimentOut]
 
 
+class IssueSentimentSample(BaseModel):
+    title: str
+    url: str
+    source: str | None = None
+    label: SentimentLit
+    score: float
+
+
+class IssueSentimentOut(BaseModel):
+    keyword: str
+    overall_label: SentimentLit
+    positive_count: int
+    neutral_count: int
+    negative_count: int
+    total_analyzed: int
+    method: Literal["finbert", "rule_based"]
+    samples: list[IssueSentimentSample]
+
+
 # ---- Admin ----
 class ModerationPatch(BaseModel):
     moderation_status: ModerationStatusLit
