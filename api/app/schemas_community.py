@@ -180,6 +180,26 @@ class RelatedPostOut(BaseModel):
     title: str
 
 
+# ---- 여론 평가 (FinBERT 감정분석) ----
+SentimentLit = Literal["positive", "neutral", "negative"]
+
+
+class CommentSentimentOut(BaseModel):
+    label: SentimentLit
+    score: float
+
+
+class SentimentAnalysisOut(BaseModel):
+    news_post_id: int
+    overall_label: SentimentLit
+    positive_count: int
+    neutral_count: int
+    negative_count: int
+    total_analyzed: int
+    method: Literal["finbert", "rule_based"]
+    comment_sentiments: list[CommentSentimentOut]
+
+
 # ---- Admin ----
 class ModerationPatch(BaseModel):
     moderation_status: ModerationStatusLit

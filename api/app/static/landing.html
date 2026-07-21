@@ -122,7 +122,7 @@
   @keyframes pulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.8); opacity: 0; } }
   .live-bar-item { display: flex; align-items: baseline; gap: 6px; font-size: 13px; color: var(--ink-muted); }
   .live-bar-item .v { font-family: var(--font-mono); font-weight: 700; color: var(--ink); }
-  .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; }
   .feature-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 20px; box-shadow: var(--shadow-card); }
   .feature-card .icon { width: 26px; height: 26px; margin-bottom: 14px; color: var(--accent); }
   .feature-card h3 { font-family: var(--font-body); font-size: 15px; font-weight: 600; margin-bottom: 6px; }
@@ -216,7 +216,7 @@
 <header>
   <div class="wrap">
     <a class="logo" href="#top">
-      <img src="/static/logo.png" alt="iChapterwise 로고">
+      <img src="/static/logo.jpg" alt="iChapterwise 로고">
       <span class="logo-text">
         <span class="wordmark">doke<span class="accent-word">-V</span></span>
         <span class="subtitle">도깨비</span>
@@ -365,6 +365,11 @@
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <h3>안전하게 운영되는 공간</h3>
         <p>신고·모더레이션 체계와 AI 필터가 함께 운영되어, 확정적이지 않은 판단은 항상 사람이 검토합니다.</p>
+      </div>
+      <div class="feature-card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 17l4-6 4 3 4-8 6 11" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h3>여론 평가</h3>
+        <p>AI(FinBERT)가 기사 본문과 댓글의 감정을 긍정·중립·부정으로 분류해, 학부모·학생 여론의 흐름을 한눈에 보여드려요.</p>
       </div>
     </div>
     <div style="margin-top:24px;"><a class="btn btn-ghost" href="https://edu-ai-consulting-community.onrender.com" target="_blank" rel="noreferrer">커뮤니티 살펴보기 →</a></div>
