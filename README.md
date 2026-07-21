@@ -79,6 +79,7 @@ POST /news/import-url                  단일 기사 수동 등록
 POST /news/{id}/summarize              AI 기사 요약 (summarize_news_article)
 POST /news/{id}/debate-summary         AI 댓글 토론 요약 (summarize_comment_thread + extract_debate_points)
 POST /news/{id}/sentiment              여론 평가 — 기사+댓글 감정분석 (FinBERT, 미설치 시 규칙 기반 폴백)
+GET  /news/issue-sentiment             이슈(키워드)별 여론 평가 — 네이버 뉴스 실시간 검색 + 감정분석, 로그인 불필요(랜딩페이지 공개 위젯)
 POST /news/{id}/comments · /vote · /report   커뮤니티 게시글과 동일한 댓글/투표/신고
 
 GET  /mom-cafe/boards                  게시판 목록

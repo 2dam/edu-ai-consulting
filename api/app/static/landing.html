@@ -184,6 +184,24 @@
   form.try-form button { width: 100%; margin-top: 20px; justify-content: center; }
   #try-result { margin-top: 20px; white-space: pre-wrap; line-height: 1.7; background: var(--surface); border: 1px solid var(--line); padding: 18px; border-radius: var(--radius-md); display: none; font-size: 13.5px; }
   #try-error { margin-top: 14px; color: var(--err); display: none; font-size: 13.5px; }
+
+  .issue-sentiment-tool { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 24px; box-shadow: var(--shadow-card); margin-top: 24px; }
+  .issue-sentiment-tool h3 { font-family: var(--font-body); font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .issue-sentiment-form { display: flex; gap: 10px; margin-top: 14px; }
+  .issue-sentiment-form input {
+    flex: 1; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+    font-family: var(--font-body); font-size: 14px; background: var(--surface-sunken); color: var(--ink);
+  }
+  .issue-sentiment-form button { flex-shrink: 0; }
+  #issue-sentiment-error { margin-top: 14px; color: var(--err); display: none; font-size: 13.5px; }
+  #issue-sentiment-result { margin-top: 20px; display: none; }
+  .sentiment-bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; margin: 10px 0 14px; background: var(--surface-sunken); }
+  .sentiment-samples { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .sentiment-samples li { font-size: 13px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .sentiment-samples a { color: var(--ink); text-decoration: none; }
+  .sentiment-samples a:hover { text-decoration: underline; }
+  .sentiment-tag { font-family: var(--font-mono); font-size: 11px; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; }
+  @media (max-width: 600px) { .issue-sentiment-form { flex-direction: column; } }
   .try-note { color: var(--ink-faint); font-size: 12px; margin-top: 14px; }
 
   details.faq-item { border-top: 1px solid var(--line); padding: 16px 0; }
@@ -216,7 +234,7 @@
 <header>
   <div class="wrap">
     <a class="logo" href="#top">
-      <img src="/static/logo.jpg" alt="iChapterwise 로고">
+      <img src="/static/logo.png" alt="iChapterwise 로고">
       <span class="logo-text">
         <span class="wordmark">doke<span class="accent-word">-V</span></span>
         <span class="subtitle">도깨비</span>
@@ -369,9 +387,21 @@
       <div class="feature-card">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 17l4-6 4 3 4-8 6 11" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <h3>여론 평가</h3>
-        <p>AI(FinBERT)가 기사 본문과 댓글의 감정을 긍정·중립·부정으로 분류해, 학부모·학생 여론의 흐름을 한눈에 보여드려요.</p>
+        <p>AI(FinBERT)가 실시간 교육 뉴스를 이슈·키워드별로 모아 감정을 긍정·중립·부정으로 분류해요. 아래에서 직접 체험해보세요.</p>
       </div>
     </div>
+
+    <div class="issue-sentiment-tool">
+      <h3>이슈별 여론 분석 직접 체험하기</h3>
+      <p class="sample-note" style="margin:0;">키워드를 입력하면 실시간 교육 뉴스(네이버 뉴스 검색)를 가져와 AI가 기사 제목의 감정을 분석합니다.</p>
+      <form id="issue-sentiment-form" class="issue-sentiment-form">
+        <input type="text" id="issue-keyword" placeholder="예: 사교육, 입시, AI 교육" required maxlength="50">
+        <button class="btn btn-primary" type="submit" id="issue-sentiment-btn">분석하기</button>
+      </form>
+      <div id="issue-sentiment-error"></div>
+      <div id="issue-sentiment-result"></div>
+    </div>
+
     <div style="margin-top:24px;"><a class="btn btn-ghost" href="https://edu-ai-consulting-community.onrender.com" target="_blank" rel="noreferrer">커뮤니티 살펴보기 →</a></div>
   </section>
 
@@ -741,6 +771,67 @@
     } finally {
       qcrmBtn.disabled = false;
       qcrmBtn.textContent = '진단하기';
+    }
+  });
+
+  // Chapter 4 "여론 평가" — 키워드를 넘겨 /news/issue-sentiment(실시간 네이버 뉴스 검색 +
+  // FinBERT/규칙 기반 감정분석)를 호출하는 공개 위젯. 로그인 불필요.
+  const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+  const SENTIMENT_COLOR = { positive: '#16a34a', neutral: '#9ca3af', negative: '#e11d48' };
+  const SENTIMENT_LABEL_KO = { positive: '긍정', neutral: '중립', negative: '부정' };
+
+  const issueForm = document.getElementById('issue-sentiment-form');
+  const issueBtn = document.getElementById('issue-sentiment-btn');
+  const issueError = document.getElementById('issue-sentiment-error');
+  const issueResult = document.getElementById('issue-sentiment-result');
+
+  issueForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    issueError.style.display = 'none';
+    issueResult.style.display = 'none';
+    const keyword = document.getElementById('issue-keyword').value.trim();
+    if (!keyword) return;
+
+    issueBtn.disabled = true;
+    issueBtn.textContent = '분석 중...';
+    try {
+      const res = await fetch('/news/issue-sentiment?keyword=' + encodeURIComponent(keyword));
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `요청 실패 (${res.status})`);
+      }
+      const data = await res.json();
+      const total = data.total_analyzed || 1;
+      const bar = ['positive', 'neutral', 'negative'].map((k) => {
+        const width = Math.round((data[k + '_count'] / total) * 100);
+        return width > 0 ? `<div style="width:${width}%; background:${SENTIMENT_COLOR[k]}"></div>` : '';
+      }).join('');
+      const samples = data.samples.map((s) => `
+        <li>
+          <a href="${escapeHtml(s.url)}" target="_blank" rel="noreferrer">${escapeHtml(s.title)}</a>
+          <span class="sentiment-tag" style="background:${SENTIMENT_COLOR[s.label]}22;color:${SENTIMENT_COLOR[s.label]}">${SENTIMENT_LABEL_KO[s.label]}</span>
+        </li>
+      `).join('');
+      issueResult.innerHTML = `
+        <p>"<strong>${escapeHtml(data.keyword)}</strong>" 관련 기사 ${data.total_analyzed}건 분석 (${data.method === 'finbert' ? 'FinBERT' : '규칙 기반 간이분석'}) — 종합 여론:
+          <strong style="color:${SENTIMENT_COLOR[data.overall_label]}">${SENTIMENT_LABEL_KO[data.overall_label]}</strong>
+        </p>
+        <div class="sentiment-bar">${bar}</div>
+        <p style="font-size:12.5px; color:var(--ink-faint); margin:0 0 10px;">
+          긍정 ${data.positive_count} · 중립 ${data.neutral_count} · 부정 ${data.negative_count}
+        </p>
+        <ul class="sentiment-samples">${samples}</ul>
+      `;
+      issueResult.style.display = 'block';
+      issueResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err) {
+      issueError.textContent = '오류: ' + err.message;
+      issueError.style.display = 'block';
+    } finally {
+      issueBtn.disabled = false;
+      issueBtn.textContent = '분석하기';
     }
   });
 </script>
