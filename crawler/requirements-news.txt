@@ -1,3 +1,3 @@
-# 교육부 보도자료 수집기 전용 최소 설치 구성
+# Minimal dependencies for the Ministry of Education news spider.
 scrapy==2.11.2
 requests==2.32.3
