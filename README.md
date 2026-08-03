@@ -78,6 +78,7 @@ POST /community/posts/{id}/report      게시글 신고
 GET  /community/trending               화제 키워드 (extract_trending_keywords)
 GET  /community/posts/{id}/related     관련 게시글 추천 (suggest_related_posts)
 GET  /official-admission-sources       입학처·어디가·커리어넷·대학알리미 공식 출처 안내
+GET  /university-admissions            검증된 대학 입학처 목록 (q/region 검색)
 
 GET  /news/feed                        뉴스 피드 (category/region_slug)
 GET  /news/{id}                        뉴스 상세 + 댓글 트리

@@ -42,8 +42,8 @@ OFFICIAL_ADMISSION_SOURCES = [
         "url": None,
         "purposes": ["최종 모집요강", "원서접수 일정", "전형 변경사항", "합격자 발표"],
         "access_mode": "institution_registry",
-        "integration": "pending_admissions_registry",
-        "notice": "대학별 공식 도메인을 검증한 레지스트리로 제공할 예정입니다.",
+        "integration": "university_admissions_registry",
+        "notice": "검증일이 표시된 대학별 공식 입학처 링크를 제공합니다.",
     },
 ]
 
