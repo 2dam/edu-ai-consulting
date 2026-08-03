@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app import ai_engine, cctv, feedback_loop, imputation, naver_news, predictive_model, psychology_engine, qcrm_engine, youtube
+from app import ai_engine, cctv, feedback_loop, imputation, naver_news, official_sources, predictive_model, psychology_engine, qcrm_engine, youtube
 from app import models_community  # noqa: F401 - Base.metadata에 커뮤니티 테이블을 등록시키기 위한 import
 from app.models_community import Comment, CommunityPost, User
 from app import models_reputation  # noqa: F401 - Base.metadata에 학원 평판 테이블을 등록시키기 위한 import
@@ -142,6 +142,12 @@ def landing():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/official-admission-sources")
+def official_admission_sources():
+    """콘텐츠를 복제하지 않고 입시 공식 원문과 연동 상태를 안내한다."""
+    return {"items": official_sources.list_official_sources()}
 
 
 # ── 크롤러 데이터 적재 ────────────────────────────────────────────────────────
