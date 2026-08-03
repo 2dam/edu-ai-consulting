@@ -79,6 +79,7 @@ GET  /community/trending               화제 키워드 (extract_trending_keywor
 GET  /community/posts/{id}/related     관련 게시글 추천 (suggest_related_posts)
 GET  /official-admission-sources       입학처·어디가·커리어넷·대학알리미 공식 출처 안내
 GET  /university-admissions            검증된 대학 입학처 목록 (q/region 검색)
+GET  /career-guidance-centers          전국 시도교육청 진로·진학센터 목록 (q/region 검색)
 
 GET  /news/feed                        뉴스 피드 (category/region_slug)
 GET  /news/{id}                        뉴스 상세 + 댓글 트리

@@ -45,6 +45,16 @@ OFFICIAL_ADMISSION_SOURCES = [
         "integration": "university_admissions_registry",
         "notice": "검증일이 표시된 대학별 공식 입학처 링크를 제공합니다.",
     },
+    {
+        "id": "regional_career_guidance",
+        "name": "시도교육청 진로진학정보센터",
+        "operator": "17개 시도교육청",
+        "url": None,
+        "purposes": ["지역별 대입정보", "진학상담", "설명회", "진로교육자료"],
+        "access_mode": "institution_registry",
+        "integration": "career_guidance_centers_registry",
+        "notice": "지역별 공식 센터 링크와 확인일을 제공합니다.",
+    },
 ]
 
 

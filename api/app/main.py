@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app import ai_engine, cctv, feedback_loop, imputation, naver_news, official_sources, predictive_model, psychology_engine, qcrm_engine, university_admissions, youtube
+from app import ai_engine, career_guidance_centers, cctv, feedback_loop, imputation, naver_news, official_sources, predictive_model, psychology_engine, qcrm_engine, university_admissions, youtube
 from app import models_community  # noqa: F401 - Base.metadata에 커뮤니티 테이블을 등록시키기 위한 import
 from app.models_community import Comment, CommunityPost, User
 from app import models_reputation  # noqa: F401 - Base.metadata에 학원 평판 테이블을 등록시키기 위한 import
@@ -155,6 +155,13 @@ def university_admission_sites(q: str | None = None, region: str | None = None):
     """검증한 대학 공식 입학처 링크를 대학명 또는 지역으로 조회한다."""
     items = university_admissions.list_university_admissions(query=q, region=region)
     return {"items": items, "count": len(items), "verified_at": university_admissions.VERIFIED_AT}
+
+
+@app.get("/career-guidance-centers")
+def career_guidance_center_sites(q: str | None = None, region: str | None = None):
+    """전국 시도교육청의 공식 진로·진학 지원 서비스 링크를 조회한다."""
+    items = career_guidance_centers.list_career_guidance_centers(query=q, region=region)
+    return {"items": items, "count": len(items), "verified_at": career_guidance_centers.VERIFIED_AT}
 
 
 # ── 크롤러 데이터 적재 ────────────────────────────────────────────────────────
