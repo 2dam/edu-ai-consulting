@@ -61,6 +61,16 @@ npm install
 npm run dev   # http://localhost:5173, api(localhost:8000)를 CORS로 호출
 ```
 
+교육 뉴스 수집기만 실행할 때는 전체 브라우저 자동화 의존성 대신
+`crawler/requirements-news.txt`만 설치할 수 있습니다.
+
+```powershell
+cd crawler
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-news.txt
+.\.venv\Scripts\python.exe -m scrapy crawl education_news -a start_url="https://www.moe.go.kr/boardCnts/listRenew.do?boardID=294&m=020402&s=moe" -a category="정책" -O education-news.json
+```
+
 ## 커뮤니티 모듈 API
 
 ```

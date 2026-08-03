@@ -3,6 +3,10 @@ BOT_NAME = "edu_crawler"
 SPIDER_MODULES = ["edu_crawler.spiders"]
 NEWSPIDER_MODULE = "edu_crawler.spiders"
 
+# 일부 스파이더의 PDF/브라우저 선택 패키지가 설치되지 않은 최소 실행 환경에서도
+# education_news처럼 해당 의존성이 없는 스파이더를 실행할 수 있게 한다.
+SPIDER_LOADER_WARN_ONLY = True
+
 # 사업계획서 6.1항 "데이터 수집 합법성" 준수 — robots.txt 강제 적용.
 # 개별 스파이더에서 끄지 말 것.
 ROBOTSTXT_OBEY = True
