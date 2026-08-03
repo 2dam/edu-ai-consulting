@@ -50,6 +50,7 @@ python -m venv .venv && .venv/Scripts/activate
 pip install -r requirements.txt
 scrapy crawl public_data -a start_url="<공시자료 URL>" -a item_kind=admission
 scrapy crawl academy -a start_url="<학원 페이지 URL>" -a academy_name="OO학원" -a region="강남"
+scrapy crawl megastudy_curriculum -O megastudy.json  # robots 허용 시 공개 커리큘럼 목록만
 scrapy crawl education_news -a start_url="<교육 뉴스 목록 URL>"   # ALLOWED_SOURCES 등재 필요
 
 # 3. 커뮤니티 대시보드 프론트엔드 (다른 터미널) — 기존 OSINT용 dashboard/(Next.js)와는 별개
@@ -212,6 +213,8 @@ CCTV를 추가했다.
 
 - 실제 대상 사이트(학교알리미 정확한 URL/HTML 구조, 특정 학원 사이트)에 맞춘
   셀렉터 커스터마이징 — 지금 스파이더의 CSS 셀렉터는 예시 placeholder입니다.
+- 메가스터디 공개 커리큘럼 전용 스파이더와 fail-closed robots 검증은 구현됨
+  (`crawler/edu_crawler/spiders/megastudy_spider.py`, `docs/crawler-targets.md`).
 - 크롤링 대상 사이트별 이용약관 직접 확인 (계획서 6.1항 — 법적 책임은 코드가
   대신 판단할 수 없음, robots.txt 준수는 최소 안전장치일 뿐)
 - 인증/티어별 결제 연동, React Native 앱(3.3항)
