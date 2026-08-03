@@ -52,6 +52,7 @@ scrapy crawl public_data -a start_url="<공시자료 URL>" -a item_kind=admissio
 scrapy crawl academy -a start_url="<학원 페이지 URL>" -a academy_name="OO학원" -a region="강남"
 scrapy crawl megastudy_curriculum -O megastudy.json  # robots 허용 시 공개 커리큘럼 목록만
 scrapy crawl academyinfo_universities -O universities.json  # DATA_GO_KR_SERVICE_KEY 필요
+scrapy crawl careernet_university_majors -O career-majors.json  # CAREERNET_API_KEY 필요
 scrapy crawl education_news -a start_url="<교육 뉴스 목록 URL>"   # ALLOWED_SOURCES 등재 필요
 
 # 3. 커뮤니티 대시보드 프론트엔드 (다른 터미널) — 기존 OSINT용 dashboard/(Next.js)와는 별개

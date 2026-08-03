@@ -53,6 +53,17 @@
 - 제한: 웹 화면을 크롤링하지 않고 공식 XML API만 사용하며 개발계정 일 1,000회 한도를 준수
 - 구현: `crawler/edu_crawler/spiders/academyinfo_spider.py`
 
+## 커리어넷 — 공식 Open API 사용
+
+- 검토일: 2026-08-03
+- 제공기관: 교육부·한국직업능력연구원
+- API: `https://www.career.go.kr/cnet/openapi/getOpenApi`
+- 인증: 커리어넷 Open API 신청 후 `CAREERNET_API_KEY` 설정
+- 요청: `svcCode=MAJOR`, `gubun=univ_list`, `contentType=json`
+- 수집 범위: 학과코드, 계열, 학과명, 세부학과명
+- 운영 원칙: 웹 화면을 스크래핑하지 않고 발급된 인증키로 공식 API만 호출하며 페이지당 100건씩 순차 요청
+- 구현: `crawler/edu_crawler/spiders/careernet_spider.py`
+
 ## 대입정보포털 어디가 — 링크 전용
 
 - 검토일: 2026-08-03

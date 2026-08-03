@@ -32,7 +32,7 @@ OFFICIAL_ADMISSION_SOURCES = [
         "url": "https://www.career.go.kr/",
         "purposes": ["학과정보", "직업정보", "진로교육자료", "진로상담사례"],
         "access_mode": "official_api",
-        "integration": "pending_careernet_api",
+        "integration": "careernet_university_majors",
         "notice": "공식 Open API 인증키가 필요한 출처입니다.",
     },
     {
