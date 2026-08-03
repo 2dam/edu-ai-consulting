@@ -1,3 +1,6 @@
 # Minimal dependencies for the Ministry of Education news spider.
 scrapy==2.11.2
 requests==2.32.3
+twisted==24.11.0
+cryptography==43.0.3
+service-identity==24.2.0
