@@ -116,7 +116,17 @@ def ingest_news(payload: IngestPayload, db: Session = Depends(get_db)):
     region/category 문자열이 기존 데이터와 매칭되지 않아도 절대 reject하지 않고
     null로 저장한다 — 크롤러 안정성이 완벽한 분류보다 우선한다.
     """
+    news, created = _store_news_payload(payload, db)
+    db.commit()
+    return {"id": news.id, "created": created}
+
+
+def _store_news_payload(payload: IngestPayload, db: Session) -> tuple[NewsPost, bool]:
+    """URL을 기준으로 뉴스를 생성하거나 기존 항목을 최신 수집 내용으로 갱신한다."""
     data = payload.data
+    source_url = str(data.get("url") or data.get("source_url") or "").strip()
+    if not source_url:
+        raise HTTPException(status_code=422, detail="뉴스 원문 URL이 필요합니다.")
 
     region = None
     region_key = data.get("region")
@@ -140,21 +150,44 @@ def ingest_news(payload: IngestPayload, db: Session = Depends(get_db)):
         except ValueError:
             published_at = None
 
-    news = NewsPost(
-        board_id=board.id if board else None,
-        region_id=region.id if region else None,
-        title=data.get("title", "(제목 없음)"),
-        source_url=data.get("url") or data.get("source_url", ""),
-        source_name=data.get("source"),
-        category=data.get("category"),
-        body_text=data.get("body_text"),
-        thumbnail_url=data.get("thumbnail_url"),
-        tags=tags_str,
-        published_at=published_at,
-    )
-    db.add(news)
+    news = db.query(NewsPost).filter(NewsPost.source_url == source_url).first()
+    created = news is None
+    if news is None:
+        news = NewsPost(source_url=source_url)
+        db.add(news)
+
+    news.board_id = board.id if board else None
+    news.region_id = region.id if region else None
+    news.title = data.get("title", "(제목 없음)")
+    news.source_name = data.get("source")
+    news.category = data.get("category")
+    news.body_text = data.get("body_text")
+    news.thumbnail_url = data.get("thumbnail_url")
+    news.tags = tags_str
+    news.published_at = published_at
+    db.flush()
+    return news, created
+
+
+@router.post("/ingest-batch")
+def ingest_news_batch(payloads: list[IngestPayload], db: Session = Depends(get_db)):
+    """크롤러의 뉴스 묶음을 한 트랜잭션으로 저장하고 URL 중복은 갱신한다."""
+    if len(payloads) > 500:
+        raise HTTPException(status_code=413, detail="한 번에 최대 500건까지 적재할 수 있습니다.")
+
+    ids: list[int] = []
+    created_count = 0
+    for payload in payloads:
+        news, created = _store_news_payload(payload, db)
+        ids.append(news.id)
+        created_count += int(created)
     db.commit()
-    return {"id": news.id}
+    return {
+        "ids": ids,
+        "created": created_count,
+        "updated": len(payloads) - created_count,
+        "count": len(payloads),
+    }
 
 
 @router.post("/import-url", response_model=NewsPostOut)

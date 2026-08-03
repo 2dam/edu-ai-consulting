@@ -94,6 +94,7 @@ GET  /career-guidance-centers          전국 시도교육청 진로·진학센�
 GET  /news/feed                        뉴스 피드 (category/region_slug)
 GET  /news/{id}                        뉴스 상세 + 댓글 트리
 POST /news/ingest                      크롤러 전용 수집 엔드포인트 (education_news_spider)
+POST /news/ingest-batch                크롤러 뉴스 일괄 적재 (URL 중복 갱신, 최대 500건)
 POST /news/import-url                  단일 기사 수동 등록
 POST /news/{id}/summarize              AI 기사 요약 (summarize_news_article)
 POST /news/{id}/debate-summary         AI 댓글 토론 요약 (summarize_comment_thread + extract_debate_points)

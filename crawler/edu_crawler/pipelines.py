@@ -31,7 +31,7 @@ class ApiExportPipeline:
 
     def open_spider(self, spider):
         self.api_url = spider.settings.get("EXPORT_API_URL")
-        self.batch_url = self.api_url.replace("/ingest", "/ingest-batch")
+        self.batch_url = f"{self.api_url.rstrip('/')}-batch"
         self.buffer = []
 
     def process_item(self, item, spider):
@@ -52,11 +52,14 @@ class ApiExportPipeline:
             return
         batch, self.buffer = self.buffer, []
         try:
-            requests.post(self.batch_url, json=batch, timeout=30)
+            response = requests.post(self.batch_url, json=batch, timeout=30)
+            response.raise_for_status()
+            logger.info("API batch export succeeded: %d items", len(batch))
         except requests.RequestException as exc:
             logger.warning("배치 전송 실패, 건별 전송으로 재시도: %s", exc)
             for payload in batch:
                 try:
-                    requests.post(self.api_url, json=payload, timeout=5)
+                    response = requests.post(self.api_url, json=payload, timeout=5)
+                    response.raise_for_status()
                 except requests.RequestException as exc2:
                     logger.warning("API export failed, dropping to local log only: %s", exc2)
