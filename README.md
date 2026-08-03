@@ -32,7 +32,7 @@
 - `dashboard-community/` — Vite + React + TypeScript 프론트엔드 (커뮤니티/뉴스/맘카페 UI,
   `dashboard/`와는 별개 앱)
 - `docs/` — GitHub Pages용 OSINT 대시보드 정적 빌드(`index.html`, `qcrm.md`) +
-  커뮤니티 모듈 데이터 모델/모더레이션 정책/임시 인증 문서
+  커뮤니티 모듈 데이터 모델/모더레이션 정책/OAuth2·JWT 인증 문서
 
 ## 실행 방법
 
@@ -61,7 +61,10 @@ npm run dev   # http://localhost:5173, api(localhost:8000)를 CORS로 호출
 ## 커뮤니티 모듈 API
 
 ```
-POST /community/users                  임시 가입 (닉네임만) → user_id 발급, X-User-Id 헤더로 사용
+POST /auth/register                    비밀번호 기반 회원가입 + Bearer JWT 발급
+POST /auth/token                       OAuth2 로그인 + Bearer JWT 발급
+GET  /auth/me                          현재 로그인 사용자 조회
+POST /auth/logout                      기존 사용자 토큰 무효화
 GET  /community/feed                   커뮤니티 피드 (board_slug/sort/limit/offset)
 GET  /community/posts/{id}             게시글 상세 + 댓글 트리
 POST /community/posts                  게시글 작성
@@ -94,7 +97,7 @@ PATCH /admin/news/posts/{id}/moderation           뉴스 모더레이션 (관리
 
 자세한 데이터 모델은 [`docs/community-platform.md`](docs/community-platform.md),
 모더레이션 정책은 [`docs/moderation.md`](docs/moderation.md),
-임시 인증 방식의 한계는 [`docs/temporary-auth.md`](docs/temporary-auth.md)를 참고하세요.
+인증 설정과 마이그레이션은 [`docs/temporary-auth.md`](docs/temporary-auth.md)를 참고하세요.
 
 ### 환경 변수
 
@@ -214,8 +217,8 @@ CCTV를 추가했다.
 - 인증/티어별 결제 연동, React Native 앱(3.3항)
 - k-익명성 같은 정식 비식별화 알고리즘 (현재 `AnonymizePipeline`은 단순 필드 제거 수준)
 - 자체 ML 레이어로의 전환 (3단계 로드맵 중 2단계, 데이터 누적 후)
-- **임시 인증(`X-User-Id` 헤더) — TODO: 실제 OAuth2/JWT 인증으로 교체.**
-  현재는 비밀번호도 세션도 없이 헤더 값을 그대로 신뢰하므로 스푸핑이 가능합니다
+- OAuth2/JWT 인증은 구현됨. 운영 전 로그인 rate limiting, 비밀번호 재설정,
+  refresh token 회전과 보안 감사 로그를 추가해야 합니다
   (`api/app/auth.py`, [`docs/temporary-auth.md`](docs/temporary-auth.md) 참고).
 - `education_news_spider.py`의 `ALLOWED_SOURCES`가 아직 비어 있음 — 실제 대상 매체를
   정하고 robots.txt/로그인 필요 여부를 직접 확인한 뒤 등재해야 합니다.

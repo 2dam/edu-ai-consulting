@@ -1,37 +1,49 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
-import { getStoredUserId, setStoredUserId } from "../api/client";
-import { registerUser } from "../api/community";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { getStoredAccessToken, setStoredAccessToken } from "../api/client";
+import { getCurrentUser, loginUser, logoutUser, registerUser } from "../api/community";
 import type { CurrentUser } from "../api/types";
 
 interface UserContextValue {
   user: CurrentUser | null;
-  register: (nickname: string, regionSlug?: string) => Promise<void>;
-  logout: () => void;
+  loading: boolean;
+  register: (nickname: string, password: string, regionSlug?: string) => Promise<void>;
+  login: (nickname: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined);
 
-/**
- * 임시 인증. TODO: replace with real OAuth2/JWT auth.
- * 새로고침 시 서버에 저장된 프로필을 다시 불러오지 않는다 — user_id만 localStorage에
- * 남아있고 닉네임 등은 세션 동안만 메모리에 유지된다 (재로그인 없이 새로고침하면
- * X-User-Id는 유지되지만 화면 상단 닉네임 표시는 다시 등록해야 나타남 — MVP 한계).
- */
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
+  const [loading, setLoading] = useState(getStoredAccessToken() !== null);
 
-  async function register(nickname: string, regionSlug?: string) {
-    const created = await registerUser(nickname, regionSlug);
-    setStoredUserId(created.id);
-    setUser(created);
+  useEffect(() => {
+    if (!getStoredAccessToken()) return;
+    getCurrentUser()
+      .then(setUser)
+      .catch(() => setStoredAccessToken(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function register(nickname: string, password: string, regionSlug?: string) {
+    const auth = await registerUser(nickname, password, regionSlug);
+    setStoredAccessToken(auth.access_token);
+    setUser(auth.user);
   }
 
-  function logout() {
-    setStoredUserId(null);
+  async function login(nickname: string, password: string) {
+    const auth = await loginUser(nickname, password);
+    setStoredAccessToken(auth.access_token);
+    setUser(auth.user);
+  }
+
+  async function logout() {
+    try { await logoutUser(); } catch { /* clear local session even if API is unavailable */ }
+    setStoredAccessToken(null);
     setUser(null);
   }
 
-  return <UserContext.Provider value={{ user, register, logout }}>{children}</UserContext.Provider>;
+  return <UserContext.Provider value={{ user, loading, register, login, logout }}>{children}</UserContext.Provider>;
 }
 
 export function useUser(): UserContextValue {
@@ -41,5 +53,5 @@ export function useUser(): UserContextValue {
 }
 
 export function hasStoredSession(): boolean {
-  return getStoredUserId() !== null;
+  return getStoredAccessToken() !== null;
 }

@@ -20,7 +20,7 @@ from app.models_community import Comment, CommunityPost, User
 from app import models_reputation  # noqa: F401 - Base.metadata에 학원 평판 테이블을 등록시키기 위한 import
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
-from app.routers import admin, committee, community, mom_cafe, news, reputation
+from app.routers import admin, authentication, committee, community, mom_cafe, news, reputation
 from app.schemas import (
     CctvInfo,
     CctvResponse,
@@ -65,6 +65,8 @@ async def _loop_scheduler() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from app.auth import validate_auth_configuration
+    validate_auth_configuration()
     Base.metadata.create_all(bind=engine)
     # 운영 DB의 raw_records가 수만 건 규모라 CREATE INDEX/ANALYZE를 앱 시작(lifespan) 경로에
     # 동기로 넣었더니 기동 자체가 헬스체크 타임아웃을 넘겨버려 502를 유발했다 — 되돌림.
@@ -74,6 +76,8 @@ async def lifespan(app: FastAPI):
     from app.database import SessionLocal
     db = SessionLocal()
     try:
+        from app.seed import migrate_auth_schema
+        migrate_auth_schema(db)
         # 재시작 시 마지막 활성 prompt variant 복원
         feedback_loop.restore_variant_from_db(db)
         # 커뮤니티 모듈 기본 지역/게시판 시드 (멱등)
@@ -111,6 +115,7 @@ app.add_middleware(
 )
 
 app.include_router(community.router)
+app.include_router(authentication.router)
 app.include_router(news.router)
 app.include_router(mom_cafe.router)
 app.include_router(admin.router)

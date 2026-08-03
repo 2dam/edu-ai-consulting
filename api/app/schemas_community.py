@@ -12,6 +12,7 @@ ModerationStatusLit = Literal["visible", "hidden", "deleted"]
 # ---- 사용자 (임시 가입) ----
 class UserCreate(BaseModel):
     nickname: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=10, max_length=128)
     region_slug: str | None = None
 
 
@@ -21,6 +22,13 @@ class UserOut(BaseModel):
     region: str | None = None
     level: str | None = None
     created_at: datetime
+
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: Literal["bearer"] = "bearer"
+    expires_in: int
+    user: UserOut
 
 
 # ---- 게시판 ----

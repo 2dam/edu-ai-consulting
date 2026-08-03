@@ -5,7 +5,7 @@ from app import ai_community
 from app.auth import get_current_user
 from app.community_common import apply_vote, build_comment_tree, create_comment, serialize_post
 from app.database import get_db
-from app.models_community import Board, Comment, CommunityPost, ModerationStatus, Region, Report, TargetType, User
+from app.models_community import Board, Comment, CommunityPost, ModerationStatus, Report, TargetType, User
 from app.schemas_community import (
     CommentCreate,
     CommentOut,
@@ -16,35 +16,11 @@ from app.schemas_community import (
     RelatedPostOut,
     ReportCreate,
     ReportOut,
-    UserCreate,
-    UserOut,
     VoteRequest,
     VoteResult,
 )
 
 router = APIRouter(prefix="/community", tags=["community"])
-
-
-@router.post("/users", response_model=UserOut)
-def create_user(payload: UserCreate, db: Session = Depends(get_db)):
-    """임시 가입 — 비밀번호 없이 닉네임만으로 user_id를 발급한다. TODO: 실제 인증으로 교체."""
-    if db.query(User).filter(User.nickname == payload.nickname).first():
-        raise HTTPException(status_code=409, detail="이미 사용 중인 닉네임입니다")
-
-    region = None
-    if payload.region_slug:
-        region = db.query(Region).filter(Region.slug == payload.region_slug).first()
-        if not region:
-            raise HTTPException(status_code=400, detail="존재하지 않는 지역입니다")
-
-    user = User(nickname=payload.nickname, region_id=region.id if region else None)
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return UserOut(
-        id=user.id, nickname=user.nickname, region=region.name if region else None,
-        level=None, created_at=user.created_at,
-    )
 
 
 @router.get("/feed", response_model=FeedPage)

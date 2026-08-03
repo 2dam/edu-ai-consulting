@@ -82,17 +82,15 @@ class Region(Base):
 
 
 class User(Base):
-    """임시 사용자 모델.
-
-    TODO: replace with real OAuth2/JWT auth. 지금은 비밀번호/세션이 전혀 없고
-    닉네임만으로 가입하며, 클라이언트가 발급받은 id를 X-User-Id 헤더로 보내는
-    방식으로만 신원을 구분한다 (app/auth.py 참고).
-    """
+    """OAuth2/JWT로 인증되는 커뮤니티 사용자."""
 
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     nickname = Column(String(64), nullable=False, unique=True)
+    password_hash = Column(String(255), nullable=True)
+    is_admin = Column(Boolean, default=False, nullable=False)
+    token_version = Column(Integer, default=0, nullable=False)
     region_id = Column(Integer, ForeignKey("regions.id"), nullable=True)
     level_id = Column(Integer, ForeignKey("user_levels.id"), nullable=True)
     created_at = Column(DateTime, default=_now)
