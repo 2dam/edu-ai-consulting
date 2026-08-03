@@ -53,7 +53,7 @@ scrapy crawl academy -a start_url="<학원 페이지 URL>" -a academy_name="OO�
 scrapy crawl megastudy_curriculum -O megastudy.json  # robots 허용 시 공개 커리큘럼 목록만
 scrapy crawl academyinfo_universities -O universities.json  # DATA_GO_KR_SERVICE_KEY 필요
 scrapy crawl careernet_university_majors -O career-majors.json  # CAREERNET_API_KEY 필요
-scrapy crawl education_news -a start_url="<교육 뉴스 목록 URL>"   # ALLOWED_SOURCES 등재 필요
+scrapy crawl education_news -a start_url="https://www.moe.go.kr/boardCnts/listRenew.do?boardID=294&m=020402&s=moe" -a category="정책"
 
 # 3. 커뮤니티 대시보드 프론트엔드 (다른 터미널) — 기존 OSINT용 dashboard/(Next.js)와는 별개
 cd dashboard-community
@@ -228,8 +228,8 @@ CCTV를 추가했다.
 - OAuth2/JWT 인증은 구현됨. 운영 전 로그인 rate limiting, 비밀번호 재설정,
   refresh token 회전과 보안 감사 로그를 추가해야 합니다
   (`api/app/auth.py`, [`docs/temporary-auth.md`](docs/temporary-auth.md) 참고).
-- `education_news_spider.py`의 `ALLOWED_SOURCES`가 아직 비어 있음 — 실제 대상 매체를
-  정하고 robots.txt/로그인 필요 여부를 직접 확인한 뒤 등재해야 합니다.
+- `education_news_spider.py`는 교육부 공공누리 보도자료만 허용함 — 다른 매체는
+  robots.txt, 로그인 필요 여부와 게시물별 재이용 조건을 직접 확인한 뒤 등재해야 합니다.
 - 댓글 단위 모더레이션(개별 댓글 숨김/삭제) 미구현 — 현재는 게시글/뉴스 단위만 지원.
 - `dashboard-community/`는 아직 별도 배포 파이프라인이 없음 — `render.yaml`은 `api/`만 배포하므로
   프론트엔드는 별도 정적 호스팅 서비스 추가가 필요합니다.
