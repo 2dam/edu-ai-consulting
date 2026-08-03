@@ -68,6 +68,7 @@ npm run dev   # http://localhost:5173, api(localhost:8000)를 CORS로 호출
 cd crawler
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-news.txt
+$env:SCRAPY_SETTINGS_MODULE="edu_crawler.settings_news"
 .\.venv\Scripts\python.exe -m scrapy crawl education_news -a start_url="https://www.moe.go.kr/boardCnts/listRenew.do?boardID=294&m=020402&s=moe" -a category="정책" -O education-news.json
 ```
 
