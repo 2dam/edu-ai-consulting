@@ -1,3 +1,4 @@
+
 .venv/
 __pycache__/
 *.pyc
@@ -8,3 +9,5 @@ __pycache__/
 *.egg-info/
 .scrapy/
 tmp_inspect/
+crawler/admission-youtube.json
+crawler/education-news.json
