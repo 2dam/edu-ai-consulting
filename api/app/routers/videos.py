@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, Query
+import hmac
+import os
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -70,15 +73,23 @@ def get_video_feed(
 
 
 @router.post("/ingest-batch", response_model=AdmissionVideoIngestResult)
-def ingest_video_batch(payloads: list[AdmissionVideoIn], db: Session = Depends(get_db)):
-    if len(payloads) > 500:
-        from fastapi import HTTPException
+def ingest_video_batch(
+    payloads: list[AdmissionVideoIn],
+    x_ingest_key: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
+    expected_key = os.getenv("VIDEO_INGEST_API_KEY", "").strip()
+    if not expected_key:
+        raise HTTPException(status_code=503, detail="Video ingestion is not configured")
+    if not x_ingest_key or not hmac.compare_digest(x_ingest_key, expected_key):
+        raise HTTPException(status_code=401, detail="Invalid ingestion key")
 
-        raise HTTPException(status_code=413, detail="한 번에 최대 500건까지 저장할 수 있습니다.")
+    if len(payloads) > 500:
+        raise HTTPException(status_code=413, detail="??踰덉뿉 理쒕? 500嫄닿퉴吏 ??ν븷 ???덉뒿?덈떎.")
 
     unique_payloads: dict[str, AdmissionVideoIn] = {}
     for payload in payloads:
-        # 같은 영상이 여러 검색어에 잡히면 마지막 수집 통계를 사용한다.
+        # 媛숈? ?곸긽???щ윭 寃?됱뼱???≫엳硫?留덉?留??섏쭛 ?듦퀎瑜??ъ슜?쒕떎.
         unique_payloads[payload.video_id] = payload
 
     created = 0
@@ -103,3 +114,4 @@ def ingest_video_batch(payloads: list[AdmissionVideoIn], db: Session = Depends(g
         created=created,
         updated=updated,
     )
+
