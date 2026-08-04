@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { getNewsFeed } from "../api/news";
 import { newsPostToFeedItem } from "../api/types";
@@ -12,10 +13,27 @@ export function NewsFeed() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    getNewsFeed({ category: category === "전체" ? undefined : category })
-      .then((page) => setItems(page.items.map(newsPostToFeedItem)))
-      .finally(() => setLoading(false));
+    let active = true;
+    const load = (showLoading = false) => {
+      if (showLoading) setLoading(true);
+      getNewsFeed({ category: category === "전체" ? undefined : category })
+        .then((page) => {
+          if (active) setItems(page.items.map(newsPostToFeedItem));
+        })
+        .finally(() => {
+          if (active && showLoading) setLoading(false);
+        });
+    };
+
+    load(true);
+    const intervalId = window.setInterval(() => load(), 60_000);
+    const refreshOnFocus = () => load();
+    window.addEventListener("focus", refreshOnFocus);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshOnFocus);
+    };
   }, [category]);
 
   return (
