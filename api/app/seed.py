@@ -4,12 +4,15 @@ Region/Board 테이블이 비어있을 때만 기본 지역(한국 시/도 17개
 (자유/교육/육아/뉴스 + 지역별 게시판)을 채운다. main.py의 FastAPI startup 이벤트에서
 호출되며, 별도 마이그레이션 도구 없이 새 SQLite DB에서 바로 개발을 시작할 수 있게 한다.
 
-관리자 유저(id=1)도 여기서 함께 보장한다 — app/auth.py의 require_admin이 X-User-Id: 1에
-해당하는 users 행의 실존 여부를 확인하므로, 이 행이 없으면 ADMIN_ACCESS_TOKEN을 맞게
-넣어도 백엔드 단계에서 401로 막혀버린다(새 배포/디스크 초기화 직후에 특히 발생).
+관리자 유저(id=1)도 여기서 함께 보장하고 DB의 is_admin 권한을 설정한다. 최초 비밀번호는
+ADMIN_PASSWORD 환경변수가 있을 때만 해시해 저장한다.
 """
+import os
+
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
+from app.auth import hash_password
 from app.models_community import Board, BoardType, Region, User
 
 REGIONS = [
@@ -40,6 +43,20 @@ DEFAULT_BOARDS = [
 ]
 
 
+def migrate_auth_schema(db: Session) -> None:
+    """기존 users 테이블에 인증 컬럼을 데이터 손실 없이 추가한다."""
+    columns = {c["name"] for c in inspect(db.bind).get_columns("users")}
+    additions = {
+        "password_hash": "VARCHAR(255)",
+        "is_admin": "BOOLEAN NOT NULL DEFAULT FALSE",
+        "token_version": "INTEGER NOT NULL DEFAULT 0",
+    }
+    for name, ddl in additions.items():
+        if name not in columns:
+            db.execute(text(f"ALTER TABLE users ADD COLUMN {name} {ddl}"))
+    db.commit()
+
+
 def seed_defaults(db: Session) -> None:
     if db.query(Region).first() is None:
         for name, slug in REGIONS:
@@ -63,11 +80,21 @@ def seed_defaults(db: Session) -> None:
             )
         db.commit()
 
-    if db.query(User).get(1) is None:
+    admin = db.get(User, 1)
+    if admin is None:
         nickname = "admin"
         suffix = 1
         while db.query(User).filter(User.nickname == nickname).first() is not None:
             suffix += 1
             nickname = f"admin{suffix}"
-        db.add(User(id=1, nickname=nickname))
+        admin = User(id=1, nickname=nickname, is_admin=True)
+        db.add(admin)
+        db.commit()
+    elif not admin.is_admin:
+        admin.is_admin = True
+        db.commit()
+
+    admin_password = os.getenv("ADMIN_PASSWORD")
+    if admin_password and not admin.password_hash:
+        admin.password_hash = hash_password(admin_password)
         db.commit()

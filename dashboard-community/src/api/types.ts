@@ -8,6 +8,13 @@ export interface CurrentUser {
   level: string | null;
 }
 
+export interface AuthToken {
+  access_token: string;
+  token_type: "bearer";
+  expires_in: number;
+  user: CurrentUser;
+}
+
 export interface BoardOut {
   id: number;
   slug: string;
@@ -69,6 +76,26 @@ export interface NewsPostOut {
 export interface NewsPostDetail extends NewsPostOut {
   body_text: string | null;
   comments: CommentOut[];
+}
+
+export interface AdmissionVideoOut {
+  id: number;
+  video_id: string;
+  source_url: string;
+  title: string;
+  description: string | null;
+  channel_id: string | null;
+  channel_title: string | null;
+  published_at: string | null;
+  thumbnail_url: string | null;
+  duration: string | null;
+  view_count: number;
+  like_count: number;
+  comment_count: number;
+  search_query: string | null;
+  crawled_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface FeedPage<T> {

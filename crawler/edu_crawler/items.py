@@ -105,3 +105,34 @@ class EducationFacilityItem(scrapy.Item):
     evaluation_grade = scrapy.Field()    # 어린이집평가제 등급 등 (해당 시)
     status_note = scrapy.Field()         # 등록상태·행정처분 이력 요약 (학원 등)
     crawled_at = scrapy.Field()
+
+
+class AdmissionVideoItem(scrapy.Item):
+    """YouTube Data API로 수집한 공개 입시 관련 영상 메타데이터."""
+
+    source_url = scrapy.Field()
+    platform = scrapy.Field()
+    video_id = scrapy.Field()
+    title = scrapy.Field()
+    description = scrapy.Field()
+    channel_id = scrapy.Field()
+    channel_title = scrapy.Field()
+    published_at = scrapy.Field()
+    thumbnail_url = scrapy.Field()
+    duration = scrapy.Field()
+    view_count = scrapy.Field()
+    like_count = scrapy.Field()
+    comment_count = scrapy.Field()
+    search_query = scrapy.Field()
+    crawled_at = scrapy.Field()
+
+
+class CareerMajorItem(scrapy.Item):
+    """커리어넷 공식 Open API가 제공하는 대학 학과 목록."""
+
+    source_url = scrapy.Field()
+    major_code = scrapy.Field()
+    major_name = scrapy.Field()
+    category = scrapy.Field()
+    department = scrapy.Field()
+    crawled_at = scrapy.Field()

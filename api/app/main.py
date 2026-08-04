@@ -14,13 +14,13 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app import ai_engine, cctv, feedback_loop, imputation, naver_news, predictive_model, psychology_engine, qcrm_engine, youtube
+from app import ai_engine, career_guidance_centers, cctv, feedback_loop, imputation, naver_news, official_sources, predictive_model, psychology_engine, qcrm_engine, university_admissions, youtube
 from app import models_community  # noqa: F401 - Base.metadata에 커뮤니티 테이블을 등록시키기 위한 import
 from app.models_community import Comment, CommunityPost, User
 from app import models_reputation  # noqa: F401 - Base.metadata에 학원 평판 테이블을 등록시키기 위한 import
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
-from app.routers import admin, committee, community, mom_cafe, news, reputation
+from app.routers import admin, authentication, committee, community, mom_cafe, news, reputation, videos
 from app.schemas import (
     CctvInfo,
     CctvResponse,
@@ -65,6 +65,8 @@ async def _loop_scheduler() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from app.auth import validate_auth_configuration
+    validate_auth_configuration()
     Base.metadata.create_all(bind=engine)
     # 운영 DB의 raw_records가 수만 건 규모라 CREATE INDEX/ANALYZE를 앱 시작(lifespan) 경로에
     # 동기로 넣었더니 기동 자체가 헬스체크 타임아웃을 넘겨버려 502를 유발했다 — 되돌림.
@@ -74,6 +76,8 @@ async def lifespan(app: FastAPI):
     from app.database import SessionLocal
     db = SessionLocal()
     try:
+        from app.seed import migrate_auth_schema
+        migrate_auth_schema(db)
         # 재시작 시 마지막 활성 prompt variant 복원
         feedback_loop.restore_variant_from_db(db)
         # 커뮤니티 모듈 기본 지역/게시판 시드 (멱등)
@@ -111,7 +115,9 @@ app.add_middleware(
 )
 
 app.include_router(community.router)
+app.include_router(authentication.router)
 app.include_router(news.router)
+app.include_router(videos.router)
 app.include_router(mom_cafe.router)
 app.include_router(admin.router)
 app.include_router(committee.router)
@@ -137,6 +143,26 @@ def landing():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/official-admission-sources")
+def official_admission_sources():
+    """콘텐츠를 복제하지 않고 입시 공식 원문과 연동 상태를 안내한다."""
+    return {"items": official_sources.list_official_sources()}
+
+
+@app.get("/university-admissions")
+def university_admission_sites(q: str | None = None, region: str | None = None):
+    """검증한 대학 공식 입학처 링크를 대학명 또는 지역으로 조회한다."""
+    items = university_admissions.list_university_admissions(query=q, region=region)
+    return {"items": items, "count": len(items), "verified_at": university_admissions.VERIFIED_AT}
+
+
+@app.get("/career-guidance-centers")
+def career_guidance_center_sites(q: str | None = None, region: str | None = None):
+    """전국 시도교육청의 공식 진로·진학 지원 서비스 링크를 조회한다."""
+    items = career_guidance_centers.list_career_guidance_centers(query=q, region=region)
+    return {"items": items, "count": len(items), "verified_at": career_guidance_centers.VERIFIED_AT}
 
 
 # ── 크롤러 데이터 적재 ────────────────────────────────────────────────────────

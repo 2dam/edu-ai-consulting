@@ -7,9 +7,11 @@ import { TrendingTopics } from "./TrendingTopics";
 import "./AppShell.css";
 
 function RegisterWidget() {
-  const { user, register, logout } = useUser();
+  const { user, register, login, logout } = useUser();
   const [nickname, setNickname] = useState("");
   const [regionSlug, setRegionSlug] = useState("");
+  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [regions, setRegions] = useState<{ slug: string; name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -39,13 +41,14 @@ function RegisterWidget() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!nickname.trim()) return;
+    if (!nickname.trim() || password.length < 10) return;
     setSubmitting(true);
     setError(null);
     try {
-      await register(nickname.trim(), regionSlug || undefined);
-    } catch {
-      setError("닉네임이 이미 사용 중이거나 등록에 실패했습니다");
+      if (mode === "register") await register(nickname.trim(), password, regionSlug || undefined);
+      else await login(nickname.trim(), password);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "인증에 실패했습니다");
     } finally {
       setSubmitting(false);
     }
@@ -54,20 +57,30 @@ function RegisterWidget() {
   return (
     <form className="register-widget" onSubmit={handleSubmit}>
       <input
-        placeholder="닉네임으로 시작하기"
+        placeholder="닉네임"
         value={nickname}
         onChange={(e) => setNickname(e.target.value)}
       />
-      <select value={regionSlug} onChange={(e) => setRegionSlug(e.target.value)}>
+      <input
+        type="password"
+        autoComplete={mode === "login" ? "current-password" : "new-password"}
+        placeholder="비밀번호(10자 이상)"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      {mode === "register" && <select value={regionSlug} onChange={(e) => setRegionSlug(e.target.value)}>
         <option value="">지역 선택(선택)</option>
         {regions.map((r) => (
           <option key={r.slug} value={r.slug}>
             {r.name}
           </option>
         ))}
-      </select>
-      <button type="submit" disabled={submitting || !nickname.trim()}>
-        시작하기
+      </select>}
+      <button type="submit" disabled={submitting || !nickname.trim() || password.length < 10}>
+        {mode === "login" ? "로그인" : "가입"}
+      </button>
+      <button type="button" onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(null); }}>
+        {mode === "login" ? "회원가입" : "로그인으로"}
       </button>
       {error && <span className="register-error">{error}</span>}
     </form>

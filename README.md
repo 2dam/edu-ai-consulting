@@ -32,7 +32,7 @@
 - `dashboard-community/` — Vite + React + TypeScript 프론트엔드 (커뮤니티/뉴스/맘카페 UI,
   `dashboard/`와는 별개 앱)
 - `docs/` — GitHub Pages용 OSINT 대시보드 정적 빌드(`index.html`, `qcrm.md`) +
-  커뮤니티 모듈 데이터 모델/모더레이션 정책/임시 인증 문서
+  커뮤니티 모듈 데이터 모델/모더레이션 정책/OAuth2·JWT 인증 문서
 
 ## 실행 방법
 
@@ -50,7 +50,18 @@ python -m venv .venv && .venv/Scripts/activate
 pip install -r requirements.txt
 scrapy crawl public_data -a start_url="<공시자료 URL>" -a item_kind=admission
 scrapy crawl academy -a start_url="<학원 페이지 URL>" -a academy_name="OO학원" -a region="강남"
-scrapy crawl education_news -a start_url="<교육 뉴스 목록 URL>"   # ALLOWED_SOURCES 등재 필요
+scrapy crawl megastudy_curriculum -O megastudy.json  # robots 허용 시 공개 커리큘럼 목록만
+scrapy crawl academyinfo_universities -O universities.json  # DATA_GO_KR_SERVICE_KEY 필요
+
+# YouTube Data API v3로 최근 1년 입시 관련 공개 영상 메타데이터 수집 (PowerShell)
+$env:SCRAPY_SETTINGS_MODULE="edu_crawler.settings_youtube"
+$env:YOUTUBE_API_KEY="발급받은 API 키"
+.\.venv\Scripts\python.exe -m scrapy crawl admission_youtube -O admission-youtube.json
+
+기본 실행은 로컬 JSON 파일만 생성합니다. 수집 결과를 검증한 뒤 API/운영 DB 적재를
+별도로 수행하여, API 서버가 꺼져 있을 때 항목별 재시도로 수집이 지연되지 않게 합니다.
+scrapy crawl careernet_university_majors -O career-majors.json  # CAREERNET_API_KEY 필요
+scrapy crawl education_news -a start_url="https://www.moe.go.kr/boardCnts/listRenew.do?boardID=294&m=020402&s=moe" -a category="정책"
 
 # 3. 커뮤니티 대시보드 프론트엔드 (다른 터미널) — 기존 OSINT용 dashboard/(Next.js)와는 별개
 cd dashboard-community
@@ -58,10 +69,24 @@ npm install
 npm run dev   # http://localhost:5173, api(localhost:8000)를 CORS로 호출
 ```
 
+교육 뉴스 수집기만 실행할 때는 전체 브라우저 자동화 의존성 대신
+`crawler/requirements-news.txt`만 설치할 수 있습니다.
+
+```powershell
+cd crawler
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-news.txt
+$env:SCRAPY_SETTINGS_MODULE="edu_crawler.settings_news"
+.\.venv\Scripts\python.exe -m scrapy crawl education_news -a start_url="https://www.moe.go.kr/boardCnts/listRenew.do?boardID=294&m=020402&s=moe" -a category="정책" -O education-news.json
+```
+
 ## 커뮤니티 모듈 API
 
 ```
-POST /community/users                  임시 가입 (닉네임만) → user_id 발급, X-User-Id 헤더로 사용
+POST /auth/register                    비밀번호 기반 회원가입 + Bearer JWT 발급
+POST /auth/token                       OAuth2 로그인 + Bearer JWT 발급
+GET  /auth/me                          현재 로그인 사용자 조회
+POST /auth/logout                      기존 사용자 토큰 무효화
 GET  /community/feed                   커뮤니티 피드 (board_slug/sort/limit/offset)
 GET  /community/posts/{id}             게시글 상세 + 댓글 트리
 POST /community/posts                  게시글 작성
@@ -71,16 +96,33 @@ POST /community/comments/{id}/vote     댓글 추천/비추천
 POST /community/posts/{id}/report      게시글 신고
 GET  /community/trending               화제 키워드 (extract_trending_keywords)
 GET  /community/posts/{id}/related     관련 게시글 추천 (suggest_related_posts)
+GET  /official-admission-sources       입학처·어디가·커리어넷·대학알리미 공식 출처 안내
+GET  /university-admissions            검증된 대학 입학처 목록 (q/region 검색)
+GET  /career-guidance-centers          전국 시도교육청 진로·진학센터 목록 (q/region 검색)
 
 GET  /news/feed                        뉴스 피드 (category/region_slug)
 GET  /news/{id}                        뉴스 상세 + 댓글 트리
 POST /news/ingest                      크롤러 전용 수집 엔드포인트 (education_news_spider)
+POST /news/ingest-batch                크롤러 뉴스 일괄 적재 (URL 중복 갱신, 최대 500건)
 POST /news/import-url                  단일 기사 수동 등록
 POST /news/{id}/summarize              AI 기사 요약 (summarize_news_article)
 POST /news/{id}/debate-summary         AI 댓글 토론 요약 (summarize_comment_thread + extract_debate_points)
 POST /news/{id}/sentiment              여론 평가 — 기사+댓글 감정분석 (FinBERT, 미설치 시 규칙 기반 폴백)
 GET  /news/issue-sentiment             이슈(키워드)별 여론 평가 — 네이버 뉴스 실시간 검색 + 감정분석, 로그인 불필요(랜딩페이지 공개 위젯)
 POST /news/{id}/comments · /vote · /report   커뮤니티 게시글과 동일한 댓글/투표/신고
+
+GET  /videos/feed                      입시 영상 목록·제목/채널 검색·주제 필터
+POST /videos/ingest-batch              YouTube 수집 JSON 일괄 적재 (video_id 중복 갱신)
+
+커뮤니티의 `/#/videos`에서 수집된 공개 입시 영상을 확인할 수 있습니다. 영상은 YouTube
+원문 링크로 연결되며 제목·채널·게시일·조회수 등의 공개 메타데이터만 저장합니다.
+
+수집 JSON을 API에 적재:
+
+```powershell
+cd crawler
+.\.venv\Scripts\python.exe import_admission_videos.py --api-url http://127.0.0.1:8000
+```
 
 GET  /mom-cafe/boards                  게시판 목록
 GET  /mom-cafe/region/{region}         지역 게시판 피드
@@ -94,7 +136,7 @@ PATCH /admin/news/posts/{id}/moderation           뉴스 모더레이션 (관리
 
 자세한 데이터 모델은 [`docs/community-platform.md`](docs/community-platform.md),
 모더레이션 정책은 [`docs/moderation.md`](docs/moderation.md),
-임시 인증 방식의 한계는 [`docs/temporary-auth.md`](docs/temporary-auth.md)를 참고하세요.
+인증 설정과 마이그레이션은 [`docs/temporary-auth.md`](docs/temporary-auth.md)를 참고하세요.
 
 ### 환경 변수
 
@@ -209,16 +251,18 @@ CCTV를 추가했다.
 
 - 실제 대상 사이트(학교알리미 정확한 URL/HTML 구조, 특정 학원 사이트)에 맞춘
   셀렉터 커스터마이징 — 지금 스파이더의 CSS 셀렉터는 예시 placeholder입니다.
+- 메가스터디 공개 커리큘럼 전용 스파이더와 fail-closed robots 검증은 구현됨
+  (`crawler/edu_crawler/spiders/megastudy_spider.py`, `docs/crawler-targets.md`).
 - 크롤링 대상 사이트별 이용약관 직접 확인 (계획서 6.1항 — 법적 책임은 코드가
   대신 판단할 수 없음, robots.txt 준수는 최소 안전장치일 뿐)
 - 인증/티어별 결제 연동, React Native 앱(3.3항)
 - k-익명성 같은 정식 비식별화 알고리즘 (현재 `AnonymizePipeline`은 단순 필드 제거 수준)
 - 자체 ML 레이어로의 전환 (3단계 로드맵 중 2단계, 데이터 누적 후)
-- **임시 인증(`X-User-Id` 헤더) — TODO: 실제 OAuth2/JWT 인증으로 교체.**
-  현재는 비밀번호도 세션도 없이 헤더 값을 그대로 신뢰하므로 스푸핑이 가능합니다
+- OAuth2/JWT 인증은 구현됨. 운영 전 로그인 rate limiting, 비밀번호 재설정,
+  refresh token 회전과 보안 감사 로그를 추가해야 합니다
   (`api/app/auth.py`, [`docs/temporary-auth.md`](docs/temporary-auth.md) 참고).
-- `education_news_spider.py`의 `ALLOWED_SOURCES`가 아직 비어 있음 — 실제 대상 매체를
-  정하고 robots.txt/로그인 필요 여부를 직접 확인한 뒤 등재해야 합니다.
+- `education_news_spider.py`는 교육부 공공누리 보도자료만 허용함 — 다른 매체는
+  robots.txt, 로그인 필요 여부와 게시물별 재이용 조건을 직접 확인한 뒤 등재해야 합니다.
 - 댓글 단위 모더레이션(개별 댓글 숨김/삭제) 미구현 — 현재는 게시글/뉴스 단위만 지원.
 - `dashboard-community/`는 아직 별도 배포 파이프라인이 없음 — `render.yaml`은 `api/`만 배포하므로
   프론트엔드는 별도 정적 호스팅 서비스 추가가 필요합니다.

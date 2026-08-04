@@ -14,6 +14,7 @@ import enum
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     Column,
     DateTime,
@@ -82,17 +83,15 @@ class Region(Base):
 
 
 class User(Base):
-    """임시 사용자 모델.
-
-    TODO: replace with real OAuth2/JWT auth. 지금은 비밀번호/세션이 전혀 없고
-    닉네임만으로 가입하며, 클라이언트가 발급받은 id를 X-User-Id 헤더로 보내는
-    방식으로만 신원을 구분한다 (app/auth.py 참고).
-    """
+    """OAuth2/JWT로 인증되는 커뮤니티 사용자."""
 
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     nickname = Column(String(64), nullable=False, unique=True)
+    password_hash = Column(String(255), nullable=True)
+    is_admin = Column(Boolean, default=False, nullable=False)
+    token_version = Column(Integer, default=0, nullable=False)
     region_id = Column(Integer, ForeignKey("regions.id"), nullable=True)
     level_id = Column(Integer, ForeignKey("user_levels.id"), nullable=True)
     created_at = Column(DateTime, default=_now)
@@ -170,6 +169,30 @@ class NewsPost(Base):
 
     board = relationship("Board")
     region = relationship("Region")
+
+
+class AdmissionVideo(Base):
+    """YouTube Data API로 수집한 공개 입시 영상 메타데이터."""
+
+    __tablename__ = "admission_videos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    video_id = Column(String(32), nullable=False, unique=True, index=True)
+    source_url = Column(String(512), nullable=False)
+    title = Column(String(500), nullable=False)
+    description = Column(Text, nullable=True)
+    channel_id = Column(String(64), nullable=True, index=True)
+    channel_title = Column(String(255), nullable=True, index=True)
+    published_at = Column(DateTime, nullable=True, index=True)
+    thumbnail_url = Column(String(512), nullable=True)
+    duration = Column(String(32), nullable=True)
+    view_count = Column(BigInteger, default=0, nullable=False)
+    like_count = Column(BigInteger, default=0, nullable=False)
+    comment_count = Column(BigInteger, default=0, nullable=False)
+    search_query = Column(String(128), nullable=True, index=True)
+    crawled_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=_now, nullable=False)
+    updated_at = Column(DateTime, default=_now, onupdate=_now, nullable=False)
 
 
 class Comment(Base):

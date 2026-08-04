@@ -4,14 +4,28 @@ import type {
   CommunityPostDetail,
   CommunityPostOut,
   CurrentUser,
+  AuthToken,
   FeedPage,
   ReportOut,
   ReportReason,
   VoteResult,
 } from "./types";
 
-export function registerUser(nickname: string, regionSlug?: string): Promise<CurrentUser> {
-  return api.post<CurrentUser>("/community/users", { nickname, region_slug: regionSlug || null });
+export function registerUser(nickname: string, password: string, regionSlug?: string): Promise<AuthToken> {
+  return api.post<AuthToken>("/auth/register", { nickname, password, region_slug: regionSlug || null });
+}
+
+export function loginUser(nickname: string, password: string): Promise<AuthToken> {
+  const form = new URLSearchParams({ username: nickname, password });
+  return api.postForm<AuthToken>("/auth/token", form);
+}
+
+export function getCurrentUser(): Promise<CurrentUser> {
+  return api.get<CurrentUser>("/auth/me");
+}
+
+export function logoutUser(): Promise<void> {
+  return api.post<void>("/auth/logout");
 }
 
 export function getCommunityFeed(params: {

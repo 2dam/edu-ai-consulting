@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
 import { UserProvider } from "./context/UserContext";
 import { AdminPage } from "./pages/AdminPage";
+import { AdmissionVideos } from "./pages/AdmissionVideos";
 import { BoardPage } from "./pages/BoardPage";
 import { CommunityHome } from "./pages/CommunityHome";
 import { EducationBoard } from "./pages/EducationBoard";
@@ -19,6 +20,7 @@ function App() {
           <Route path="/" element={<CommunityHome />} />
           <Route path="/news" element={<NewsFeed />} />
           <Route path="/news/:id" element={<NewsDetailPage />} />
+          <Route path="/videos" element={<AdmissionVideos />} />
           <Route path="/posts/:id" element={<PostDetailPage />} />
           <Route path="/board/:slug" element={<BoardPage />} />
           <Route path="/mom-cafe/region/:region" element={<RegionBoard />} />

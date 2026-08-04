@@ -25,6 +25,9 @@ export function MomCafeSidebar() {
         <NavLink to="/news" className="sidebar-link">
           📰 교육 뉴스
         </NavLink>
+        <NavLink to="/videos" className="sidebar-link">
+          ▶ 입시 영상
+        </NavLink>
         <NavLink to="/mom-cafe/education" className="sidebar-link">
           🎓 교육 게시판
         </NavLink>
