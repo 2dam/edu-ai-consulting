@@ -1,7 +1,10 @@
+
 import json
+import hmac
+import os
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app import ai_community, naver_news, sentiment_finbert
@@ -30,6 +33,17 @@ from app.schemas_community import (
 )
 
 router = APIRouter(prefix="/news", tags=["news"])
+
+
+def require_news_ingest_key(x_ingest_key: str | None = Header(default=None)) -> None:
+    expected_key = (
+        os.getenv("NEWS_INGEST_API_KEY", "").strip()
+        or os.getenv("VIDEO_INGEST_API_KEY", "").strip()
+    )
+    if not expected_key:
+        raise HTTPException(status_code=503, detail="News ingestion is not configured")
+    if not x_ingest_key or not hmac.compare_digest(x_ingest_key, expected_key):
+        raise HTTPException(status_code=401, detail="Invalid ingestion key")
 
 
 @router.get("/feed", response_model=NewsFeedPage)
@@ -107,7 +121,7 @@ def get_news_detail(news_id: int, db: Session = Depends(get_db)):
     return NewsPostDetail(**base.model_dump(), body_text=news.body_text, comments=build_comment_tree(comments))
 
 
-@router.post("/ingest")
+@router.post("/ingest", dependencies=[Depends(require_news_ingest_key)])
 def ingest_news(payload: IngestPayload, db: Session = Depends(get_db)):
     """크롤러(education_news_spider) 전용 수집 엔드포인트.
 
@@ -169,7 +183,7 @@ def _store_news_payload(payload: IngestPayload, db: Session) -> tuple[NewsPost, 
     return news, created
 
 
-@router.post("/ingest-batch")
+@router.post("/ingest-batch", dependencies=[Depends(require_news_ingest_key)])
 def ingest_news_batch(payloads: list[IngestPayload], db: Session = Depends(get_db)):
     """크롤러의 뉴스 묶음을 한 트랜잭션으로 저장하고 URL 중복은 갱신한다."""
     if len(payloads) > 500:
