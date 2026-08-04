@@ -1,8 +1,9 @@
+
 'use client'
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { AcademyNode, LayerId, CctvPoint, EducationFacility } from '@/lib/data'
-import { LAYERS, SAMPLE_EDUCATION_FACILITIES } from '@/lib/data'
+import { LAYERS, REGION_NODES } from '@/lib/data'
 import HUD from '@/components/HUD'
 import OsintPanel from '@/components/OsintPanel'
 import VideoPanel from '@/components/VideoPanel'
@@ -53,13 +54,13 @@ export default function Page() {
     backend_region_count: number
     loop_status: any
   } | null>(null)
+  const [dataError, setDataError] = useState<string | null>(null)
   const [news, setNews] = useState<any[]>([])
   const [dropoutRisks, setDropoutRisks] = useState<Record<string, any>>({})
   const [universities, setUniversities] = useState<any[]>([])
   const [cctvPoints, setCctvPoints] = useState<CctvPoint[]>([])
-  // 크롤러를 아직 안 돌렸어도 화면이 비어 보이지 않도록 예시 데이터로 시작 —
-  // 실제 수집 데이터가 도착하면 아래 useEffect에서 자동으로 대체된다.
-  const [educationFacilities, setEducationFacilities] = useState<EducationFacility[]>(SAMPLE_EDUCATION_FACILITIES)
+  // Production screens must never present sample facilities as collected data.
+  const [educationFacilities, setEducationFacilities] = useState<EducationFacility[]>([])
   const [activeLayers, setActiveLayers] = useState<Set<LayerId>>(
     new Set(LAYERS.filter(l => l.default).map(l => l.id))
   )
@@ -74,7 +75,27 @@ export default function Page() {
   } | undefined>()
 
   useEffect(() => {
-    const load = () => fetch('/api/education').then(r => r.json()).then(setData).catch(console.error)
+    const load = async () => {
+      try {
+        const response = await fetch('/api/education', {
+          cache: 'no-store',
+          signal: AbortSignal.timeout(20_000),
+        })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const nextData = await response.json()
+        if (!Array.isArray(nextData.regions)) throw new Error('Invalid education data')
+        setData(nextData)
+        setDataError(null)
+      } catch (error) {
+        console.error('교육 현황을 불러오지 못했습니다.', error)
+        setData(current => current ?? {
+          regions: REGION_NODES,
+          backend_region_count: 0,
+          loop_status: null,
+        })
+        setDataError('실시간 교육 현황 서버에 연결하지 못했습니다. 30초 후 자동으로 다시 시도합니다.')
+      }
+    }
     load()
     const id = setInterval(load, 30_000)
     return () => clearInterval(id)
@@ -125,6 +146,11 @@ export default function Page() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+      {dataError && (
+        <div role="alert" style={{ position: 'absolute', zIndex: 1000, top: 12, left: '50%', transform: 'translateX(-50%)', padding: '8px 14px', border: '1px solid #f97316', borderRadius: 6, background: 'rgba(10, 12, 16, 0.94)', color: '#fdba74', fontSize: 12 }}>
+          {dataError}
+        </div>
+      )}
       {/* 지도 전체화면 */}
       <div style={{ position: 'absolute', inset: 0 }}>
         <Map
