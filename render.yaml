@@ -1,3 +1,4 @@
+
 services:
   - type: web
     name: edu-ai-consulting-api
@@ -58,21 +59,4 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
-
-  # Refresh admission-related YouTube videos every hour. Search requests are
-  # deliberately capped to stay within the default YouTube API daily quota.
-  - type: cron
-    name: admission-youtube-sync
-    runtime: python
-    rootDir: crawler
-    schedule: "0 * * * *"
-    buildCommand: pip install -r requirements-news.txt
-    startCommand: python sync_admission_videos.py
-    envVars:
-      - key: API_BASE_URL
-        value: https://ichapterwise.com
-      - key: YOUTUBE_API_KEY
-        sync: false
-      - key: VIDEO_INGEST_API_KEY
-        sync: false
 
