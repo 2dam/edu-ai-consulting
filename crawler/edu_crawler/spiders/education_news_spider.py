@@ -1,3 +1,4 @@
+
 """
 공개 교육 뉴스 매체(교육부/시도교육청 보도자료, 공개 교육 전문지 등)에서 기사 목록/본문을
 수집해 AI 교육 뉴스 커뮤니티 모듈(api의 NewsPost)로 보내는 스파이더.
@@ -21,6 +22,7 @@ ALLOWED_SOURCES 화이트리스트에 등재된 도메인에서만 동작한다.
     -a category="정책"
 """
 from datetime import datetime, timezone
+import os
 import re
 from urllib.parse import parse_qs, urlencode, urlparse
 
@@ -82,7 +84,7 @@ class EducationNewsSpider(scrapy.Spider):
     # 크롤러 전용 신규 라우트로 전송 — api/app/routers/news.py의 POST /news/ingest.
     # 기존 ApiExportPipeline은 전혀 수정하지 않고 스파이더 단위로만 EXPORT_API_URL을 오버라이드한다.
     custom_settings = {
-        "EXPORT_API_URL": "http://localhost:8000/news/ingest",
+        "EXPORT_API_URL": os.getenv("NEWS_EXPORT_API_URL", "http://localhost:8000/news/ingest"),
         # 공식 보도자료 수집에서는 브라우저 대체 요청이나 차단 우회를 사용하지 않는다.
         "DOWNLOADER_MIDDLEWARES": {
             "edu_crawler.middlewares.ScraplingFallbackMiddleware": None,
