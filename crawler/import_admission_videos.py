@@ -1,14 +1,15 @@
-"""수집한 입시 영상 JSON을 API의 전용 테이블에 일괄 적재한다."""
+"""?섏쭛???낆떆 ?곸긽 JSON??API???꾩슜 ?뚯씠釉붿뿉 ?쇨큵 ?곸옱?쒕떎."""
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 import requests
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="입시 영상 JSON API 적재")
+    parser = argparse.ArgumentParser(description="?낆떆 ?곸긽 JSON API ?곸옱")
     parser.add_argument("--api-url", default="http://127.0.0.1:8000")
     parser.add_argument("--file", default="admission-youtube.json")
     args = parser.parse_args()
@@ -16,17 +17,26 @@ def main() -> None:
     source = Path(args.file)
     payload = json.loads(source.read_text(encoding="utf-8"))
     if not isinstance(payload, list):
-        raise ValueError("영상 JSON의 최상위 값은 배열이어야 합니다.")
+        raise ValueError("?곸긽 JSON??理쒖긽??媛믪? 諛곗뿴?댁뼱???⑸땲??")
 
     endpoint = f"{args.api_url.rstrip('/')}/videos/ingest-batch"
-    response = requests.post(endpoint, json=payload, timeout=120)
+    ingest_key = os.getenv("VIDEO_INGEST_API_KEY", "").strip()
+    if not ingest_key:
+        raise RuntimeError("VIDEO_INGEST_API_KEY environment variable is required")
+    response = requests.post(
+        endpoint,
+        json=payload,
+        headers={"X-Ingest-Key": ingest_key},
+        timeout=120,
+    )
     response.raise_for_status()
     result = response.json()
     print(
-        f"완료: 입력 {result['total']}건, 고유 {result['unique']}건, "
-        f"중복 {result['duplicates']}건, 생성 {result['created']}건, 갱신 {result['updated']}건"
+        f"?꾨즺: ?낅젰 {result['total']}嫄? 怨좎쑀 {result['unique']}嫄? "
+        f"以묐났 {result['duplicates']}嫄? ?앹꽦 {result['created']}嫄? 媛깆떊 {result['updated']}嫄?
     )
 
 
 if __name__ == "__main__":
     main()
+
