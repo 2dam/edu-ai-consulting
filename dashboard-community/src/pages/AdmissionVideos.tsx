@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { getAdmissionVideos } from "../api/videos";
@@ -25,23 +26,42 @@ export function AdmissionVideos() {
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    setLoading(true);
-    setError("");
-    getAdmissionVideos({
-      q: keyword || undefined,
-      searchQuery: topic === "전체" ? undefined : topic,
-      limit: 100,
-    })
-      .then((page) => {
-        setVideos(page.items);
-        setTotal(page.total);
+    let active = true;
+    const load = (showLoading = false) => {
+      if (showLoading) setLoading(true);
+      setError("");
+      getAdmissionVideos({
+        q: keyword || undefined,
+        searchQuery: topic === "전체" ? undefined : topic,
+        limit: 100,
       })
-      .catch(() => {
-        setVideos([]);
-        setTotal(0);
-        setError("입시 영상 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
-      })
-      .finally(() => setLoading(false));
+        .then((page) => {
+          if (!active) return;
+          setVideos(page.items);
+          setTotal(page.total);
+        })
+        .catch(() => {
+          if (!active) return;
+          if (showLoading) {
+            setVideos([]);
+            setTotal(0);
+          }
+          setError("입시 영상 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        })
+        .finally(() => {
+          if (active && showLoading) setLoading(false);
+        });
+    };
+
+    load(true);
+    const intervalId = window.setInterval(() => load(), 60_000);
+    const refreshOnFocus = () => load();
+    window.addEventListener("focus", refreshOnFocus);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshOnFocus);
+    };
   }, [keyword, topic]);
 
   const submitSearch = (event: FormEvent) => {
