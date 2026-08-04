@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   sync:
+    environment: YOUTUBE_API_KEY
     runs-on: ubuntu-latest
     timeout-minutes: 180
     defaults:
