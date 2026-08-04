@@ -117,6 +117,13 @@ POST /videos/ingest-batch              YouTube 수집 JSON 일괄 적재 (video_
 커뮤니티의 `/#/videos`에서 수집된 공개 입시 영상을 확인할 수 있습니다. 영상은 YouTube
 원문 링크로 연결되며 제목·채널·게시일·조회수 등의 공개 메타데이터만 저장합니다.
 
+수집 JSON을 API에 적재:
+
+```powershell
+cd crawler
+.\.venv\Scripts\python.exe import_admission_videos.py --api-url http://127.0.0.1:8000
+```
+
 GET  /mom-cafe/boards                  게시판 목록
 GET  /mom-cafe/region/{region}         지역 게시판 피드
 GET  /mom-cafe/education               교육 게시판 피드
