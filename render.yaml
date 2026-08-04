@@ -16,6 +16,10 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      # Required for signing login tokens. Set a unique value of at least
+      # 32 characters in Render; never commit the secret itself.
+      - key: JWT_SECRET_KEY
+        sync: false
       - key: DATABASE_URL
         value: sqlite:////var/data/edu_consulting.db
 
