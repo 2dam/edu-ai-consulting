@@ -1,5 +1,8 @@
+
 import asyncio
+import hmac
 import logging
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
@@ -7,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -167,40 +170,69 @@ def career_guidance_center_sites(q: str | None = None, region: str | None = None
 
 # ── 크롤러 데이터 적재 ────────────────────────────────────────────────────────
 
-@app.post("/ingest")
+def require_ingest_key(x_ingest_key: str | None = Header(default=None)) -> None:
+    expected_key = os.getenv("CONTENT_INGEST_API_KEY", "").strip() or os.getenv("VIDEO_INGEST_API_KEY", "").strip()
+    if not expected_key:
+        raise HTTPException(status_code=503, detail="Content ingestion is not configured")
+    if not x_ingest_key or not hmac.compare_digest(x_ingest_key, expected_key):
+        raise HTTPException(status_code=401, detail="Invalid ingestion key")
+
+
+def _apply_raw_payload(record: RawRecord, payload: IngestPayload) -> None:
+    record.item_type = payload.item_type
+    record.data = payload.data
+    record.source_url = payload.data.get("source_url", "")
+    record.facility_type = payload.data.get("facility_type")
+    record.region = payload.data.get("region")
+    record.district = payload.data.get("district")
+
+
+@app.post("/ingest", dependencies=[Depends(require_ingest_key)])
 def ingest(payload: IngestPayload, db: Session = Depends(get_db)):
-    record = RawRecord(
-        item_type=payload.item_type,
-        data=payload.data,
-        source_url=payload.data.get("source_url", ""),
-        # facility_type/region/district를 적재 시점에 실제 컬럼으로도 채워둔다 — 조회 시
-        # json_extract 풀스캔 대신 인덱스를 타게 하기 위함(백필은 backfill_facility_columns.py).
-        facility_type=payload.data.get("facility_type"),
-        region=payload.data.get("region"),
-        district=payload.data.get("district"),
-    )
-    db.add(record)
+    source_url = str(payload.data.get("source_url") or "")
+    record = None
+    if payload.item_type == "EducationFacilityItem" and source_url:
+        record = db.query(RawRecord).filter(
+            RawRecord.item_type == payload.item_type,
+            RawRecord.source_url == source_url,
+        ).first()
+    if record is None:
+        record = RawRecord()
+        db.add(record)
+    _apply_raw_payload(record, payload)
     db.commit()
     return {"id": record.id}
 
 
-@app.post("/ingest-batch")
+@app.post("/ingest-batch", dependencies=[Depends(require_ingest_key)])
 def ingest_batch(payloads: list[IngestPayload], db: Session = Depends(get_db)):
-    """대량 크롤링(학원 등)에서 건별 요청 왕복 비용을 줄이기 위한 일괄 적재."""
-    records = [
-        RawRecord(
-            item_type=p.item_type,
-            data=p.data,
-            source_url=p.data.get("source_url", ""),
-            facility_type=p.data.get("facility_type"),
-            region=p.data.get("region"),
-            district=p.data.get("district"),
-        )
+    """대량 적재. 시설은 공식 원문 식별 URL을 기준으로 갱신해 재수집 중복을 막는다."""
+    facility_urls = {
+        str(p.data.get("source_url"))
         for p in payloads
-    ]
-    db.add_all(records)
+        if p.item_type == "EducationFacilityItem" and p.data.get("source_url")
+    }
+    existing = {}
+    if facility_urls:
+        existing = {
+            record.source_url: record
+            for record in db.query(RawRecord).filter(
+                RawRecord.item_type == "EducationFacilityItem",
+                RawRecord.source_url.in_(facility_urls),
+            ).all()
+        }
+
+    for payload in payloads:
+        source_url = str(payload.data.get("source_url") or "")
+        record = existing.get(source_url) if payload.item_type == "EducationFacilityItem" else None
+        if record is None:
+            record = RawRecord()
+            db.add(record)
+            if payload.item_type == "EducationFacilityItem" and source_url:
+                existing[source_url] = record
+        _apply_raw_payload(record, payload)
     db.commit()
-    return {"count": len(records)}
+    return {"count": len(payloads)}
 
 
 @app.get("/records")
