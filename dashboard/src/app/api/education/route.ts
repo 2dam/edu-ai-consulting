@@ -1,10 +1,11 @@
+
 import { NextResponse } from 'next/server'
 import { REGION_NODES } from '@/lib/data'
 import { BACKEND_URL } from '@/lib/backend'
 
 export const dynamic = 'force-dynamic'
 
-const BACKEND_TIMEOUT_MS = 20000
+const BACKEND_TIMEOUT_MS = 5000
 const BACKEND_CANDIDATES = Array.from(new Set([BACKEND_URL, 'https://ichapterwise.com'].filter(Boolean)))
 
 // 나이스 학원교습소정보의 region은 전체 시도명("서울특별시")이거나 REGION_NODES가 쓰는
@@ -120,7 +121,12 @@ export async function GET() {
   let loopStatus: any = null
   let source = 'fallback-empty'
 
-  const statsResult = await fetchFromBackend<{ districts?: RegionStatDistrict[] }>('/region-stats')
+  // These endpoints are independent. Waiting for them one after another made the
+  // dashboard remain on its loading screen for up to a minute during an outage.
+  const [statsResult, loopResult] = await Promise.all([
+    fetchFromBackend<{ districts?: RegionStatDistrict[] }>('/region-stats'),
+    fetchFromBackend<any>('/loop-status'),
+  ])
   if (statsResult?.data.districts?.length) {
     regionStats = statsResult.data.districts
     source = `region-stats:${statsResult.baseUrl}`
@@ -132,7 +138,6 @@ export async function GET() {
     }
   }
 
-  const loopResult = await fetchFromBackend<any>('/loop-status')
   if (loopResult?.data) loopStatus = loopResult.data
 
   const merged = mergeRegionStats(regionStats)
