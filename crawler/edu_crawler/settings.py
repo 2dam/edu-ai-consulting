@@ -1,3 +1,7 @@
+
+import os
+
+
 BOT_NAME = "edu_crawler"
 
 SPIDER_MODULES = ["edu_crawler.spiders"]
@@ -34,7 +38,7 @@ ITEM_PIPELINES = {
 }
 
 # 백엔드 API로 결과를 전송할 주소 (api/app/main.py 의 /ingest 엔드포인트)
-EXPORT_API_URL = "http://localhost:8000/ingest"
+EXPORT_API_URL = os.getenv("EXPORT_API_URL", "http://localhost:8000/ingest")
 
 LOG_LEVEL = "INFO"
 REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
