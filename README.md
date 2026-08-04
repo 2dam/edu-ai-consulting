@@ -52,6 +52,11 @@ scrapy crawl public_data -a start_url="<공시자료 URL>" -a item_kind=admissio
 scrapy crawl academy -a start_url="<학원 페이지 URL>" -a academy_name="OO학원" -a region="강남"
 scrapy crawl megastudy_curriculum -O megastudy.json  # robots 허용 시 공개 커리큘럼 목록만
 scrapy crawl academyinfo_universities -O universities.json  # DATA_GO_KR_SERVICE_KEY 필요
+
+# YouTube Data API v3로 최근 1년 입시 관련 공개 영상 메타데이터 수집 (PowerShell)
+$env:SCRAPY_SETTINGS_MODULE="edu_crawler.settings_youtube"
+$env:YOUTUBE_API_KEY="발급받은 API 키"
+.\.venv\Scripts\python.exe -m scrapy crawl admission_youtube -O admission-youtube.json
 scrapy crawl careernet_university_majors -O career-majors.json  # CAREERNET_API_KEY 필요
 scrapy crawl education_news -a start_url="https://www.moe.go.kr/boardCnts/listRenew.do?boardID=294&m=020402&s=moe" -a category="정책"
 

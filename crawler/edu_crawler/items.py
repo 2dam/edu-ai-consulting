@@ -107,6 +107,26 @@ class EducationFacilityItem(scrapy.Item):
     crawled_at = scrapy.Field()
 
 
+class AdmissionVideoItem(scrapy.Item):
+    """YouTube Data API로 수집한 공개 입시 관련 영상 메타데이터."""
+
+    source_url = scrapy.Field()
+    platform = scrapy.Field()
+    video_id = scrapy.Field()
+    title = scrapy.Field()
+    description = scrapy.Field()
+    channel_id = scrapy.Field()
+    channel_title = scrapy.Field()
+    published_at = scrapy.Field()
+    thumbnail_url = scrapy.Field()
+    duration = scrapy.Field()
+    view_count = scrapy.Field()
+    like_count = scrapy.Field()
+    comment_count = scrapy.Field()
+    search_query = scrapy.Field()
+    crawled_at = scrapy.Field()
+
+
 class CareerMajorItem(scrapy.Item):
     """커리어넷 공식 Open API가 제공하는 대학 학과 목록."""
 
