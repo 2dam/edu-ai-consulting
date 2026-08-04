@@ -60,6 +60,7 @@ class AdmissionYoutubeSpider(scrapy.Spider):
         if order not in {"date", "relevance", "viewCount"}:
             raise ValueError("order는 date, relevance, viewCount 중 하나여야 합니다.")
         self.order = order
+        self.seen_video_ids: set[str] = set()
 
     def start_requests(self):
         published_after = (
@@ -123,6 +124,9 @@ class AdmissionYoutubeSpider(scrapy.Spider):
             if video.get("status", {}).get("privacyStatus") != "public":
                 continue
             video_id = video.get("id", "")
+            if not video_id or video_id in self.seen_video_ids:
+                continue
+            self.seen_video_ids.add(video_id)
             snippet = video.get("snippet", {})
             statistics = video.get("statistics", {})
             thumbnails = snippet.get("thumbnails", {})
@@ -144,5 +148,5 @@ class AdmissionYoutubeSpider(scrapy.Spider):
             item["comment_count"] = int(statistics.get("commentCount", 0) or 0)
             item["search_query"] = query
             item["crawled_at"] = now
-            if video_id and item["title"]:
+            if item["title"]:
                 yield item
