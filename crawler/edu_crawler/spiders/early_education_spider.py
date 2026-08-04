@@ -1,3 +1,4 @@
+
 """어린이집·유치원·초등학교·학원 기본현황 + 공식 평가/등록 정보 수집 스파이더.
 
 네 시설 유형을 -a facility_type=daycare|kindergarten|elementary|academy 로 선택한다.
@@ -185,7 +186,8 @@ class EarlyEducationSpider(scrapy.Spider):
 
         for row in rows:
             item = EducationFacilityItem()
-            item["source_url"] = _sanitize_url(response.url)
+            school_code = row.get("SD_SCHUL_CODE", "")
+            item["source_url"] = f"{NEIS_SCHOOL_INFO_URL}?{urlencode({'ATPT_OFCDC_SC_CODE': region_code, 'SD_SCHUL_CODE': school_code})}"
             item["facility_type"] = "elementary"
             item["name"] = row.get("SCHUL_NM", "")
             item["region"] = row.get("LCTN_SC_NM", "") or region_name
@@ -253,7 +255,8 @@ class EarlyEducationSpider(scrapy.Spider):
 
         for row in rows:
             item = EducationFacilityItem()
-            item["source_url"] = _sanitize_url(response.url)
+            academy_code = row.get("ACA_ASNUM", "")
+            item["source_url"] = f"{NEIS_ACADEMY_URL}?{urlencode({'ATPT_OFCDC_SC_CODE': region_code, 'ACA_ASNUM': academy_code})}"
             item["facility_type"] = "academy"
             item["name"] = row.get("ACA_NM", "")
             item["region"] = region_name
