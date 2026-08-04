@@ -9,3 +9,10 @@ NEWSPIDER_MODULE = "edu_crawler.spiders"
 
 # 공식 API 응답은 원본 JSON 파일과 범용 /ingest 저장소에 함께 보낼 수 있다.
 ROBOTSTXT_OBEY = False
+
+# 기본 실행은 JSON 파일 생성만 담당한다. 로컬 API 서버가 꺼진 상태에서 각 항목마다
+# 재시도하며 수분간 멈추는 일을 막고, 운영 DB 적재는 검증 후 별도 단계에서 수행한다.
+ITEM_PIPELINES = {
+    "edu_crawler.pipelines.AnonymizePipeline": 100,
+}
+TELNETCONSOLE_ENABLED = False

@@ -57,6 +57,9 @@ scrapy crawl academyinfo_universities -O universities.json  # DATA_GO_KR_SERVICE
 $env:SCRAPY_SETTINGS_MODULE="edu_crawler.settings_youtube"
 $env:YOUTUBE_API_KEY="발급받은 API 키"
 .\.venv\Scripts\python.exe -m scrapy crawl admission_youtube -O admission-youtube.json
+
+기본 실행은 로컬 JSON 파일만 생성합니다. 수집 결과를 검증한 뒤 API/운영 DB 적재를
+별도로 수행하여, API 서버가 꺼져 있을 때 항목별 재시도로 수집이 지연되지 않게 합니다.
 scrapy crawl careernet_university_majors -O career-majors.json  # CAREERNET_API_KEY 필요
 scrapy crawl education_news -a start_url="https://www.moe.go.kr/boardCnts/listRenew.do?boardID=294&m=020402&s=moe" -a category="정책"
 
