@@ -1,4 +1,6 @@
+
 import logging
+import os
 
 import requests
 from itemadapter import ItemAdapter
@@ -32,6 +34,11 @@ class ApiExportPipeline:
     def open_spider(self, spider):
         self.api_url = spider.settings.get("EXPORT_API_URL")
         self.batch_url = f"{self.api_url.rstrip('/')}-batch"
+        ingest_key = (
+            os.getenv("NEWS_INGEST_API_KEY", "").strip()
+            or os.getenv("VIDEO_INGEST_API_KEY", "").strip()
+        )
+        self.headers = {"X-Ingest-Key": ingest_key} if ingest_key else {}
         self.buffer = []
 
     def process_item(self, item, spider):
@@ -52,14 +59,14 @@ class ApiExportPipeline:
             return
         batch, self.buffer = self.buffer, []
         try:
-            response = requests.post(self.batch_url, json=batch, timeout=30)
+            response = requests.post(self.batch_url, json=batch, headers=self.headers, timeout=30)
             response.raise_for_status()
             logger.info("API batch export succeeded: %d items", len(batch))
         except requests.RequestException as exc:
             logger.warning("배치 전송 실패, 건별 전송으로 재시도: %s", exc)
             for payload in batch:
                 try:
-                    response = requests.post(self.api_url, json=payload, timeout=5)
+                    response = requests.post(self.api_url, json=payload, headers=self.headers, timeout=5)
                     response.raise_for_status()
                 except requests.RequestException as exc2:
                     logger.warning("API export failed, dropping to local log only: %s", exc2)
