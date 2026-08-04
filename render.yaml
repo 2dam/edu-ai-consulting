@@ -5,8 +5,8 @@ services:
     rootDir: api
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    # 크롤링으로 쌓은 데이터가 재배포/재시작 후에도 남아있도록 영구 디스크에 저장한다.
-    # 디스크가 없으면 컨테이너 재시작 시 SQLite 파일이 초기화된다.
+    # ?щ·留곸쑝濡??볦? ?곗씠?곌? ?щ같???ъ떆???꾩뿉???⑥븘?덈룄濡??곴뎄 ?붿뒪?ъ뿉 ??ν븳??
+    # ?붿뒪?ш? ?놁쑝硫?而⑦뀒?대꼫 ?ъ떆????SQLite ?뚯씪??珥덇린?붾맂??
     disk:
       name: edu-ai-consulting-data
       mountPath: /var/data
@@ -20,10 +20,12 @@ services:
       # 32 characters in Render; never commit the secret itself.
       - key: JWT_SECRET_KEY
         sync: false
+      - key: VIDEO_INGEST_API_KEY
+        sync: false
       - key: DATABASE_URL
         value: sqlite:////var/data/edu_consulting.db
 
-  # OSINT/EduIntel Next.js 대시보드 (app.ichapterwise.com).
+  # OSINT/EduIntel Next.js ??쒕낫??(app.ichapterwise.com).
   - type: web
     name: edu-ai-consulting-dashboard
     runtime: node
@@ -35,13 +37,13 @@ services:
         value: https://ichapterwise.com
       - key: NEXT_PUBLIC_BACKEND_URL
         value: https://ichapterwise.com
-      # 학원 평판 관리자 페이지(/reputation) 게이트 — Render 대시보드에서 직접 값을 설정할 것.
-      # 미설정 시 /api/reputation/[...path] 프록시가 관리 엔드포인트를 전부 차단한다(안전 기본값).
+      # ?숈썝 ?됲뙋 愿由ъ옄 ?섏씠吏(/reputation) 寃뚯씠????Render ??쒕낫?쒖뿉??吏곸젒 媛믪쓣 ?ㅼ젙??寃?
+      # 誘몄꽕????/api/reputation/[...path] ?꾨줉?쒓? 愿由??붾뱶?ъ씤?몃? ?꾨? 李⑤떒?쒕떎(?덉쟾 湲곕낯媛?.
       - key: ADMIN_ACCESS_TOKEN
         sync: false
 
-  # AI 교육뉴스 커뮤니티·맘카페 프론트엔드 (Vite+React 정적 빌드).
-  # 기존 dashboard/(OSINT용 Next.js 대시보드, app.ichapterwise.com)와는 별개 서비스.
+  # AI 援먯쑁?댁뒪 而ㅻ??덊떚쨌留섏뭅???꾨줎?몄뿏??(Vite+React ?뺤쟻 鍮뚮뱶).
+  # 湲곗〈 dashboard/(OSINT??Next.js ??쒕낫?? app.ichapterwise.com)???蹂꾧컻 ?쒕퉬??
   - type: web
     name: edu-ai-consulting-community
     runtime: static
@@ -52,7 +54,25 @@ services:
       - key: VITE_API_BASE_URL
         value: https://ichapterwise.com
     routes:
-      # React Router의 클라이언트 사이드 라우팅을 위해 모든 경로를 index.html로 폴백.
+      # React Router???대씪?댁뼵???ъ씠???쇱슦?낆쓣 ?꾪빐 紐⑤뱺 寃쎈줈瑜?index.html濡??대갚.
       - type: rewrite
         source: /*
         destination: /index.html
+
+  # Refresh admission-related YouTube videos every hour. Search requests are
+  # deliberately capped to stay within the default YouTube API daily quota.
+  - type: cron
+    name: admission-youtube-sync
+    runtime: python
+    rootDir: crawler
+    schedule: "0 * * * *"
+    buildCommand: pip install -r requirements-news.txt
+    startCommand: python sync_admission_videos.py
+    envVars:
+      - key: API_BASE_URL
+        value: https://ichapterwise.com
+      - key: YOUTUBE_API_KEY
+        sync: false
+      - key: VIDEO_INGEST_API_KEY
+        sync: false
+
