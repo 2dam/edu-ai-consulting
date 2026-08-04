@@ -1,6 +1,7 @@
+
 import { Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
-import { UserProvider } from "./context/UserContext";
+import { UserProvider } from "./context/UserProvider";
 import { AdminPage } from "./pages/AdminPage";
 import { AdmissionVideos } from "./pages/AdmissionVideos";
 import { BoardPage } from "./pages/BoardPage";
