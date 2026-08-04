@@ -169,6 +169,60 @@ class NewsFeedPage(BaseModel):
     offset: int
 
 
+# ---- 입시 영상 ----
+class AdmissionVideoIn(BaseModel):
+    source_url: str
+    platform: Literal["youtube"] = "youtube"
+    video_id: str = Field(min_length=1, max_length=32)
+    title: str = Field(min_length=1, max_length=500)
+    description: str | None = None
+    channel_id: str | None = None
+    channel_title: str | None = None
+    published_at: datetime | None = None
+    thumbnail_url: str | None = None
+    duration: str | None = None
+    view_count: int = Field(default=0, ge=0)
+    like_count: int = Field(default=0, ge=0)
+    comment_count: int = Field(default=0, ge=0)
+    search_query: str | None = None
+    crawled_at: datetime | None = None
+
+
+class AdmissionVideoOut(BaseModel):
+    id: int
+    video_id: str
+    source_url: str
+    title: str
+    description: str | None
+    channel_id: str | None
+    channel_title: str | None
+    published_at: datetime | None
+    thumbnail_url: str | None
+    duration: str | None
+    view_count: int
+    like_count: int
+    comment_count: int
+    search_query: str | None
+    crawled_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdmissionVideoFeedPage(BaseModel):
+    items: list[AdmissionVideoOut]
+    total: int
+    limit: int
+    offset: int
+
+
+class AdmissionVideoIngestResult(BaseModel):
+    total: int
+    unique: int
+    duplicates: int
+    created: int
+    updated: int
+
+
 class NewsSummaryOut(BaseModel):
     news_post_id: int
     summary: str

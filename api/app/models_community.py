@@ -14,6 +14,7 @@ import enum
 from datetime import datetime, timezone
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     Column,
     DateTime,
@@ -168,6 +169,30 @@ class NewsPost(Base):
 
     board = relationship("Board")
     region = relationship("Region")
+
+
+class AdmissionVideo(Base):
+    """YouTube Data API로 수집한 공개 입시 영상 메타데이터."""
+
+    __tablename__ = "admission_videos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    video_id = Column(String(32), nullable=False, unique=True, index=True)
+    source_url = Column(String(512), nullable=False)
+    title = Column(String(500), nullable=False)
+    description = Column(Text, nullable=True)
+    channel_id = Column(String(64), nullable=True, index=True)
+    channel_title = Column(String(255), nullable=True, index=True)
+    published_at = Column(DateTime, nullable=True, index=True)
+    thumbnail_url = Column(String(512), nullable=True)
+    duration = Column(String(32), nullable=True)
+    view_count = Column(BigInteger, default=0, nullable=False)
+    like_count = Column(BigInteger, default=0, nullable=False)
+    comment_count = Column(BigInteger, default=0, nullable=False)
+    search_query = Column(String(128), nullable=True, index=True)
+    crawled_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=_now, nullable=False)
+    updated_at = Column(DateTime, default=_now, onupdate=_now, nullable=False)
 
 
 class Comment(Base):

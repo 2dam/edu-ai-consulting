@@ -111,6 +111,12 @@ POST /news/{id}/sentiment              여론 평가 — 기사+댓글 감정분
 GET  /news/issue-sentiment             이슈(키워드)별 여론 평가 — 네이버 뉴스 실시간 검색 + 감정분석, 로그인 불필요(랜딩페이지 공개 위젯)
 POST /news/{id}/comments · /vote · /report   커뮤니티 게시글과 동일한 댓글/투표/신고
 
+GET  /videos/feed                      입시 영상 목록·제목/채널 검색·주제 필터
+POST /videos/ingest-batch              YouTube 수집 JSON 일괄 적재 (video_id 중복 갱신)
+
+커뮤니티의 `/#/videos`에서 수집된 공개 입시 영상을 확인할 수 있습니다. 영상은 YouTube
+원문 링크로 연결되며 제목·채널·게시일·조회수 등의 공개 메타데이터만 저장합니다.
+
 GET  /mom-cafe/boards                  게시판 목록
 GET  /mom-cafe/region/{region}         지역 게시판 피드
 GET  /mom-cafe/education               교육 게시판 피드

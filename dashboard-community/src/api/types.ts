@@ -78,6 +78,26 @@ export interface NewsPostDetail extends NewsPostOut {
   comments: CommentOut[];
 }
 
+export interface AdmissionVideoOut {
+  id: number;
+  video_id: string;
+  source_url: string;
+  title: string;
+  description: string | null;
+  channel_id: string | null;
+  channel_title: string | null;
+  published_at: string | null;
+  thumbnail_url: string | null;
+  duration: string | null;
+  view_count: number;
+  like_count: number;
+  comment_count: number;
+  search_query: string | null;
+  crawled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface FeedPage<T> {
   items: T[];
   total: number;

@@ -20,7 +20,7 @@ from app.models_community import Comment, CommunityPost, User
 from app import models_reputation  # noqa: F401 - Base.metadata에 학원 평판 테이블을 등록시키기 위한 import
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
-from app.routers import admin, authentication, committee, community, mom_cafe, news, reputation
+from app.routers import admin, authentication, committee, community, mom_cafe, news, reputation, videos
 from app.schemas import (
     CctvInfo,
     CctvResponse,
@@ -117,6 +117,7 @@ app.add_middleware(
 app.include_router(community.router)
 app.include_router(authentication.router)
 app.include_router(news.router)
+app.include_router(videos.router)
 app.include_router(mom_cafe.router)
 app.include_router(admin.router)
 app.include_router(committee.router)
