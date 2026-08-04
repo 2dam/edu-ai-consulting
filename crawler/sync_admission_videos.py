@@ -1,3 +1,4 @@
+
 """Collect recent admission videos and upsert them into the production API."""
 
 from __future__ import annotations
@@ -22,6 +23,8 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory(prefix="admission-videos-") as temp_dir:
         output = Path(temp_dir) / "videos.json"
+        crawler_env = os.environ.copy()
+        crawler_env["SCRAPY_SETTINGS_MODULE"] = "edu_crawler.settings_youtube"
         subprocess.run(
             [
                 sys.executable,
@@ -39,6 +42,7 @@ def main() -> None:
                 str(output),
             ],
             check=True,
+            env=crawler_env,
         )
         payload = json.loads(output.read_text(encoding="utf-8"))
 
