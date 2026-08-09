@@ -1,0 +1,30 @@
+# Buzz 릴레이 — Render 환경변수 예시 (buzz.ichapterwise.com)
+# Render 대시보드 > edu-ai-consulting-buzz 서비스 > Environment 에 입력.
+# secret 값(sync: false)은 Render 대시보드에서 직접 설정. 절대 커밋 금지.
+#
+# BUZZ_IMAGE=ghcr.io/block/buzz:main
+# BUZZ_DOMAIN=buzz.ichapterwise.com
+# RELAY_URL=wss://buzz.ichapterwise.com
+# BUZZ_MEDIA_BASE_URL=https://buzz.ichapterwise.com/media
+# BUZZ_MEDIA_SERVER_DOMAIN=buzz.ichapterwise.com
+# BUZZ_CORS_ORIGINS=https://buzz.ichapterwise.com,https://ichapterwise.com
+# BUZZ_REQUIRE_AUTH_TOKEN=true
+# BUZZ_REQUIRE_RELAY_MEMBERSHIP=true
+# BUZZ_ALLOW_NIP_OA_AUTH=true
+# BUZZ_AUTO_MIGRATE=true
+# BUZZ_GIT_CONFORMANCE_PROBE=true
+# RELAY_OWNER_PUBKEY=<64자 헥스 공개키 — 직접 입력>
+# BUZZ_RELAY_PRIVATE_KEY=<64자 헥스 — Render secret>
+# BUZZ_GIT_HOOK_HMAC_SECRET=<랜덤 — Render secret>
+# POSTGRES_DB=buzz
+# POSTGRES_USER=buzz
+# POSTGRES_PASSWORD=<Render secret>
+# REDIS_PASSWORD=<Render secret>
+# BUZZ_S3_ACCESS_KEY=<Render secret>
+# BUZZ_S3_SECRET_KEY=<Render secret>
+# BUZZ_S3_BUCKET=buzz-media
+# BUZZ_S3_ADDRESSING_STYLE=path
+#
+# ⚠️ Render 무료/스타터는 메모리 제약 있음. Buzz 릴레이는 Postgres+Redis+MinIO
+#    를 요구하므로, 릴레이 전용 저사양 인스턴스 + Render Postgres/Redis 애드온
+#    또는 외부 MinIO 를 쓰는 것을 권장. 무료 tier 부족 시 유료 인스턴스 필요.

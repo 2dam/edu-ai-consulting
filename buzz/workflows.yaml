@@ -1,0 +1,92 @@
+# Buzz 워크플로 — EduIntel (buzz.ichapterwise.com)
+# 실제 ichapterwise.com API 엔드포인트와 연동.
+# Buzz 워크플로 모델: 메시지 필터 매칭 / 타이머 / 에이전트 ping.
+
+---
+
+# 워크플로 1: 교육뉴스 수집 → 요약 → 맘카페 연계
+# 트리거: #data-ops 에 크롤러 동기화 완료 메시지 (기존 .github/workflows/education-news-sync.yml 과 보완)
+id: news-to-content
+name: "Education news ingest -> summarize -> mom-cafe"
+enabled: true
+trigger:
+  type: message
+  channel: "#data-ops"
+  filter:
+    text_match: ["[news][ingest]", "education_news_spider done", "NEWS_EXPORT_API_URL posted"]
+steps:
+  - id: summarize
+    action: ping_agent
+    agent: news
+    message: >-
+      새 교육뉴스 수집 완료. 각 신규 기사에 대해
+      POST /news/{id}/summarize 와 POST /news/{id}/debate-summary 를 호출해
+      3줄 요약 + 찬반 포인트를 #content 에 포스트하세요.
+      원문 source_url 은 반드시 첨부(가짜뉴스 라벨은 참고용).
+  - id: issue-sentiment
+    action: ping_agent
+    agent: news
+    message: >-
+      토론이 많은 기사는 GET /news/issue-sentiment?keyword=<이슈> 로
+      여론 한 줄을 같이 붙이세요.
+  - id: cross-post
+    condition: "{{news.has_momcafe_angle == true}}"
+    action: post
+    channel: "#content"
+    text: "📰 오늘의 교육 이슈: {{news.headline}} — 맘카페 토론 초안 첨부"
+
+---
+
+# 워크플로 2: 리포트 품질 게이트 (신뢰 유지)
+# 트리거: PREMIUM 리포트 생성 요청 → DataAgent 가 결측 컷오프 신뢰도 검증
+id: report-quality-gate
+name: "PREMIUM report trust gate"
+enabled: true
+trigger:
+  type: message
+  channel: "#feat-reports"
+  filter:
+    text_match: ["POST /reports", "tier=PREMIUM", "qcrm_profile"]
+steps:
+  - id: check-cutoff-confidence
+    action: ping_agent
+    agent: data
+    message: >-
+      PREMIUM 리포트 요청. GET /predict-missing-cutoffs 신뢰도 확인.
+      n_observed<200 이면 "표본이 적어 신뢰도가 낮다" 경고를 리포트에 그대로 노출하도록
+      DevAgent 에게 지시하세요(저장소 규칙: 미노출 금지).
+  - id: require-warning-exposed
+    condition: "{{data.low_confidence == true}}"
+    action: post
+    channel: "#feat-reports"
+    text: "⚠️ 저신뢰도 컷오프 포함됨 — 경고 문구 미노출 시 머지 불가 (YOU 최종 확인)"
+
+---
+
+# 워크플로 3: 맘카페/뉴스 모더레이션 큐
+# 트리거: 신고 접수 → QAAgent 1차 triage → 관리자(YOU) 최종
+id: moderation-triage
+name: "Moderation report triage"
+enabled: true
+trigger:
+  type: message
+  channel: "#inbox"
+  filter:
+    text_match: ["[report]", "신고접수", "POST /community/posts/{id}/report"]
+steps:
+  - id: triage
+    action: ping_agent
+    agent: qa
+    message: >-
+      신고 접수. 사유(personal_info/toxicity/fake_news) 분류하고
+      독성/advisory 플래그만 보고하세요. 삭제·숨김 금지(관리자 최종).
+      개인정보 노출 의심 시 즉시 @owner 멘션.
+  - id: owner-decision
+    action: wait
+    until: owner_decision
+    timeout: "12h"
+  - id: log
+    condition: "{{owner.action == 'hide' or owner.action == 'delete'}}"
+    action: post
+    channel: "#inbox"
+    text: "🛡 모더레이션 조치 완료: {{owner.action}} (ModerationLog 기록)"
