@@ -1,8 +1,19 @@
-# Mini QCRM Learning Diagnosis
+# QCRM 기본진단 (Basic Diagnosis)
 
-Mini QCRM is a small quantum-inspired diagnosis model for education consulting.
+QCRM 기본진단은 교육 컨설팅을 위한 소형 학습 사고 진단 모델입니다.
 It is designed as a consulting aid, not as a standardized psychological test or
 quantum-hardware execution.
+
+
+## Basic behavior items
+
+기본진단의 행동 기반 미니 문제는 특정 과목의 성취도에 편중되지 않도록
+국어·영어·수학·사회·과학·통합 영역에서 한 문항씩 구성합니다. 각 문항은
+교과 지식 자체보다 핵심 조건 파악, 전략 선택, 계산 정확도, 주의 조절,
+시간 관리와 같은 QCRM 요인을 관찰하는 데 목적이 있습니다.
+
+문항 데이터는 [qcrm-basic-items.json](qcrm-basic-items.json)에 저장합니다.
+향후 150문항 심화진단은 기본진단과 별도 버전 및 문항은행으로 관리합니다.
 
 ## Backend
 
