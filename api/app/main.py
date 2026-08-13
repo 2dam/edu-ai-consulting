@@ -143,6 +143,18 @@ def landing():
     return FileResponse(STATIC_DIR / "landing.html")
 
 
+@app.get("/education")
+def education_columns():
+    # 교육 데이터 칼럼 (SEO 콘텐츠용, 광고 없음)
+    return FileResponse(STATIC_DIR / "education.html")
+
+
+@app.get("/guide")
+def parent_guide():
+    # 학부모 가이드 (SEO 콘텐츠용, 광고 없음)
+    return FileResponse(STATIC_DIR / "guide.html")
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}

@@ -1,7 +1,5 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { AdsConsentProvider } from '@/lib/adsense'
-import AdConsentBanner from '@/components/AdConsentBanner'
 
 export const metadata: Metadata = {
   title: 'EduIntel — 한국 교육 인텔리전스',
@@ -11,12 +9,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body>
-        <AdsConsentProvider>
-          {children}
-          <AdConsentBanner />
-        </AdsConsentProvider>
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

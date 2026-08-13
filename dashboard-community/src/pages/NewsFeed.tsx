@@ -4,7 +4,6 @@ import { getNewsFeed } from "../api/news";
 import { newsPostToFeedItem } from "../api/types";
 import type { FeedItem } from "../api/types";
 import { PostCard } from "../components/post/PostCard";
-import { AdBanner } from "../components/AdBanner";
 
 const CATEGORIES = ["전체", "정책", "입시", "트렌드"];
 
@@ -51,12 +50,8 @@ export function NewsFeed() {
       </div>
       {loading && <p className="loading-text">불러오는 중...</p>}
       {!loading && items.length === 0 && <p className="empty-text">아직 등록된 뉴스가 없어요.</p>}
-      {items.map((item, i) => (
-        <>
-          <PostCard key={item.id} item={item} />
-          {/* 3번째 카드 이후마다 피드 중간 광고 (콘텐츠 사이 원칙) — 초기 자동 광고 모드 */}
-          {i === 2 && <AdBanner auto className="ad-in-feed" />}
-        </>
+      {items.map((item) => (
+        <PostCard key={item.id} item={item} />
       ))}
     </div>
   );

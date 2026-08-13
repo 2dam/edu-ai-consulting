@@ -1,2 +1,0 @@
-# AdSense 게시자 ID(VITE_ADSENSE_PUBLISHER_ID)가 설정되지 않았습니다.
-# AdSense 가입 후 .env.production 에 실제 pub-XXXXXXXXXXXXXXXX 값을 입력하세요.
