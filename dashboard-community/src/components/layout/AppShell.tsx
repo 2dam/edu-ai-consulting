@@ -4,6 +4,7 @@ import { getBoards } from "../../api/momCafe";
 import { useUser } from "../../context/UserContext";
 import { MomCafeSidebar } from "./MomCafeSidebar";
 import { TrendingTopics } from "./TrendingTopics";
+import { AdBanner } from "../../components/AdBanner";
 import "./AppShell.css";
 
 function RegisterWidget() {
@@ -99,6 +100,8 @@ export function AppShell() {
       <div className="app-body">
         <MomCafeSidebar />
         <main className="app-main">
+          {/* 메인 콘텐츠 상단 광고 (PC 사이드바·모바일은 피드 상단에 자연스럽게 노출) */}
+          <AdBanner slot={import.meta.env.VITE_AD_SLOT_SIDEBAR} className="ad-top" />
           <Outlet />
         </main>
         <TrendingTopics />

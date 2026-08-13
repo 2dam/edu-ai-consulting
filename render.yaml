@@ -29,13 +29,19 @@ services:
       - key: DATABASE_URL
         value: sqlite:////var/data/edu_consulting.db
 
-  # OSINT/EduIntel Next.js 대시보드 (app.ichapterwise.com).
+  # OSINT/EduIntel Next.js 대시보드 (app.ichapterwise.com / doke-v.net).
   - type: web
     name: edu-ai-consulting-dashboard
     runtime: node
     rootDir: dashboard
     buildCommand: npm install && npm run build
     startCommand: npx next start -p $PORT
+    # AdSense 메인 사이트 도메인: doke-v.net (호스팅거 구입 도메인).
+    # Render 대시보드에서도 같은 도메인을 추가 인증해야 하며,
+    # 호스팅거 DNS를 Render 안내 IP/CNAME 으로 변경해야 한다.
+    domains:
+      - doke-v.net
+      - www.doke-v.net
     envVars:
       - key: BACKEND_URL
         value: https://ichapterwise.com
@@ -48,12 +54,15 @@ services:
 
   # AI 교육뉴스 커뮤니티·맘카페 프론트엔드 (Vite+React 정적 빌드).
   # 기존 dashboard/(OSINT용 Next.js 대시보드, app.ichapterwise.com)와는 별개 서비스.
+  # AdSense 2차 사이트: community.doke-v.net
   - type: web
     name: edu-ai-consulting-community
     runtime: static
     rootDir: dashboard-community
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
+    domains:
+      - community.doke-v.net
     envVars:
       - key: VITE_API_BASE_URL
         value: https://ichapterwise.com
