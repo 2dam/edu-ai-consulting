@@ -633,18 +633,21 @@
   // 예전엔 이 자리에 하드코딩된 시안용 예시 수치가 있었다.
   (async () => {
     const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('ko-KR') : '—');
-    // 빈 지표(0)는 신뢰를 깎지 않도록 '베타 오픈' 톤으로 폴백한다.
-    const beta = (n, suffix, noun) =>
-      (n && n > 0) ? fmt(n) + suffix : `베타 오픈 · ${noun} 준비 중`;
+    // 빈 지표(0)는 신뢰를 깎지 않도록 정직한 '준비 중' 톤으로 폴백한다.
+    // beta(n, suffix, noun) — noun은 기본 폴백 문구. fallback 문자열을 직접 줄 수도 있다.
+    const beta = (n, suffix, fallback) =>
+      (n && n > 0)
+        ? fmt(n) + suffix
+        : (typeof fallback === 'string' ? fallback : `베타 오픈 · ${fallback} 준비 중`);
     try {
       const res = await fetch('/site-stats');
       if (!res.ok) throw new Error(`site-stats ${res.status}`);
       const s = await res.json();
 
-      document.getElementById('stat-curriculum').innerHTML = beta(s.curriculum_items, '<span class="unit">개</span>', '학원 커리큘럼 분석');
-      document.getElementById('stat-admission').innerHTML = beta(s.admission_data_points, '<span class="unit">건</span>', '입결 데이터 적재');
-      document.getElementById('stat-reports').innerHTML = beta(s.reports_issued, '<span class="unit">건</span>', '맞춤 리포트 발급');
-      document.getElementById('stat-members').innerHTML = beta(s.active_members, '<span class="unit">명</span>', '커뮤니티 초대');
+      document.getElementById('stat-curriculum').innerHTML = beta(s.curriculum_items, '<span class="unit">개</span>', '학원 커리큘럼 수집 파이프라인 연동 중');
+      document.getElementById('stat-admission').innerHTML = beta(s.admission_data_points, '<span class="unit">건</span>', '대입 입결 데이터 수집 파이프라인 연동 중');
+      document.getElementById('stat-reports').innerHTML = beta(s.reports_issued, '<span class="unit">건</span>', '맞춤 리포트 발급 엔진 준비 완료 · 무료로 받아보세요');
+      document.getElementById('stat-members').innerHTML = beta(s.active_members, '<span class="unit">명</span>', '커뮤니티 초대 — 창립 멤버 모집 중');
 
       document.getElementById('case-facility-count').textContent =
         (s.facility_records && s.facility_records > 0)
@@ -661,7 +664,7 @@
 
       document.getElementById('live-posts-today').textContent = fmt(s.posts_today);
       document.getElementById('live-comments-week').textContent = fmt(s.comments_this_week);
-      document.getElementById('live-members').textContent = beta(s.active_members, '', '커뮤니티 초대');
+      document.getElementById('live-members').textContent = beta(s.active_members, '', '커뮤니티 초대 — 창립 멤버 모집 중');
     } catch (err) {
       console.error('site-stats fetch failed', err);
       ['stat-curriculum', 'stat-admission', 'stat-reports', 'stat-members'].forEach((id) => {
