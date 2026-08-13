@@ -100,8 +100,8 @@ export function AppShell() {
       <div className="app-body">
         <MomCafeSidebar />
         <main className="app-main">
-          {/* 메인 콘텐츠 상단 광고 (PC 사이드바·모바일은 피드 상단에 자연스럽게 노출) */}
-          <AdBanner slot={import.meta.env.VITE_AD_SLOT_SIDEBAR} className="ad-top" />
+          {/* 메인 콘텐츠 상단 광고 — 초기 자동 광고(auto) 모드. 슬롯 지정 시 아래 auto 빼고 slot 사용 */}
+          <AdBanner auto className="ad-top" />
           <Outlet />
         </main>
         <TrendingTopics />

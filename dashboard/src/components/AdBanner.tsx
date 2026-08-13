@@ -74,11 +74,9 @@ export default function AdBanner({
       ref={ref}
       className={`adsbygoogle ${className || ''}`}
       style={{ display: 'block', width: '100%', minHeight, ...style }}
-      data-ad-client={publisherId}
       data-ad-slot={auto ? undefined : slot}
       data-ad-format={auto ? undefined : format}
       data-full-width-responsive="true"
-      data-ad-layout={auto ? undefined : undefined}
     />
   )
 }

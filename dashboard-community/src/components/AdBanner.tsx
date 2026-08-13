@@ -57,12 +57,11 @@ export function AdBanner({
   return (
     <ins
       ref={ref}
-      className={`adsbygoogle ${className || ""}`}
-      style={{ display: "block", width: "100%", minHeight, margin: "16px 0" }}
-      data-ad-client={publisherId}
+      className={`adsbygoogle ${className || ''}`}
+      style={{ display: 'block', width: '100%', minHeight, margin: '16px 0' }}
       data-ad-slot={auto ? undefined : slot}
       data-ad-format={auto ? undefined : format}
       data-full-width-responsive="true"
     />
-  );
+  )
 }

@@ -51,6 +51,14 @@ services:
       # 미설정 시 /api/reputation/[...path] 프록시가 관리 엔드포인트를 전부 차단한다(안전 기본값).
       - key: ADMIN_ACCESS_TOKEN
         sync: false
+      # AdSense 게시자 ID — AdSense 가입 후 받은 pub-XXXXXXXXXXXXXXXX 값을
+      # Render 대시보드에서 직접 설정 (sync:false → 커밋 금지, 대시보드에서만 관리).
+      - key: NEXT_PUBLIC_ADSENSE_PUBLISHER_ID
+        sync: false
+      - key: NEXT_PUBLIC_SITE_DOMAIN
+        value: doke-v.net
+      - key: NEXT_PUBLIC_ADS_ENABLED
+        value: "true"
 
   # AI 교육뉴스 커뮤니티·맘카페 프론트엔드 (Vite+React 정적 빌드).
   # 기존 dashboard/(OSINT용 Next.js 대시보드, app.ichapterwise.com)와는 별개 서비스.
@@ -66,6 +74,13 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         value: https://ichapterwise.com
+      # AdSense 게시자 ID — AdSense 가입 후 Render 대시보드에서 직접 설정 (커밋 금지).
+      - key: VITE_ADSENSE_PUBLISHER_ID
+        sync: false
+      - key: VITE_SITE_DOMAIN
+        value: doke-v.net
+      - key: VITE_ADS_ENABLED
+        value: "true"
     routes:
       # React Router의 클라이언트 사이드 라우팅을 위해 모든 경로를 index.html로 폴백.
       - type: rewrite

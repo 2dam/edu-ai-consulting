@@ -54,8 +54,8 @@ export function NewsFeed() {
       {items.map((item, i) => (
         <>
           <PostCard key={item.id} item={item} />
-          {/* 3번째 카드 이후마다 피드 중간 광고 (콘텐츠 사이 원칙) */}
-          {i === 2 && <AdBanner slot={import.meta.env.VITE_AD_SLOT_FEED} className="ad-in-feed" />}
+          {/* 3번째 카드 이후마다 피드 중간 광고 (콘텐츠 사이 원칙) — 초기 자동 광고 모드 */}
+          {i === 2 && <AdBanner auto className="ad-in-feed" />}
         </>
       ))}
     </div>
