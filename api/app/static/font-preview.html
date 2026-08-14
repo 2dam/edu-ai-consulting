@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>히어로 글씨체 시안</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/pretendard.min.css">
+<link href="https://cdn.jsdelivr.net/npm/gowun-batang@1.0/gowun-batang.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/black7375/Gmarket-Sans@main/GmarketSans.css" rel="stylesheet">
+<style>
+  :root{
+    --paper:#170F35; --ink:#F1EDFF; --ink-muted:#B6AAD9; --ink-faint:#7C6FA8;
+    --accent:#9B84FF; --accent2:#FF7EC4; --line:#362B5E; --surface:#1F1746;
+  }
+  body{margin:0;background:var(--paper);color:var(--ink);font-size:15.5px;}
+  .wrap{max-width:880px;margin:0 auto;padding:48px 28px;}
+  h2.section{font-size:13px;font-family:ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:56px 0 18px;}
+  .card{border:1px solid var(--line);border-radius:8px;padding:28px 24px;margin-bottom:18px;background:var(--surface);}
+  .tag{font-family:ui-monospace,monospace;font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;}
+  .h1{font-weight:400;line-height:1.32;font-size:34px;margin:0 0 14px;max-width:680px;
+      text-wrap:balance;}
+  .sub{font-size:15px;color:var(--ink-muted);max-width:560px;margin:0;line-height:1.7;}
+
+  /* A. 현재 — 명조(serif) */
+  .a .h1{font-family:Georgia,'Noto Serif KR',Batang,'Apple SD Gothic Neo',serif;}
+  .a .sub{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;}
+  /* B. Pretendard — 한글 웹표준 산세리프 */
+  .b .h1,.b .sub{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;}
+  .b .h1{font-weight:600;}
+  /* C. Gowun Batang — 한글 바탕체(세련 명조) */
+  .c .h1,.c .sub{font-family:'Gowun Batang',Georgia,'Noto Serif KR',serif;}
+  .c .h1{font-weight:400;}
+  /* D. Gmarket Sans — 둥근 디스플레이 산세리프 */
+  .d .h1,.d .sub{font-family:'Gmarket Sans','Apple SD Gothic Neo','Malgun Gothic',sans-serif;}
+  .d .h1{font-weight:500;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2 class="section">히어로 글씨체 시안 (현재 배경/색상 그대로)</h2>
+
+  <div class="card a">
+    <div class="tag">A · 현재 (Georgia / Noto Serif KR 명조)</div>
+    <div class="h1">입시 데이터를 가장 많이 읽은 AI가, 다음 챕터를 함께 씁니다.</div>
+    <div class="sub">강남 학원 커리큘럼과 대학 입결 데이터를 실시간으로 분석해, 학교·학원·학부모·학생 각자에게 필요한 리포트를 만들어 드립니다.</div>
+  </div>
+
+  <div class="card b">
+    <div class="tag">B · Pretendard (한글 웹표준 산세리프 · 가독성↑ · 추천)</div>
+    <div class="h1">입시 데이터를 가장 많이 읽은 AI가, 다음 챕터를 함께 씁니다.</div>
+    <div class="sub">강남 학원 커리큘럼과 대학 입결 데이터를 실시간으로 분석해, 학교·학원·학부모·학생 각자에게 필요한 리포트를 만들어 드립니다.</div>
+  </div>
+
+  <div class="card c">
+    <div class="tag">C · Gowun Batang (한글 바탕체 · 세련된 명조 느낌)</div>
+    <div class="h1">입시 데이터를 가장 많이 읽은 AI가, 다음 챕터를 함께 씁니다.</div>
+    <div class="sub">강남 학원 커리큘럼과 대학 입결 데이터를 실시간으로 분석해, 학교·학원·학부모·학생 각자에게 필요한 리포트를 만들어 드립니다.</div>
+  </div>
+
+  <div class="card d">
+    <div class="tag">D · Gmarket Sans (둥근 디스플레이 산세리프 · 친근한 톤)</div>
+    <div class="h1">입시 데이터를 가장 많이 읽은 AI가, 다음 챕터를 함께 씁니다.</div>
+    <div class="sub">강남 학원 커리큘럼과 대학 입결 데이터를 실시간으로 분석해, 학교·학원·학부모·학생 각자에게 필요한 리포트를 만들어 드립니다.</div>
+  </div>
+
+  <p class="sub" style="margin-top:24px;color:var(--ink-faint);font-size:12px;">
+    네이버 웹폰트(Pretendard/Gowun Batang/Gmarket Sans)는 CDN에서 로드 — 운영 적용 시 폰트 파일을 로컬/self-host 권장(렌더링 지연 방지).
+  </p>
+</div>
+</body>
+</html>
