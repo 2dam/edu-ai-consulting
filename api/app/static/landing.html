@@ -40,9 +40,9 @@
     font-family: var(--font-body); line-height: 1.65; font-size: 15.5px;
     word-break: keep-all;
   }
-  /* 본문 문단 일괄: 한 줄 강제 (폭 따라 글자 축소 → 잘림 없이 한 줄) */
+  /* 본문 문단 일괄: 띄어쓰기 경계 줄바꿈(음절 중간 끊김 방지) + 통일 크기 */
   main p, main li, main blockquote, main .label, main .attribution, main .profile, main .path {
-    white-space: nowrap; font-size: clamp(10px, 1.05vw, 15.5px);
+    word-break: keep-all; font-size: 14px;
   }
   .wrap { max-width: 880px; margin: 0 auto; padding: 0 28px; }
   h1, h2, h3 { font-family: var(--font-display); font-weight: 400; word-break: keep-all; margin: 0; color: var(--ink); }
@@ -88,13 +88,13 @@
 
   .hero { padding: 72px 0 40px; }
   .hero h1 { font-size: clamp(11px, 2.4vw, 28px); line-height: 1.4; margin: 18px 0 20px; max-width: none; text-wrap: auto; white-space: nowrap; }
-  .hero .sub { font-size: clamp(11px, 1.5vw, 16.5px); color: var(--ink-muted); max-width: none; margin: 0 0 32px; white-space: nowrap; }
+  .hero .sub { font-size: 14px; color: var(--ink-muted); max-width: 520px; margin: 0 0 32px; word-break: keep-all; }
   .hero-ctas { display: flex; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
 
   section.chapter { padding: 64px 0; border-top: 1px solid var(--line); }
   .chapter-head { margin-bottom: 34px; }
   .chapter-head h2 { font-size: 26px; margin: 8px 0 10px; }
-  .chapter-head p { color: var(--ink-muted); font-size: clamp(11px, 1.2vw, 14.5px); max-width: none; margin: 0; white-space: nowrap; }
+  .chapter-head p { color: var(--ink-muted); font-size: 14px; max-width: 640px; margin: 0; word-break: keep-all; }
   .sample-note { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); margin-top: 18px; }
 
   .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; }
@@ -109,7 +109,7 @@
   .exhibit-caption .fig { font-family: var(--font-mono); color: var(--ink-faint); }
   .intel-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0 0 18px; }
   .intel-chip { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-sunken); padding: 12px 14px; font-size: 13px; font-weight: 700; }
-  .intel-chip span { display: block; margin-top: 4px; color: var(--ink-muted); font-size: clamp(10px, 0.9vw, 11.5px); font-weight: 400; line-height: 1.45; white-space: nowrap; }
+  .intel-chip span { display: block; margin-top: 4px; color: var(--ink-muted); font-size: 14px; font-weight: 400; line-height: 1.45; word-break: keep-all; }
   @media (max-width: 720px) {
     .exhibit iframe { height: 360px; }
     .intel-strip { grid-template-columns: 1fr 1fr; }
@@ -119,9 +119,9 @@
   .case-card { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); background: var(--surface); padding: 20px 20px 18px; display: flex; flex-direction: column; box-shadow: var(--shadow-card); min-width: 0; cursor: pointer; text-decoration: none; color: inherit; transition: border-color 0.15s ease, transform 0.15s ease; }
   .case-card:hover { border-color: var(--accent); transform: translateY(-2px); }
   .case-card .tag { display: inline-block; font-family: var(--font-mono); font-size: 11px; color: var(--good); background: var(--good-bg); padding: 3px 8px; border-radius: 3px; margin-bottom: 12px; width: fit-content; }
-  .case-card .path { font-size: clamp(11px, 1.1vw, 13.5px); font-weight: 600; margin-bottom: 4px; white-space: nowrap; }
-  .case-card .profile { font-size: clamp(10px, 1vw, 12.5px); color: var(--ink-faint); margin-bottom: 14px; white-space: nowrap; }
-  .case-card blockquote { margin: 0 0 14px; font-family: var(--font-display); font-size: clamp(11px, 1.2vw, 15px); line-height: 1.55; color: var(--ink); white-space: nowrap; }
+  .case-card .path { font-size: 14px; font-weight: 600; margin-bottom: 4px; word-break: keep-all; }
+  .case-card .profile { font-size: 14px; color: var(--ink-faint); margin-bottom: 14px; word-break: keep-all; }
+  .case-card blockquote { margin: 0 0 14px; font-family: var(--font-display); font-size: 14px; line-height: 1.55; color: var(--ink); word-break: keep-all; }
   .case-card .attribution { font-size: 12.5px; color: var(--ink-muted); margin-top: auto; }
 
   .live-bar { display: flex; gap: 28px; padding: 14px 20px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-sunken); margin-bottom: 28px; flex-wrap: wrap; }
@@ -134,7 +134,7 @@
   .feature-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 20px; box-shadow: var(--shadow-card); min-width: 0; }
   .feature-card .icon { width: 26px; height: 26px; margin-bottom: 14px; color: var(--accent); }
   .feature-card h3 { font-family: var(--font-body); font-size: 15px; font-weight: 600; margin-bottom: 6px; overflow-wrap: break-word; word-break: break-word; }
-  .feature-card p { font-size: clamp(10px, 1vw, 13.5px); color: var(--ink-muted); margin: 0; white-space: nowrap; }
+  .feature-card p { font-size: 14px; color: var(--ink-muted); margin: 0; word-break: keep-all; }
 
   .qcrm-tool { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 22px; box-shadow: var(--shadow-card); }
   .qcrm-sliders { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 28px; margin-bottom: 18px; }
