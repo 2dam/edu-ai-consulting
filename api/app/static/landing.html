@@ -229,9 +229,61 @@
     nav.toc-strip .chapter-link { display: none; }
     .cta-band .wrap { flex-direction: column; align-items: flex-start; }
   }
+
+  /* ── 모바일 전용 모드 (하단 토글로 강제 전환) ── */
+  body.mobile-mode {
+    --font-display: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  }
+  body.mobile-mode .wrap { padding: 0 18px; max-width: 560px; }
+  body.mobile-mode .hero { padding: 48px 0 28px; text-align: center; }
+  body.mobile-mode .hero h1 { font-size: 26px; line-height: 1.4; max-width: 100%; margin: 14px 0 16px; }
+  body.mobile-mode .hero .sub { font-size: 14.5px; max-width: 100%; margin: 0 auto 26px; }
+  body.mobile-mode .hero-ctas { justify-content: center; }
+  body.mobile-mode .hero-ctas .btn { flex: 1 1 auto; justify-content: center; }
+  body.mobile-mode section.chapter { padding: 44px 0; }
+  body.mobile-mode .chapter-head h2 { font-size: 22px; }
+  body.mobile-mode .stat-grid,
+  body.mobile-mode .case-grid,
+  body.mobile-mode .feature-grid,
+  body.mobile-mode .segment-grid,
+  body.mobile-mode .tier-grid,
+  body.mobile-mode .intel-strip { grid-template-columns: 1fr !important; }
+  body.mobile-mode .exhibit iframe { height: 360px; }
+  body.mobile-mode .roster { justify-content: center; }
+  body.mobile-mode .cta-band { padding: 40px 0; text-align: center; }
+  body.mobile-mode .cta-band .wrap { flex-direction: column; align-items: stretch; text-align: center; }
+  body.mobile-mode .cta-band .btn { width: 100%; justify-content: center; }
+  body.mobile-mode nav.toc-strip .chapter-link { display: none; }
+
+  /* 하단 버전 전환 바 */
+  .version-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    display: flex; align-items: stretch; border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface-sunken) 96%, transparent);
+    backdrop-filter: blur(10px);
+  }
+  .version-bar button {
+    flex: 1; border: none; background: transparent; cursor: pointer;
+    font-family: var(--font-body); font-size: 13px; font-weight: 600;
+    color: var(--ink-muted); padding: 13px 8px; transition: color 0.15s ease, background 0.15s ease;
+  }
+  .version-bar button .vsub { display: block; font-size: 10.5px; font-weight: 400; color: var(--ink-faint); margin-top: 2px; }
+  .version-bar button.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+  .version-bar button:not(:last-child) { border-right: 1px solid var(--line); }
+  /* 버전 바 높이만큼 하단 여백 */
+  body { padding-bottom: 56px; }
+  body.mobile-mode { padding-bottom: 56px; }
 </style>
 </head>
 <body>
+<script>
+  // 모바일 버전 토글 상태 복원 (깜빡임 방지 — body 렌더 전 적용)
+  (function () {
+    try {
+      if (localStorage.getItem('view-mode') === 'mobile') document.body.classList.add('mobile-mode');
+    } catch (e) {}
+  })();
+</script>
 
 <header>
   <div class="wrap">
@@ -850,6 +902,31 @@
       issueBtn.textContent = '분석하기';
     }
   });
+</script>
+
+<!-- 하단 버전 전환 바 (PC / 모바일) -->
+<div class="version-bar" role="group" aria-label="화면 버전 선택">
+  <button id="view-pc" type="button" aria-pressed="true">PC 버전<span class="vsub">데스크톱 레이아웃</span></button>
+  <button id="view-mobile" type="button" aria-pressed="false">모바일 버전<span class="vsub">폰 최적화 레이아웃</span></button>
+</div>
+<script>
+  (function () {
+    var btnPc = document.getElementById('view-pc');
+    var btnMobile = document.getElementById('view-mobile');
+    function apply(mode) {
+      var isMobile = mode === 'mobile';
+      document.body.classList.toggle('mobile-mode', isMobile);
+      btnPc.classList.toggle('active', !isMobile);
+      btnMobile.classList.toggle('active', isMobile);
+      btnPc.setAttribute('aria-pressed', String(!isMobile));
+      btnMobile.setAttribute('aria-pressed', String(isMobile));
+      try { localStorage.setItem('view-mode', mode); } catch (e) {}
+    }
+    btnPc.addEventListener('click', function () { apply('pc'); });
+    btnMobile.addEventListener('click', function () { apply('mobile'); });
+    // 초기 상태 반영
+    apply((function () { try { return localStorage.getItem('view-mode') || 'pc'; } catch (e) { return 'pc'; } })());
+  })();
 </script>
 
 </body>
