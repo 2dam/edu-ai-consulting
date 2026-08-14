@@ -88,13 +88,13 @@
 
   .hero { padding: 72px 0 40px; }
   .hero h1 { font-size: clamp(11px, 2.4vw, 28px); line-height: 1.4; margin: 18px 0 20px; max-width: none; text-wrap: auto; white-space: nowrap; }
-  .hero .sub { font-size: 13px; color: var(--ink-muted); max-width: 540px; margin: 0 0 32px; word-break: keep-all; }
+  .hero .sub { font-size: 13px; color: var(--ink-muted); max-width: none; margin: 0 0 32px; word-break: keep-all; }
   .hero-ctas { display: flex; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
 
   section.chapter { padding: 64px 0; border-top: 1px solid var(--line); }
   .chapter-head { margin-bottom: 34px; }
   .chapter-head h2 { font-size: 26px; margin: 8px 0 10px; }
-  .chapter-head p { color: var(--ink-muted); font-size: 13px; max-width: 680px; margin: 0; word-break: keep-all; }
+  .chapter-head p { color: var(--ink-muted); font-size: 13px; max-width: none; margin: 0; word-break: keep-all; }
   .sample-note { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); margin-top: 18px; }
 
   .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; }
@@ -115,7 +115,7 @@
     .intel-strip { grid-template-columns: 1fr; }
   }
 
-  .case-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .case-grid { display: grid; grid-template-columns: 1fr; gap: 18px; max-width: 620px; }
   .case-card { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); background: var(--surface); padding: 20px 20px 18px; display: flex; flex-direction: column; box-shadow: var(--shadow-card); min-width: 0; cursor: pointer; text-decoration: none; color: inherit; transition: border-color 0.15s ease, transform 0.15s ease; }
   .case-card:hover { border-color: var(--accent); transform: translateY(-2px); }
   .case-card .tag { display: inline-block; font-family: var(--font-mono); font-size: 11px; color: var(--good); background: var(--good-bg); padding: 3px 8px; border-radius: 3px; margin-bottom: 12px; width: fit-content; }
@@ -130,7 +130,7 @@
   @keyframes pulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.8); opacity: 0; } }
   .live-bar-item { display: flex; align-items: baseline; gap: 6px; font-size: 13px; color: var(--ink-muted); }
   .live-bar-item .v { font-family: var(--font-mono); font-weight: 700; color: var(--ink); }
-  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; }
+  .feature-grid { display: grid; grid-template-columns: 1fr; gap: 18px; max-width: 620px; }
   .feature-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 20px; box-shadow: var(--shadow-card); min-width: 0; }
   .feature-card .icon { width: 26px; height: 26px; margin-bottom: 14px; color: var(--accent); }
   .feature-card h3 { font-family: var(--font-body); font-size: 15px; font-weight: 600; margin-bottom: 6px; overflow-wrap: break-word; word-break: break-word; }
@@ -159,14 +159,14 @@
   .roster .seat { font-family: var(--font-mono); font-size: 11.5px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink-muted); background: var(--surface); }
   .roster .seat.crisis { color: var(--accent2); border-color: color-mix(in srgb, var(--accent2) 40%, var(--line)); }
 
-  .segment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .segment-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
   .segment-card { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 22px 20px; background: var(--surface); box-shadow: var(--shadow-card); transition: border-color 0.15s ease; min-width: 0; }
   .segment-card:hover { border-color: var(--accent); }
   .segment-card .role { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
   .segment-card h3 { font-family: var(--font-body); font-size: 16px; font-weight: 600; margin-bottom: 8px; }
   .segment-card p { font-size: 13px; color: var(--ink-muted); margin: 0 0 16px; }
 
-  .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .tier-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
   .tier { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 26px 22px; background: var(--surface); }
   .tier.featured { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); position: relative; }
   .tier.featured .featured-tag { position: absolute; top: -11px; left: 20px; background: var(--accent); color: var(--paper); font-family: var(--font-mono); font-size: 10.5px; padding: 3px 9px; border-radius: 3px; font-weight: 700; }
@@ -371,15 +371,15 @@
     <div class="feature-grid">
       <div class="feature-card">
         <h3>다각도 평판 점수</h3>
-        <p>학부모설문·학생행동·온라인평판을 규칙 기반으로 종합하고, 표본이 적으면 신뢰도 점수로 솔직하게 알려줍니다.</p>
+        <p>설문·행동·온라인평판을 종합해 평판 점수를 매깁니다.</p>
       </div>
       <div class="feature-card">
         <h3>경쟁 학원 익명 비교</h3>
-        <p>지역·과목·규모·상위 20% 평균과 비교합니다. 개별 경쟁 학원의 수치는 표본이 충분할 때만, 집계값으로만 공개합니다.</p>
+        <p>경쟁 학원을 지역·과목별로 익명 비교합니다.</p>
       </div>
       <div class="feature-card">
         <h3>추세 예측 + AI 인사이트</h3>
-        <p>평판 이력이 쌓이면 추세를 근거로 예측하고, Claude가 긍정·위험 요인과 개선 권고를 서술형으로 정리합니다.</p>
+        <p>평판 추세를 예측해 AI 개선 권고를 정리합니다.</p>
       </div>
     </div>
     <div style="margin-top:24px;"><a class="btn btn-ghost" href="https://app.ichapterwise.com/reputation" target="_blank" rel="noreferrer">학원 평판 대시보드 보기 →</a></div>
@@ -396,7 +396,7 @@
       <a class="case-card" href="#data">
         <span class="tag">시설 데이터</span>
         <div class="path">전국 어린이집·유치원·초등·학원·대학</div>
-        <div class="profile">나이스·유치원알리미·어린이집정보공개포털 등 공식 출처 기반</div>
+        <div class="profile">공식 교육 데이터 출처 기반</div>
         <blockquote id="case-facility-count">시설 데이터 집계 중…</blockquote>
         <div class="attribution">실시간 집계</div>
       </a>
@@ -433,22 +433,22 @@
       <div class="feature-card">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 5h16M4 10h16M4 15h10" stroke-linecap="round"/></svg>
         <h3>AI가 요약하는 교육 뉴스</h3>
-        <p>정책·입시·트렌드 뉴스를 핵심만 요약하고, 댓글 토론의 찬반 쟁점까지 정리해드려요.</p>
+        <p>입시 뉴스를 요약하고 쟁점을 정리해요.</p>
       </div>
       <div class="feature-card">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 18v-3a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v3M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <h3>학부모 맘카페</h3>
-        <p>지역별 게시판과 교육·육아 게시판에서 같은 지역, 같은 고민을 가진 학부모들과 정보를 나눠보세요.</p>
+        <p>같은 고민 학부모와 정보를 나눠요.</p>
       </div>
       <div class="feature-card">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <h3>안전하게 운영되는 공간</h3>
-        <p>신고·모더레이션 체계와 AI 필터가 함께 운영되어, 확정적이지 않은 판단은 항상 사람이 검토합니다.</p>
+        <p>신고·AI 필터로 판단은 사람이 검토합니다.</p>
       </div>
       <div class="feature-card">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 17l4-6 4 3 4-8 6 11" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <h3>여론 평가</h3>
-        <p>AI(FinBERT)가 실시간 교육 뉴스를 이슈·키워드별로 모아 감정을 긍정·중립·부정으로 분류해요. 아래에서 직접 체험해보세요.</p>
+        <p>실시간 뉴스를 이슈별로 모아 감정 분류해요.</p>
       </div>
     </div>
 
@@ -484,15 +484,15 @@
     <div class="feature-grid">
       <div class="feature-card">
         <h3>사안별 자동 소집</h3>
-        <p>사안 키워드를 분석해 관련 위원(최대 7인)을 자동으로 구성합니다.</p>
+        <p>사안 키워드로 위원(최대 7인) 자동 소집</p>
       </div>
       <div class="feature-card">
         <h3>위원별 관점 + 종합 초안</h3>
-        <p>각 위원이 이론·현장 해석·실행 제안 순으로 의견을 내고, 사회자 AI가 실행 체크리스트로 종합합니다.</p>
+        <p>위원 의견을 모아 AI가 체크리스트로 종합</p>
       </div>
       <div class="feature-card">
         <h3>컨설턴트 피드백 반영</h3>
-        <p>초안에 피드백을 남기면 같은 위원회가 반영해 최종본을 다시 작성합니다.</p>
+        <p>피드백을 남기면 위원회가 최종본을 다시 씁니다.</p>
       </div>
     </div>
     <div style="margin-top:24px;"><a class="btn btn-ghost" href="https://app.ichapterwise.com/committee" target="_blank" rel="noreferrer">위원회 소집해보기 →</a></div>
@@ -508,15 +508,15 @@
     <div class="feature-grid">
       <div class="feature-card">
         <h3>6개 인지 요인 진단</h3>
-        <p>개념 이해·문제 해석·전략 선택·계산 정확도·주의 조절·시간 관리를 종합해 학습 사고 상태 점수를 계산합니다.</p>
+        <p>6개 요인을 종합해 학습 상태 점수 계산</p>
       </div>
       <div class="feature-card">
         <h3>약한 연결고리부터 제안</h3>
-        <p>가장 약한 요인과 강한 요인을 짚어 우선 개입 지점을 표시하고, 바로 쓸 수 있는 추천 상담 액션을 제시합니다.</p>
+        <p>가장 약한 요인을 짚어 우선 개입을 제시합니다.</p>
       </div>
       <div class="feature-card">
         <h3>판단 보정 레이어</h3>
-        <p>개입안 적합도·추천 모드·신뢰도를 함께 보여줘, 지금 바로 적용할지 소규모로 먼저 시험할지 판단하게 돕습니다.</p>
+        <p>적합도·신뢰도를 보여줘 적용 여부를 판단하게 해요.</p>
       </div>
     </div>
     <div class="qcrm-tool">
@@ -562,19 +562,19 @@
       <div class="segment-card">
         <div class="role">학교 · 학원</div>
         <h3>행정 부담 없이, 데이터로 설명하기</h3>
-        <p>전국 데이터와 비교한 상담 근거를 만들고, 학부모 설득 자료로 바로 활용하세요.</p>
+        <p>전국 데이터와 비교한 상담 근거를 바로 활용하세요.</p>
         <a class="btn-text" href="#try">기관용으로 시작 →</a>
       </div>
       <div class="segment-card">
         <div class="role">학부모</div>
         <h3>불안 대신 계획으로</h3>
-        <p>비교 심리에 흔들리지 않고, 우리 아이 기준으로 짜여진 리포트를 받아보세요.</p>
+        <p>비교 심리 대신 우리 아이 기준 리포트를 받아보세요.</p>
         <a class="btn-text" href="#try">학부모용으로 시작 →</a>
       </div>
       <div class="segment-card">
         <div class="role">학생</div>
         <h3>지금 무엇부터 하면 되는지</h3>
-        <p>압박은 줄이고, 이번 주에 실행할 수 있는 구체적인 다음 행동을 받아보세요.</p>
+        <p>이번 주 실행할 구체적인 다음 행동을 받아보세요.</p>
         <a class="btn-text" href="#try">학생용으로 시작 →</a>
       </div>
     </div>
