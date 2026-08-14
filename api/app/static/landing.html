@@ -82,7 +82,7 @@
   .header-right .btn { flex-shrink: 0; }
 
   .hero { padding: 72px 0 40px; }
-  .hero h1 { font-size: 40px; line-height: 1.28; margin: 18px 0 20px; max-width: 640px; }
+  .hero h1 { font-size: clamp(11px, 2.4vw, 28px); line-height: 1.4; margin: 18px 0 20px; max-width: none; text-wrap: auto; white-space: nowrap; }
   .hero .sub { font-size: 16.5px; color: var(--ink-muted); max-width: 520px; margin: 0 0 32px; }
   .hero-ctas { display: flex; gap: 12px; margin-bottom: 56px; flex-wrap: wrap; }
 
@@ -223,7 +223,7 @@
   .cta-band p { color: var(--ink-muted); font-size: 14px; margin: 8px 0 0; }
 
   @media (max-width: 760px) {
-    .hero h1 { font-size: 30px; }
+    .hero h1 { font-size: clamp(11px, 3.4vw, 28px); white-space: nowrap; }
     .stat-grid, .case-grid, .feature-grid, .segment-grid, .tier-grid { grid-template-columns: 1fr; }
     .try-shell { grid-template-columns: 1fr; }
     nav.toc-strip .chapter-link { display: none; }
@@ -236,7 +236,7 @@
   }
   body.mobile-mode .wrap { padding: 0 18px; max-width: 560px; }
   body.mobile-mode .hero { padding: 48px 0 28px; text-align: center; }
-  body.mobile-mode .hero h1 { font-size: 26px; line-height: 1.4; max-width: 100%; margin: 14px 0 16px; }
+  body.mobile-mode .hero h1 { font-size: clamp(11px, 3.4vw, 22px); line-height: 1.4; max-width: 100%; margin: 14px 0 16px; white-space: nowrap; }
   body.mobile-mode .hero .sub { font-size: 14.5px; max-width: 100%; margin: 0 auto 26px; }
   body.mobile-mode .hero-ctas { justify-content: center; }
   body.mobile-mode .hero-ctas .btn { flex: 1 1 auto; justify-content: center; }
