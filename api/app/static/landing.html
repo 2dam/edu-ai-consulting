@@ -116,11 +116,12 @@
   }
 
   .case-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .case-card { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); background: var(--surface); padding: 20px 20px 18px; display: flex; flex-direction: column; box-shadow: var(--shadow-card); }
+  .case-card { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); background: var(--surface); padding: 20px 20px 18px; display: flex; flex-direction: column; box-shadow: var(--shadow-card); min-width: 0; cursor: pointer; text-decoration: none; color: inherit; transition: border-color 0.15s ease, transform 0.15s ease; }
+  .case-card:hover { border-color: var(--accent); transform: translateY(-2px); }
   .case-card .tag { display: inline-block; font-family: var(--font-mono); font-size: 11px; color: var(--good); background: var(--good-bg); padding: 3px 8px; border-radius: 3px; margin-bottom: 12px; width: fit-content; }
-  .case-card .path { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
-  .case-card .profile { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 14px; }
-  .case-card blockquote { margin: 0 0 14px; font-family: var(--font-display); font-size: 15px; line-height: 1.55; color: var(--ink); }
+  .case-card .path { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; overflow-wrap: break-word; word-break: break-word; }
+  .case-card .profile { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 14px; overflow-wrap: break-word; word-break: break-word; }
+  .case-card blockquote { margin: 0 0 14px; font-family: var(--font-display); font-size: 15px; line-height: 1.55; color: var(--ink); overflow-wrap: break-word; word-break: break-word; }
   .case-card .attribution { font-size: 12.5px; color: var(--ink-muted); margin-top: auto; }
 
   .live-bar { display: flex; gap: 28px; padding: 14px 20px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-sunken); margin-bottom: 28px; flex-wrap: wrap; }
@@ -130,10 +131,10 @@
   .live-bar-item { display: flex; align-items: baseline; gap: 6px; font-size: 13px; color: var(--ink-muted); }
   .live-bar-item .v { font-family: var(--font-mono); font-weight: 700; color: var(--ink); }
   .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; }
-  .feature-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 20px; box-shadow: var(--shadow-card); }
+  .feature-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 20px; box-shadow: var(--shadow-card); min-width: 0; }
   .feature-card .icon { width: 26px; height: 26px; margin-bottom: 14px; color: var(--accent); }
-  .feature-card h3 { font-family: var(--font-body); font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-  .feature-card p { font-size: 13.5px; color: var(--ink-muted); margin: 0; word-break: keep-all; }
+  .feature-card h3 { font-family: var(--font-body); font-size: 15px; font-weight: 600; margin-bottom: 6px; overflow-wrap: break-word; word-break: break-word; }
+  .feature-card p { font-size: 13.5px; color: var(--ink-muted); margin: 0; word-break: keep-all; overflow-wrap: break-word; }
 
   .qcrm-tool { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); padding: 22px; box-shadow: var(--shadow-card); }
   .qcrm-sliders { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 28px; margin-bottom: 18px; }
@@ -159,7 +160,7 @@
   .roster .seat.crisis { color: var(--accent2); border-color: color-mix(in srgb, var(--accent2) 40%, var(--line)); }
 
   .segment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .segment-card { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 22px 20px; background: var(--surface); box-shadow: var(--shadow-card); transition: border-color 0.15s ease; }
+  .segment-card { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 22px 20px; background: var(--surface); box-shadow: var(--shadow-card); transition: border-color 0.15s ease; min-width: 0; }
   .segment-card:hover { border-color: var(--accent); }
   .segment-card .role { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
   .segment-card h3 { font-family: var(--font-body); font-size: 16px; font-weight: 600; margin-bottom: 8px; }
@@ -393,27 +394,27 @@
       <p>아직 후기를 지어내지 않습니다. 지금까지 실제로 수집·발급·운영한 데이터를 그대로 요약합니다.</p>
     </div>
     <div class="case-grid">
-      <div class="case-card">
+      <a class="case-card" href="#data">
         <span class="tag">시설 데이터</span>
         <div class="path">전국 어린이집·유치원·초등·학원·대학</div>
         <div class="profile">나이스·유치원알리미·어린이집정보공개포털 등 공식 출처 기반</div>
         <blockquote id="case-facility-count">시설 데이터 집계 중…</blockquote>
         <div class="attribution">실시간 집계</div>
-      </div>
-      <div class="case-card">
+      </a>
+      <a class="case-card" href="#try">
         <span class="tag">AI 리포트</span>
         <div class="path">발급 현황</div>
         <div class="profile">학생 프로필 기반 맞춤 입시 리포트</div>
         <blockquote id="case-reports">리포트 집계 중…</blockquote>
         <div class="attribution">실시간 집계</div>
-      </div>
-      <div class="case-card">
+      </a>
+      <a class="case-card" href="#community">
         <span class="tag">커뮤니티</span>
         <div class="path">학부모·교육자 커뮤니티</div>
         <div class="profile">지역 게시판 · 실시간 교육뉴스</div>
         <blockquote id="case-community">커뮤니티 집계 중…</blockquote>
         <div class="attribution">실시간 집계</div>
-      </div>
+      </a>
     </div>
   </section>
 
