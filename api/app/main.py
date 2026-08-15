@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
+from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,6 +43,8 @@ from app.schemas import (
     ReportResponse,
 )
 from app.seed import seed_defaults
+from app import timeseries_engine  # noqa: F401 - ts_* 테이블을 Base.metadata에 등록
+from app import timeseries_models  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +190,9 @@ def parent_guide():
 
 @app.get("/timesfm")
 def timesfm_page():
-    return FileResponse(STATIC_DIR / "timesfm.html")
+    resp = FileResponse(STATIC_DIR / "timesfm.html")
+    resp.headers.update({"Cache-Control": "no-store, max-age=0"})
+    return resp
 
 
 @app.get("/understand")
@@ -1107,4 +1112,68 @@ def analyze_fba(req: list[FbaIncident]):
 def unified_profile(student_id: str, db: Session = Depends(get_db)):
     """통합 학생 프로필 (학업·행동·중재 이력 한눈에)."""
     return rti_pbis_engine.build_unified_profile(db, student_id)
+
+
+# ── 시계열 성적·행동 예측 시스템 (TimesFM 참조 아키텍처) ────────────────────────────
+class PredictionRequest(BaseModel):
+    student_id: int
+    subject_ids: Optional[list[int]] = None
+    horizon: int = 12
+    include_behavioral: bool = False
+
+
+class PredictionResponse(BaseModel):
+    student_id: int
+    predictions: dict
+    recommendations: list
+    timestamp: str
+
+
+@app.post("/api/predict/student/{student_id}")
+def predict_student_performance(student_id: int, req: PredictionRequest, db: Session = Depends(get_db)):
+    """학생 성적 예측 API (명세 6절)."""
+    system = timeseries_engine.ComprehensivePredictionSystem(db)
+    try:
+        if req.subject_ids:
+            predictions = system.predictor.predict_multi_subject(db, student_id, req.subject_ids, req.horizon)
+        else:
+            report = system.generate_student_report(student_id, req.horizon)
+            predictions = report["performance_trends"]
+        recommendations = []
+        if req.subject_ids is None:
+            report = system.generate_student_report(student_id, req.horizon)
+            recommendations = report["intervention_recommendations"]
+        return PredictionResponse(
+            student_id=student_id, predictions=predictions,
+            recommendations=recommendations, timestamp=datetime.now().isoformat())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analysis/subject/{student_id}/{subject_id}")
+def analyze_subject_performance(student_id: int, subject_id: int, db: Session = Depends(get_db)):
+    """과목별 상세 분석 API (명세 6절)."""
+    system = timeseries_engine.ComprehensivePredictionSystem(db)
+    analysis = {
+        "subject_analysis": system.analyzer.analyze_by_difficulty(db, student_id, subject_id),
+        "term_analysis": system.analyzer.analyze_by_term(db, student_id, subject_id),
+        "forecast": system.predictor.forecast_performance(db, student_id, subject_id),
+        "recommendations": system._generate_intervention(
+            system._analyze_subject_detailed(student_id, subject_id)),
+    }
+    return analysis
+
+
+@app.get("/api/dashboard/student/{student_id}")
+def get_student_dashboard(student_id: int, db: Session = Depends(get_db)):
+    """학생 대시보드 데이터 API (명세 6절)."""
+    system = timeseries_engine.ComprehensivePredictionSystem(db)
+    report = system.generate_student_report(student_id)
+    return {
+        "overall_performance": report["subject_analysis"],
+        "risk_assessment": report["risk_assessment"],
+        "interventions": report["intervention_recommendations"],
+        "trends": report["performance_trends"],
+        "backend": report["backend"],
+    }
 

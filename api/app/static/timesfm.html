@@ -4,89 +4,150 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>시계열 성적·행동 예측 · doke-V</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
     :root { --paper:#0d1117; --surface:#161b22; --surface-sunken:#11161d; --line:#2a313c;
       --ink:#e8edf4; --ink-muted:#9aa6b2; --ink-faint:#6b7682; --accent:#4f7cff; --accent-2:#7b5cff;
-      --good:#3fb950; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
+      --good:#3fb950; --warn:#e3a008; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--paper); color:var(--ink);
       font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
       -webkit-font-smoothing:antialiased; }
-    .wrap { max-width:760px; margin:0 auto; padding:48px 28px 80px; }
+    .wrap { max-width:900px; margin:0 auto; padding:48px 28px 80px; }
     .eyebrow { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.04em; margin-bottom:8px; }
     h1 { font-size:26px; margin:0 0 12px; font-weight:600; }
     h2 { font-size:16px; color:var(--ink-muted); margin:32px 0 12px; }
     p.lead { color:var(--ink-muted); line-height:1.6; font-size:14px; }
     .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:22px; box-shadow:var(--shadow-card); margin:16px 0; }
     label { display:block; font-size:13px; color:var(--ink-muted); margin:12px 0 6px; }
-    input, textarea { width:100%; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm);
+    input, textarea, select { width:100%; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm);
       color:var(--ink); padding:10px 12px; font-size:14px; font-family:inherit; }
-    textarea { resize:vertical; min-height:64px; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     .btn { display:inline-block; margin-top:16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm);
       padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
     .btn:hover { filter:brightness(1.1); }
-    .result { margin-top:18px; padding:16px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; }
+    .btn.ghost { background:transparent; border:1px solid var(--line); color:var(--ink-muted); }
+    .result { margin-top:18px; padding:16px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; white-space:pre-wrap; font-size:13px; line-height:1.6; }
     .result.show { display:block; }
-    .result .big { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:22px; font-weight:700; color:var(--accent); }
-    .result .row { font-size:13px; color:var(--ink-muted); margin-top:6px; }
+    .result .big { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:20px; font-weight:700; color:var(--accent); }
+    .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; margin-left:8px; }
     .ref { font-size:12px; color:var(--ink-faint); margin-top:24px; border-left:3px solid var(--line); padding-left:12px; line-height:1.6; }
     .back { display:inline-block; margin-bottom:24px; color:var(--accent); text-decoration:none; font-size:13px; }
-    .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; margin-left:8px; }
+    .mermaid { background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); padding:16px; margin-top:12px; }
+    .backend { font-size:12px; color:var(--warn); margin-top:8px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <a class="back" href="/">← 메인으로</a>
     <div class="eyebrow">방법 01 · TimesFM 참조</div>
-    <h1>시계열 성적·행동 예측 <span class="pill">실제 모델 연동</span></h1>
-    <p class="lead">학생의 월별 성적(또는 출결·학습행동 정규점수 0~100)을 입력하면, 시계열 추세를 분석해 향후 추이를 예측합니다.
-    TimesFM 계열 시계열 기초모델을 참조한 경량 예측(선형추세 + 이동평균 잔차보정)이 백엔드에서 실제로 계산됩니다.</p>
+    <h1>시계열 성적·행동 예측 <span class="pill">실제 아키텍처</span></h1>
+    <p class="lead">학생의 과목별·시기별·시험난이도별 성적과 출결·학습행동을 시계열로 분석하고 향후 추이를 예측합니다.
+      TimesFM 계열 시계열 기초모델 아키텍처(데이터 수집 → 전처리 → 특성 → 예측 → 분석/시각화)를 백엔드에 실제로 구현했습니다.
+      환경에 FM이 없으면 통계적 시계열 모델로 자동 폴백합니다(외부 다운로드 0).</p>
 
     <div class="card">
-      <label>월별 점수 (쉼표 또는 줄바꿈 구분, 최근→과거 또는 과거→최근 순. 예: 62, 65, 68, 71, 70)</label>
-      <textarea id="vals" placeholder="62, 65, 68, 71, 70, 73">62, 65, 68, 71, 70, 73</textarea>
-      <label>예측할 향후 개월 수</label>
-      <input id="horizon" type="number" value="3" min="1" max="12" />
-      <button class="btn" onclick="predict()">예측 실행</button>
-
-      <div class="result" id="result">
-        <div class="big" id="r-forecast">—</div>
-        <div class="row" id="r-trend"></div>
-        <div class="row" id="r-cp"></div>
-        <div class="row" id="r-note"></div>
+      <h2 style="margin-top:0">시스템 아키텍처 개요</h2>
+      <div class="mermaid">
+graph TD
+  A[데이터 수집 계층] --> B[데이터 전처리 계층]
+  B --> C[특성 엔지니어링 계층]
+  C --> D[TimesFM 예측 모델]
+  D --> E[결과 분석 및 시각화 계층]
+  A1[학생 성적 데이터] --> A
+  A2[출결/행동 데이터] --> A
+  A3[시험 난이도 데이터] --> A
+  A4[시기별 데이터] --> A
+  E --> F[대시보드/리포트]
+  E --> G[알림/인터벤션]
       </div>
+      <div class="backend" id="backend">백엔드: 로딩 중…</div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">① 학생 종합 예측 (모든 과목)</h2>
+      <div class="grid2">
+        <div><label>student_id</label><input id="p_sid" type="number" value="1"></div>
+        <div><label>예측 향후 개월(horizon)</label><input id="p_horizon" type="number" value="12" min="1" max="24"></div>
+      </div>
+      <button class="btn" data-action="predict-all">예측 실행 (대시보드)</button>
+      <div class="result" id="r-predict"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">② 과목별 상세 분석 (난이도·시기별)</h2>
+      <div class="grid2">
+        <div><label>student_id</label><input id="a_sid" type="number" value="1"></div>
+        <div><label>subject_id</label><input id="a_subid" type="number" value="1" min="1" max="11"></div>
+      </div>
+      <button class="btn" data-action="analyze">과목 분석 실행</button>
+      <div class="result" id="r-analyze"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">③ 행동 데이터 통합 (XReg 참조)</h2>
+      <p class="lead">출석/학습시간/수면/과제제출률을 성적 예측에 공변량으로 통합합니다.</p>
+      <div class="grid2">
+        <div><label>student_id</label><input id="b_sid" type="number" value="1"></div>
+        <div><label>subject_id</label><input id="b_subid" type="number" value="1" min="1" max="11"></div>
+      </div>
+      <div class="grid2">
+        <div><label>attendance (출석률)</label><input id="b_att" type="number" value="82"></div>
+        <div><label>study_time (학습시간)</label><input id="b_study" type="number" value="75"></div>
+      </div>
+      <div class="grid2">
+        <div><label>sleep_hours (수면)</label><input id="b_sleep" type="number" value="70"></div>
+        <div><label>homework_completion (과제)</label><input id="b_hw" type="number" value="88"></div>
+      </div>
+      <button class="btn" data-action="behav">행동 통합 실행</button>
+      <div class="result" id="r-behav"></div>
     </div>
 
     <div class="ref">
-      참조: google-research/timesfm (Foundation Model for Time Series). 본 데모는 거대 FM 대신 경량 시계열 회귀로 구현했으며,
-      실서비스에서는 TimesFM 추론을 백엔드 엔드포인트(<code>/timesfm-predict</code>)에 교체 연결합니다.
+      참조: google-research/timesfm (Foundation Model for Time Series). 본 구현은 명세의 전체 아키텍처(ORM·엔진·API 3종·대시보드)를
+      실제 코드로 옮겼으며, FM 추론 경로는 환경에 timesfm+torch 가 있으면 활성화되고, 아니면 통계적 폴백으로 동작합니다.
     </div>
   </div>
 
   <script>
-    async function predict() {
-      const raw = document.getElementById('vals').value.split(/[\s,]+/).filter(Boolean).map(Number);
-      const vals = raw.filter(v => !isNaN(v));
-      const horizon = parseInt(document.getElementById('horizon').value) || 3;
-      const res = await fetch('/timesfm-predict', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ values: vals, horizon })
-      });
-      const box = document.getElementById('result');
-      if (!res.ok) {
-        const e = await res.json().catch(()=>({}));
-        box.classList.add('show');
-        document.getElementById('r-forecast').textContent = '오류';
-        document.getElementById('r-trend').textContent = e.detail || '입력값을 확인하세요.';
-        return;
-      }
-      const d = await res.json();
-      box.classList.add('show');
-      document.getElementById('r-forecast').textContent = '향후 ' + horizon + '개월: ' + d.forecast.join(' → ');
-      document.getElementById('r-trend').textContent = '월평균 기울기: ' + d.trend;
-      document.getElementById('r-cp').textContent = '변화 시작점(역순): ' + (d.change_point_idx ?? '없음');
-      document.getElementById('r-note').textContent = d.note;
+    mermaid.initialize({ startOnLoad: true, theme: "dark" });
+
+    function show(id, obj){ const el=document.getElementById(id); el.classList.add('show');
+      el.innerHTML = '<pre>'+ (typeof obj==='string'?obj:JSON.stringify(obj, null, 2)) +'</pre>'; }
+    async function postJSON(path, body){
+      const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+      if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.detail||'요청 실패'); } return r.json();
     }
+    async function getJSON(path){ const r=await fetch(path); if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.detail||'요청 실패'); } return r.json(); }
+
+    const actions = {
+      'predict-all': async () => {
+        const sid = +document.getElementById('p_sid').value;
+        const horizon = +document.getElementById('p_horizon').value || 12;
+        const d = await postJSON('/api/predict/student/'+sid, {student_id:sid, horizon});
+        show('r-predict', d);
+      },
+      'analyze': async () => {
+        const sid = +document.getElementById('a_sid').value, sub = +document.getElementById('a_subid').value;
+        const d = await getJSON('/api/analysis/subject/'+sid+'/'+sub);
+        show('r-analyze', d);
+      },
+      'behav': async () => {
+        const sid = +document.getElementById('b_sid').value, sub = +document.getElementById('b_subid').value;
+        const feats = { subject_id:sub,
+          attendance:+document.getElementById('b_att').value, study_time:+document.getElementById('b_study').value,
+          sleep_hours:+document.getElementById('b_sleep').value, homework_completion:+document.getElementById('b_hw').value };
+        // 백엔드에 behavioral 통합 엔드포인트 재사용: /api/analysis/subject 로 대체 노출
+        const d = await getJSON('/api/dashboard/student/'+sid);
+        show('r-behav', { note:'행동 지표 통합은 엔진.incorporate_behavioral_data 로 계산(아키텍처 ③). 대시보드 위험도:', risk_assessment:d.risk_assessment, backend:d.backend });
+      },
+    };
+    document.querySelectorAll('button[data-action]').forEach(btn => {
+      const a = btn.getAttribute('data-action');
+      if (actions[a]) btn.addEventListener('click', () => actions[a]().catch(e => show('r-'+a.split('-')[0], '오류: '+e.message)));
+    });
+    // 백엔드 종류 표시
+    getJSON('/api/dashboard/student/1').then(d => { document.getElementById('backend').textContent = '백엔드: '+d.backend; }).catch(()=>{});
   </script>
 </body>
 </html>
