@@ -927,3 +927,169 @@ def rti_pbis_assess(req: RtiPbisRequest):
         plan.append("PBIS: 명시적 기대 교습 + 긍정적 피드백 정례화")
     return RtiPbisResponse(rti_tier=rti_tier, pbis_level=pbis, plan=plan)
 
+
+# ── RTI · PBIS 통합 시스템 (실제 아키텍처) ──────────────────────────────────────
+
+from app.rti_pbis_models import (
+    Base as RtiBase, Student, UniversalScreening, ProgressMonitoringAcademic,
+    ProgressMonitoringBehavior, Intervention, FidelityRecord,
+)
+from app import rti_pbis_engine
+
+# 테이블 자동 생성 (기존 engine 재사용 — SQLite/PostgreSQL 호환)
+RtiBase.metadata.create_all(bind=engine)
+
+
+class StudentCreate(BaseModel):
+    student_id: str
+    school_id: str | None = None
+    grade_level: int | None = None
+    classroom: str | None = None
+    demographics: str | None = None
+
+
+class ScreeningCreate(BaseModel):
+    student_id: str
+    screening_date: str | None = None  # YYYY-MM-DD
+    reading_benchmark_score: float | None = None
+    math_percentile_rank: float | None = None
+    social_skills_rating: float | None = None
+    behavioral_risk_index: float | None = None
+
+
+class InterventionCreate(BaseModel):
+    student_id: str
+    intervention_id: str
+    tier: int = 1
+    assigned_date: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    status: str = "진행 중"
+    delivery_details: str | None = None
+    fba_hypothesis: str | None = None
+
+
+class AcademicPMCreate(BaseModel):
+    student_id: str
+    intervention_id: int | None = None
+    date: str | None = None
+    curriculum_based_measurement_score: float
+    note: str | None = None
+
+
+class BehaviorPMCreate(BaseModel):
+    student_id: str
+    intervention_id: int | None = None
+    date: str | None = None
+    daily_behavior_rating: float | None = None
+    cico_points_earned: float | None = None
+    note: str | None = None
+
+
+class FidelityCreate(BaseModel):
+    intervention_id: int
+    observer: str | None = None
+    date: str | None = None
+    fidelity_score: float
+
+
+class FbaIncident(BaseModel):
+    antecedent: str = ""
+    behavior: str = ""
+    consequence: str = ""
+
+
+def _as_date(s: str | None):
+    from datetime import date, datetime
+    if not s:
+        return date.today()
+    try:
+        return datetime.strptime(s, "%Y-%m-%d").date()
+    except ValueError:
+        return date.today()
+
+
+@app.post("/rti/student")
+def create_student(req: StudentCreate, db: Session = Depends(get_db)):
+    """학생 기본 정보 등록 (Student Core)."""
+    if db.query(Student).filter(Student.student_id == req.student_id).first():
+        raise HTTPException(status_code=409, detail="이미 존재하는 student_id")
+    s = Student(**req.model_dump())
+    db.add(s); db.commit(); db.refresh(s)
+    return {"student_id": s.student_id, "status": "등록 완료"}
+
+
+@app.post("/rti/screening")
+def create_screening(req: ScreeningCreate, db: Session = Depends(get_db)):
+    """보편적 스크리닝 등록 + 위험도 자동 식별."""
+    if not db.query(Student).filter(Student.student_id == req.student_id).first():
+        raise HTTPException(status_code=404, detail="학생 없음")
+    s = UniversalScreening(
+        student_id=req.student_id, screening_date=_as_date(req.screening_date),
+        reading_benchmark_score=req.reading_benchmark_score,
+        math_percentile_rank=req.math_percentile_rank,
+        social_skills_rating=req.social_skills_rating,
+        behavioral_risk_index=req.behavioral_risk_index,
+    )
+    db.add(s); db.commit(); db.refresh(s)
+    risk = rti_pbis_engine.identify_risk(s)
+    return {"screening_id": s.id, "risk": risk}
+
+
+@app.post("/rti/intervention")
+def create_intervention(req: InterventionCreate, db: Session = Depends(get_db)):
+    """중재 배정 (Intervention)."""
+    if not db.query(Student).filter(Student.student_id == req.student_id).first():
+        raise HTTPException(status_code=404, detail="학생 없음")
+    iv = Intervention(
+        student_id=req.student_id, intervention_id=req.intervention_id, tier=req.tier,
+        assigned_date=_as_date(req.assigned_date), start_date=_as_date(req.start_date),
+        end_date=_as_date(req.end_date) if req.end_date else None,
+        status=req.status, delivery_details=req.delivery_details, fba_hypothesis=req.fba_hypothesis,
+    )
+    db.add(iv); db.commit(); db.refresh(iv)
+    return {"intervention_db_id": iv.id, "type": iv.intervention_id, "tier": iv.tier, "status": iv.status}
+
+
+@app.post("/rti/pm-academic")
+def create_academic_pm(req: AcademicPMCreate, db: Session = Depends(get_db)):
+    """학업 진도 모니터링 기록 (CBM)."""
+    pm = ProgressMonitoringAcademic(
+        student_id=req.student_id, intervention_id=req.intervention_id,
+        date=_as_date(req.date), curriculum_based_measurement_score=req.curriculum_based_measurement_score,
+        note=req.note)
+    db.add(pm); db.commit(); db.refresh(pm)
+    return {"pm_id": pm.id, "date": str(pm.date), "score": pm.curriculum_based_measurement_score}
+
+
+@app.post("/rti/pm-behavior")
+def create_behavior_pm(req: BehaviorPMCreate, db: Session = Depends(get_db)):
+    """행동 진도 모니터링 기록 (일일점수/CICO)."""
+    pm = ProgressMonitoringBehavior(
+        student_id=req.student_id, intervention_id=req.intervention_id, date=_as_date(req.date),
+        daily_behavior_rating=req.daily_behavior_rating, cico_points_earned=req.cico_points_earned, note=req.note)
+    db.add(pm); db.commit(); db.refresh(pm)
+    return {"pm_id": pm.id, "date": str(pm.date), "rating": pm.daily_behavior_rating}
+
+
+@app.post("/rti/fidelity")
+def create_fidelity(req: FidelityCreate, db: Session = Depends(get_db)):
+    """충실도 측정 기록."""
+    f = FidelityRecord(intervention_id=req.intervention_id, observer=req.observer,
+                       date=_as_date(req.date), fidelity_score=req.fidelity_score)
+    db.add(f); db.commit(); db.refresh(f)
+    return {"fidelity_id": f.id, "score": f.fidelity_score}
+
+
+@app.post("/rti/fba")
+def analyze_fba(req: list[FbaIncident]):
+    """FBA 지원: A-B-C 사건 로그 → 기능적 가설 도출."""
+    incidents = [i.model_dump() for i in req]
+    return rti_pbis_engine.analyze_fba(incidents)
+
+
+@app.get("/rti/profile/{student_id}")
+def unified_profile(student_id: str, db: Session = Depends(get_db)):
+    """통합 학생 프로필 (학업·행동·중재 이력 한눈에)."""
+    return rti_pbis_engine.build_unified_profile(db, student_id)
+

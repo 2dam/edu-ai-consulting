@@ -3,94 +3,159 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RTI · PBIS 기반 중재 · doke-V</title>
+  <title>RTI · PBIS 통합 시스템 · doke-V</title>
   <style>
     :root { --paper:#0d1117; --surface:#161b22; --surface-sunken:#11161d; --line:#2a313c;
       --ink:#e8edf4; --ink-muted:#9aa6b2; --ink-faint:#6b7682; --accent:#4f7cff;
-      --good:#3fb950; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
+      --good:#3fb950; --warn:#e3b341; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--paper); color:var(--ink);
       font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
       -webkit-font-smoothing:antialiased; }
-    .wrap { max-width:760px; margin:0 auto; padding:48px 28px 80px; }
+    .wrap { max-width:920px; margin:0 auto; padding:48px 28px 80px; }
     .eyebrow { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.04em; margin-bottom:8px; }
-    h1 { font-size:26px; margin:0 0 12px; font-weight:600; }
+    h1 { font-size:26px; margin:0 0 8px; font-weight:600; }
     h2 { font-size:16px; color:var(--ink-muted); margin:28px 0 12px; }
     p.lead { color:var(--ink-muted); line-height:1.6; font-size:14px; }
     .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:22px; box-shadow:var(--shadow-card); margin:16px 0; }
-    label { display:block; font-size:13px; color:var(--ink-muted); margin:12px 0 6px; }
-    input { width:100%; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm);
-      color:var(--ink); padding:10px 12px; font-size:14px; font-family:inherit; }
-    .btn { display:inline-block; margin-top:16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm);
-      padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    @media (max-width:640px){ .grid2 { grid-template-columns:1fr; } }
+    label { display:block; font-size:12px; color:var(--ink-muted); margin:10px 0 5px; }
+    input, textarea { width:100%; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm);
+      color:var(--ink); padding:9px 11px; font-size:13px; font-family:inherit; }
+    textarea { resize:vertical; min-height:54px; }
+    .btn { display:inline-block; margin-top:14px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm);
+      padding:10px 18px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; }
     .btn:hover { filter:brightness(1.1); }
-    .result { margin-top:18px; padding:16px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; }
+    .btn.ghost { background:transparent; border:1px solid var(--line); color:var(--ink-muted); }
+    .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; }
+    .result { margin-top:14px; padding:14px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; white-space:pre-wrap; font-family:'SFMono-Regular',ui-monospace,monospace; font-size:12px; line-height:1.6; color:var(--ink-muted); max-height:380px; overflow:auto; }
     .result.show { display:block; }
-    .result .big { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:22px; font-weight:700; color:var(--accent); }
-    .result .row { font-size:13px; color:var(--ink-muted); margin-top:6px; }
-    .result ul { margin:8px 0; padding-left:20px; }
-    .result li { font-size:13px; color:var(--ink-muted); line-height:1.6; }
     .back { display:inline-block; margin-bottom:24px; color:var(--accent); text-decoration:none; font-size:13px; }
-    .ref { font-size:12px; color:var(--ink-faint); margin-top:24px; border-left:3px solid var(--line); padding-left:12px; line-height:1.6; }
-    .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; margin-left:8px; }
+    .tag { font-size:11px; padding:2px 7px; border-radius:6px; margin-right:6px; }
+    .tag.t1 { background:rgba(79,124,255,.15); color:var(--accent); }
+    .tag.t2 { background:rgba(227,179,65,.15); color:var(--warn); }
+    .tag.t3 { background:rgba(248,81,73,.15); color:#f85149; }
+    .ref { font-size:12px; color:var(--ink-faint); margin-top:24px; border-left:3px solid var(--line); padding-left:12px; line-height:1.7; }
+    .arch { font-size:12px; color:var(--ink-faint); line-height:1.7; }
+    .arch code { background:var(--surface-sunken); padding:1px 5px; border-radius:4px; color:var(--ink-muted); }
   </style>
 </head>
 <body>
   <div class="wrap">
     <a class="back" href="/">← 메인으로</a>
-    <div class="eyebrow">방법 03 · RTI / PBIS</div>
-    <h1>RTI · PBIS 기반 중재 진단 <span class="pill">실제 모델 연동</span></h1>
-    <p class="lead">학업 격차, 행동 문제, 출석률을 입력하면 RTI 3-tier와 PBIS 단계를 진단하고 맞춤 중재 계획을 제안합니다.
-    백엔드 <code>/rti-pbis-assess</code>에서 실제로 분류됩니다.</p>
+    <div class="eyebrow">방법 03 · RTI / PBIS 통합 시스템</div>
+    <h1>RTI · PBIS 통합 중재 시스템 <span class="pill">실제 백엔드 연동</span></h1>
+    <p class="lead">학업(RTI)과 행동(PBIS)을 하나의 통합 저장소에서 관리합니다. 학생 등록 → 스크리닝(위험도 식별) → 중재 배정 → 진도 모니터링 → 통합 프로필로 이어지는 증거기반 흐름을 직접 실행해 보세요.</p>
 
+    <h2>① 학생 등록 (Student Core)</h2>
     <div class="card">
-      <label>또래 대비 학업 격차 (0~100, 클수록 심각)</label>
-      <input id="gap" type="number" value="35" min="0" max="100" />
-      <label>최근 행동 문제 횟수 (주 단위)</label>
-      <input id="inc" type="number" value="2" min="0" max="20" />
-      <label>출석률 (0~100)</label>
-      <input id="att" type="number" value="88" min="0" max="100" />
-      <button class="btn" onclick="assess()">진단 실행</button>
-
-      <div class="result" id="result">
-        <div class="big" id="r-tier"></div>
-        <div class="row" id="r-pbis"></div>
-        <h2 style="margin:16px 0 8px;">맞춤 중재 계획</h2>
-        <ul id="r-plan"></ul>
+      <div class="grid2">
+        <div><label>student_id *</label><input id="s_id" value="STU-001"></div>
+        <div><label>school_id</label><input id="s_school" value="SCH-A"></div>
+        <div><label>grade_level</label><input id="s_grade" type="number" value="7"></div>
+        <div><label>classroom</label><input id="s_class" value="2반"></div>
       </div>
+      <label>demographics</label><input id="s_demo" value="여, 13세">
+      <button class="btn" onclick="call('/rti/student', studentBody())">학생 등록</button>
+    </div>
+
+    <h2>② 보편적 스크리닝 + 위험도 식별</h2>
+    <div class="card">
+      <div class="grid2">
+        <div><label>student_id</label><input id="sc_id" value="STU-001"></div>
+        <div><label>math_percentile_rank (위험&lt;25)</label><input id="sc_math" type="number" value="18"></div>
+        <div><label>reading_benchmark_score</label><input id="sc_read" type="number" value="22"></div>
+        <div><label>social_skills_rating (&lt;40 보완)</label><input id="sc_social" type="number" value="35"></div>
+        <div><label>behavioral_risk_index (&gt;70 위험)</label><input id="sc_risk" type="number" value="74"></div>
+      </div>
+      <button class="btn" onclick="call('/rti/screening', screeningBody())">스크리닝 등록</button>
+    </div>
+
+    <h2>③ 중재 배정 (Intervention)</h2>
+    <div class="card">
+      <div class="grid2">
+        <div><label>student_id</label><input id="iv_sid" value="STU-001"></div>
+        <div><label>intervention_id</label><input id="iv_type" value="Tier2_Reading_Group"></div>
+        <div><label>tier</label><input id="iv_tier" type="number" value="2"></div>
+        <div><label>status</label><input id="iv_status" value="진행 중"></div>
+      </div>
+      <label>delivery_details</label><input id="iv_del" value="주 5회, 30분, 소집단(8명)">
+      <button class="btn" onclick="call('/rti/intervention', interventionBody())">중재 배정</button>
+    </div>
+
+    <h2>④ 진도 모니터링 (Progress Monitoring)</h2>
+    <div class="card">
+      <div class="grid2">
+        <div><label>student_id</label><input id="pm_sid" value="STU-001"></div>
+        <div><label>intervention_id (DB id)</label><input id="pm_iv" type="number" value="1"></div>
+        <div><label>CBM 점수(학업)</label><input id="pm_cbm" type="number" value="42"></div>
+        <div><label>일일행동점수(행동)</label><input id="pm_beh" type="number" value="68"></div>
+      </div>
+      <button class="btn" onclick="call('/rti/pm-academic', academicBody())">학업 진도 기록</button>
+      <button class="btn ghost" onclick="call('/rti/pm-behavior', behaviorBody())">행동 진도 기록</button>
+    </div>
+
+    <h2>⑤ FBA 지원 (A-B-C → 가설)</h2>
+    <div class="card">
+      <label>사건 로그 (JSON 배열: antecedent/behavior/consequence)</label>
+      <textarea id="fba">[
+  {"antecedent":"수학 과제 시작 전","behavior":"책상 두드리기","consequence":"선생님 주의→과제 미룸"},
+  {"antecedent":"조별 활동","behavior":"떠들기","consequence":"친구들 웃음→주의 획득"},
+  {"antecedent":"혼자 시험","behavior":"고개 숙임","consequence":"쉬운 문제로 교체→회피"}
+]</textarea>
+      <button class="btn" onclick="callJson('/rti/fba', document.getElementById('fba').value)">FBA 분석</button>
+    </div>
+
+    <h2>⑥ 통합 학생 프로필</h2>
+    <div class="card">
+      <div class="grid2">
+        <div><label>student_id</label><input id="p_id" value="STU-001"></div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn" onclick="profile()">프로필 조회</button></div>
+      </div>
+    </div>
+
+    <div class="arch" style="margin-top:24px;">
+      <strong>아키텍처</strong><br>
+      · 데이터 수집 계층: <code>POST /rti/student·screening·intervention·pm-*·fidelity</code><br>
+      · 통합 저장소: <code>rti_student / rti_screening / rti_pm_* / rti_intervention / rti_fidelity</code> (SQLAlchemy ORM — SQLite·PostgreSQL 호환)<br>
+      · 분석 엔진: <code>identify_risk</code> / <code>evaluate_progress</code> / <code>analyze_fba</code> (app/rti_pbis_engine.py)<br>
+      · 확장 지점: 시계열 진도 데이터는 관계형 timestamp로 두고, 운영 시 InfluxDB로 분리 가능
     </div>
 
     <div class="ref">
       모델: RTI(Response to Intervention) · PBIS(Positive Behavioral Interventions and Supports).
-      본 데모는 격차/행동/출석 규칙 기반 티어 분류로 구현했으며, 실서비스에서는 학생별 진행도 데이터와 연동해 동적 조정합니다.
+      본 시스템은 MTSS 관점에서 학업·행동 데이터를 통합해 증거기반 의사결정을 지원합니다.
     </div>
+
+    <div class="result" id="result"></div>
   </div>
 
   <script>
-    async function assess() {
-      const body = {
-        score_gap: parseFloat(document.getElementById('gap').value) || 0,
-        behavior_incidents: parseInt(document.getElementById('inc').value) || 0,
-        attendance_rate: parseFloat(document.getElementById('att').value) || 0,
-      };
-      const res = await fetch('/rti-pbis-assess', {
-        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
-      });
-      const box = document.getElementById('result');
-      if (!res.ok) {
-        const e = await res.json().catch(()=>({}));
-        box.classList.add('show');
-        document.getElementById('r-tier').textContent = '오류';
-        document.getElementById('r-pbis').textContent = e.detail || '입력값을 확인하세요.';
-        return;
-      }
-      const d = await res.json();
-      box.classList.add('show');
-      document.getElementById('r-tier').textContent = 'RTI Tier ' + d.rti_tier;
-      document.getElementById('r-pbis').textContent = 'PBIS: ' + d.pbis_level;
-      const pl = document.getElementById('r-plan'); pl.innerHTML='';
-      d.plan.forEach(p => { const li=document.createElement('li'); li.textContent=p; pl.appendChild(li); });
+    const R = () => document.getElementById('result');
+    function show(j){ const r=R(); r.classList.add('show'); r.textContent = typeof j==='string'?j:JSON.stringify(j, null, 2); }
+    async function call(path, body){
+      const res = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)});
+      const d = await res.json().catch(()=>({error:'응답 파싱 실패'}));
+      show(res.ok? d : {error:d.detail||'요청 실패', status:res.status});
     }
+    async function callJson(path, raw){
+      let body; try { body = JSON.parse(raw); } catch(e){ show({error:'JSON 파싱 오류: '+e.message}); return; }
+      const res = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+      const d = await res.json().catch(()=>({})); show(d);
+    }
+    async function profile(){
+      const id = document.getElementById('p_id').value;
+      const res = await fetch('/rti/profile/'+encodeURIComponent(id));
+      const d = await res.json().catch(()=>({})); show(d);
+    }
+    const v = id => document.getElementById(id).value;
+    const studentBody = () => ({student_id:v('s_id'), school_id:v('s_school'), grade_level:+v('s_grade'), classroom:v('s_class'), demographics:v('s_demo')});
+    const screeningBody = () => ({student_id:v('sc_id'), math_percentile_rank:+v('sc_math'), reading_benchmark_score:+v('sc_read'), social_skills_rating:+v('sc_social'), behavioral_risk_index:+v('sc_risk')});
+    const interventionBody = () => ({student_id:v('iv_sid'), intervention_id:v('iv_type'), tier:+v('iv_tier'), status:v('iv_status'), delivery_details:v('iv_del')});
+    const academicBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), curriculum_based_measurement_score:+v('pm_cbm')});
+    const behaviorBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), daily_behavior_rating:+v('pm_beh')});
   </script>
 </body>
 </html>
