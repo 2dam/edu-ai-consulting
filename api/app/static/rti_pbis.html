@@ -151,11 +151,11 @@
       const d = await res.json().catch(()=>({})); show(d);
     }
     const v = id => document.getElementById(id).value;
-    const studentBody = () => ({student_id:v('s_id'), school_id:v('s_school'), grade_level:+v('s_grade'), classroom:v('s_class'), demographics:v('s_demo')});
-    const screeningBody = () => ({student_id:v('sc_id'), math_percentile_rank:+v('sc_math'), reading_benchmark_score:+v('sc_read'), social_skills_rating:+v('sc_social'), behavioral_risk_index:+v('sc_risk')});
-    const interventionBody = () => ({student_id:v('iv_sid'), intervention_id:v('iv_type'), tier:+v('iv_tier'), status:v('iv_status'), delivery_details:v('iv_del')});
-    const academicBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), curriculum_based_measurement_score:+v('pm_cbm')});
-    const behaviorBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), daily_behavior_rating:+v('pm_beh')});
+    window.studentBody = () => ({student_id:v('s_id'), school_id:v('s_school'), grade_level:+v('s_grade'), classroom:v('s_class'), demographics:v('s_demo')});
+    window.screeningBody = () => ({student_id:v('sc_id'), math_percentile_rank:+v('sc_math'), reading_benchmark_score:+v('sc_read'), social_skills_rating:+v('sc_social'), behavioral_risk_index:+v('sc_risk')});
+    window.interventionBody = () => ({student_id:v('iv_sid'), intervention_id:v('iv_type'), tier:+v('iv_tier'), status:v('iv_status'), delivery_details:v('iv_del')});
+    window.academicBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), curriculum_based_measurement_score:+v('pm_cbm')});
+    window.behaviorBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), daily_behavior_rating:+v('pm_beh')});
   </script>
 </body>
 </html>
