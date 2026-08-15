@@ -105,13 +105,37 @@
       </div>
     </div>
 
+    <div class="section-title">3. AI 리포트 (발급 현황)</div>
+    <div class="stat-grid">
+      <div class="stat-tile">
+        <div class="figure" id="stat-ai-reports">—</div>
+        <div class="label">발급된 AI 맞춤 입시 리포트</div>
+        <div class="src">source: /reports 발급 이력 (실제 비즈니스 데이터)</div>
+      </div>
+      <div class="stat-tile">
+        <div class="figure">프로필 기반</div>
+        <div class="label">맞춤 리포트 생성 방식</div>
+        <div class="src">성적대 · 지망학과 · 관심지역으로 개인화</div>
+      </div>
+    </div>
+    <p class="meta">AI 리포트는 학생 프로필(성적대·지망학과·관심지역)을 바탕으로 맞춤 입시 컨설팅 리포트를 생성합니다. 발급 이력은 실제 비즈니스 데이터로 집계됩니다.</p>
+
     <p class="meta">최종 갱신: 파이프라인 연동 중 — 운영 데이터 적재 시 자동 갱신 예정</p>
     <a class="back" href="/?key=internal">← 공개 랜딩으로 돌아가기</a>
   </div>
 
   <script>
-    // 실제 운영 데이터가 있으면 여기서 채움 (현재 — 유지)
-    // fetch('/site-stats').then(r=>r.json()).then(d=>{ ... })
+    (async () => {
+      try {
+        const res = await fetch('/site-stats');
+        if (!res.ok) return;
+        const s = await res.json();
+        const el = document.getElementById('stat-ai-reports');
+        if (el && s.reports_issued != null) {
+          el.innerHTML = (s.reports_issued > 0 ? s.reports_issued.toLocaleString('ko-KR') : '0') + '<span class="unit">건</span>';
+        }
+      } catch (e) {}
+    })();
   </script>
 </body>
 </html>
