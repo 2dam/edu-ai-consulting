@@ -104,6 +104,14 @@
   .stat-tile .label { font-size: 12.5px; color: var(--ink-muted); margin-top: 6px; }
   .stat-tile .src { font-size: 11px; color: var(--ink-faint); margin-top: 6px; line-height: 1.4; word-break: keep-all; }
 
+  /* Chapter 1 — 컨설팅 방법론 카드 */
+  .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .method-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 22px 20px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; }
+  .method-card .method-no { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+  .method-card h3 { font-size: 16px; margin: 10px 0 8px; color: var(--ink); word-break: keep-all; }
+  .method-card p { font-size: 13px; color: var(--ink-muted); line-height: 1.55; margin: 0 0 12px; word-break: keep-all; }
+  .method-card .src { font-size: 11px; color: var(--ink-faint); margin-top: auto; line-height: 1.4; word-break: keep-all; }
+
   .exhibit { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; box-shadow: var(--shadow-card); }
   .exhibit iframe { width: 100%; height: 480px; border: none; display: block; background: #0B0820; }
   .exhibit-caption { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; font-size: 13px; color: var(--ink-muted); border-top: 1px solid var(--line); }
@@ -231,7 +239,7 @@
 
   @media (max-width: 760px) {
     .hero h1 { font-size: clamp(11px, 3.4vw, 28px); white-space: nowrap; }
-    .stat-grid, .case-grid, .feature-grid, .segment-grid, .tier-grid { grid-template-columns: 1fr; }
+    .stat-grid, .case-grid, .feature-grid, .segment-grid, .tier-grid, .method-grid { grid-template-columns: 1fr; }
     .try-shell { grid-template-columns: 1fr; }
     nav.toc-strip .chapter-link { display: none; }
     .cta-band .wrap { flex-direction: column; align-items: flex-start; }
@@ -303,7 +311,7 @@
     </a>
     <div class="header-right">
       <nav class="toc-strip" aria-label="목차">
-        <a class="chapter-link" href="#summary">Ch.1 지표</a>
+        <a class="chapter-link" href="#summary">Ch.1 방법</a>
         <a class="chapter-link" href="#data">Ch.2 데이터</a>
         <a class="chapter-link" href="#reputation">학원평판</a>
         <a class="chapter-link" href="#results">Ch.3 성과</a>
@@ -331,28 +339,30 @@
 
   <section class="chapter wrap" id="summary">
     <div class="chapter-head">
-      <div class="eyebrow"><span class="chapter-no">Chapter 1.</span> 교육컨설팅 핵심 지표</div>
-      <h2>좋은 컨설팅을 가르는 3가지 지표</h2>
-      <p>입시 컨설팅의 효과는 숫자로 증명됩니다. 우리가 약속하는 핵심 지표 프레임입니다.</p>
+      <div class="eyebrow"><span class="chapter-no">Chapter 1.</span> 교육컨설팅 핵심 방법</div>
+      <h2>회원에게 제공하는 3가지 컨설팅 방법</h2>
+      <p>입시 컨설팅은 '설명'이 아니라 '방법'으로 증명됩니다. 학생에게 실제로 적용하는 컨설팅 관점과 방법론입니다.</p>
     </div>
-    <div class="stat-grid">
-      <div class="stat-tile">
-        <div class="figure num">준비 중</div>
-        <div class="label">합격률</div>
-        <div class="src">목표 대학·학과 달성 비율 (사전 목표 대비 사후 결과)</div>
+    <div class="method-grid">
+      <div class="method-card">
+        <div class="method-no">01</div>
+        <h3>시계열 성적·행동 예측</h3>
+        <p>TimesFM 계열 시계열 기초모델을 참조해, 학생의 내신·모의고사 성적과 출결·학습행동을 시계열로 분석하고 향후 추이를 예측합니다. 변화가 시작되는 지점을 숫자로 먼저 봅니다.</p>
+        <div class="src">참조: google-research/timesfm (Foundation Model for Time Series)</div>
       </div>
-      <div class="stat-tile">
-        <div class="figure num">준비 중</div>
-        <div class="label">점수 상승폭</div>
-        <div class="src">내신·모의고사 사전→사후 향상 폭 (과목별 추적)</div>
+      <div class="method-card">
+        <div class="method-no">02</div>
+        <h3>학생·학부모·교사 상호이해 모델</h3>
+        <p>다자 간 맥락 이해 모델을 설계해, 학생·학부모·교사가 서로의 의도와 상황을 오해 없이 파악하게 합니다. 세 주체의 입장을 정리해 학생 학습에 실질적인 도움을 줍니다.</p>
+        <div class="src">참조: Egonex-AI/Understand-Anything (다자 간 이해 모델)</div>
       </div>
-      <div class="stat-tile">
-        <div class="figure num">준비 중</div>
-        <div class="label">데이터 커버리지</div>
-        <div class="src">전국 학원·학교 중 리포트에 반영된 비중 (신선도 포함)</div>
+      <div class="method-card">
+        <div class="method-no">03</div>
+        <h3>RTI · PBIS 기반 중재</h3>
+        <p>학습장애 중재반응(RTI)과 긍정적 행동지원(PBIS) 모델을 컨설팅에 적용합니다. 학생의 수준과 행동 특성에 맞춘 단계별 중재로 적절한 컨설팅을 제공합니다.</p>
+        <div class="src">모델: RTI(Response to Intervention) · PBIS(Positive Behavioral Interventions and Supports)</div>
       </div>
     </div>
-    <p class="sample-note" style="margin-top:16px;">* 위 지표는 교육컨설팅 효과를 보여주기 위한 프레임 시안입니다. 실제 수치는 측정 체계 구축 후 운영 데이터로 공개합니다.</p>
   </section>
 
   <section class="chapter wrap" id="data">
