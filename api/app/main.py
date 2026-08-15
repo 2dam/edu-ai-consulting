@@ -143,6 +143,22 @@ def landing():
     return FileResponse(STATIC_DIR / "landing.html")
 
 
+@app.get("/admin")
+def admin(key: str | None = None):
+    # 내부 참고용 지표 대시보드 — 외부 공개 차단
+    if key != "internal":
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(
+            "<!doctype html><meta charset='utf-8'><title>접근 제한</title>"
+            "<body style='font-family:sans-serif;background:#0d1117;color:#ddd;display:flex;"
+            "align-items:center;justify-content:center;height:100vh;margin:0'>"
+            "<div style='text-align:center'><h1>내부 전용</h1>"
+            "<p>이 페이지는 내부 참고용입니다. 관리자 키가 필요합니다.</p></div></body>",
+            status_code=403,
+        )
+    return FileResponse(STATIC_DIR / "admin.html")
+
+
 @app.get("/education")
 def education_columns():
     # 교육 데이터 칼럼 (SEO 콘텐츠용, 광고 없음)

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>내부 참고용 지표 · doke-V</title>
+  <style>
+    :root {
+      --paper: #0d1117;
+      --surface: #161b22;
+      --surface-sunken: #11161d;
+      --line: #2a313c;
+      --ink: #e8edf4;
+      --ink-muted: #9aa6b2;
+      --ink-faint: #6b7682;
+      --accent: #4f7cff;
+      --accent-2: #7b5cff;
+      --good: #3fb950;
+      --good-bg: #11281a;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow-card: 0 1px 2px rgba(0,0,0,.3);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink);
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+      -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 0 28px; }
+    h1, h2, h3 { font-weight: 600; margin: 0; }
+    .top { padding: 40px 0 12px; }
+    .eyebrow { font-size: 12px; color: var(--ink-faint); font-family: 'SFMono-Regular', ui-monospace, monospace; letter-spacing: .04em; margin-bottom: 8px; }
+    .badge { display: inline-block; margin-left: 10px; font-size: 11px; color: var(--good);
+      background: var(--good-bg); border: 1px solid color-mix(in srgb, var(--good) 35%, transparent);
+      padding: 2px 8px; border-radius: 99px; vertical-align: middle; }
+    .note { font-size: 12.5px; color: var(--ink-faint); line-height: 1.6; margin: 10px 0 28px;
+      border-left: 3px solid var(--line); padding-left: 12px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 36px; }
+    .stat-tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 20px 18px; box-shadow: var(--shadow-card); }
+    .stat-tile .figure { font-family: 'SFMono-Regular', ui-monospace, monospace; font-size: 30px; font-weight: 700;
+      font-variant-numeric: tabular-nums; color: var(--ink); }
+    .stat-tile .figure .unit { font-size: 14px; color: var(--ink-muted); font-weight: 400; margin-left: 2px; }
+    .stat-tile .label { font-size: 13px; color: var(--ink-muted); margin-top: 8px; }
+    .stat-tile .src { font-size: 11px; color: var(--ink-faint); margin-top: 6px; }
+    .section-title { font-size: 15px; color: var(--ink-muted); margin: 32px 0 14px; font-weight: 700; }
+    .meta { font-size: 12px; color: var(--ink-faint); }
+    .back { display: inline-block; margin: 8px 0 40px; color: var(--accent); text-decoration: none; font-size: 13px; }
+    @media (max-width: 640px) { .stat-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="eyebrow">INTERNAL · REFERENCE ONLY</div>
+      <h1>내부 참고용 지표 대시보드 <span class="badge">비공개</span></h1>
+      <p class="note">이 페이지는 외부(학부모·학생·경쟁사)에 공개되지 않는 내부 참고용입니다.
+      아래 수치는 파이프라인 운영 현황을 추적하기 위한 것이며, 공개 랜딩페이지의 '교육컨설팅 핵심 지표' 시안과는 별도입니다.
+      외부 노출 시 개인정보보호법·허위 지표 이슈가 있으므로 링크를 외부에 유포하지 마세요.</p>
+    </div>
+
+    <div class="section-title">1. 데이터 파이프라인 산출물 (운영 추적)</div>
+    <div class="stat-grid">
+      <div class="stat-tile">
+        <div class="figure" id="stat-curriculum">—</div>
+        <div class="label">수집된 학원 커리큘럼</div>
+        <div class="src">source: collect_academies.py (data.go.kr 학원신고현황)</div>
+      </div>
+      <div class="stat-tile">
+        <div class="figure" id="stat-admission">—</div>
+        <div class="label">대입 결과 데이터 포인트</div>
+        <div class="src">source: collect_admissions.py (입학처 공시)</div>
+      </div>
+      <div class="stat-tile">
+        <div class="figure" id="stat-reports">—</div>
+        <div class="label">발급된 맞춤 리포트</div>
+        <div class="src">source: /reports 발급 이력 (실제 비즈니스 데이터)</div>
+      </div>
+      <div class="stat-tile">
+        <div class="figure" id="stat-members">—</div>
+        <div class="label">활성 학부모·교육자 커뮤니티</div>
+        <div class="src">source: 커뮤니티 활성 사용자 (실제 비즈니스 데이터)</div>
+      </div>
+    </div>
+
+    <div class="section-title">2. 기존 랜딩 시안용 예시 수치 (보관, 외부 미사용)</div>
+    <div class="stat-grid">
+      <div class="stat-tile">
+        <div class="figure">1,842<span class="unit">개</span></div>
+        <div class="label">분석된 학원 커리큘럼 (시안 예시)</div>
+        <div class="src">⚠ 5b1cb6f 시안 수치 — 실제 아님</div>
+      </div>
+      <div class="stat-tile">
+        <div class="figure">37,400<span class="unit">건</span></div>
+        <div class="label">대입 결과 데이터 포인트 (시안 예시)</div>
+        <div class="src">⚠ 5b1cb6f 시안 수치 — 실제 아님</div>
+      </div>
+      <div class="stat-tile">
+        <div class="figure">6,200<span class="unit">건</span></div>
+        <div class="label">발급된 맞춤 리포트 (시안 예시)</div>
+        <div class="src">⚠ 5b1cb6f 시안 수치 — 실제 아님</div>
+      </div>
+      <div class="stat-tile">
+        <div class="figure">1,240<span class="unit">명</span></div>
+        <div class="label">활성 학부모·교육자 커뮤니티 (시안 예시)</div>
+        <div class="src">⚠ 5b1cb6f 시안 수치 — 실제 아님</div>
+      </div>
+    </div>
+
+    <p class="meta">최종 갱신: 파이프라인 연동 중 — 운영 데이터 적재 시 자동 갱신 예정</p>
+    <a class="back" href="/?key=internal">← 공개 랜딩으로 돌아가기</a>
+  </div>
+
+  <script>
+    // 실제 운영 데이터가 있으면 여기서 채움 (현재 — 유지)
+    // fetch('/site-stats').then(r=>r.json()).then(d=>{ ... })
+  </script>
+</body>
+</html>
