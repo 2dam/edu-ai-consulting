@@ -171,6 +171,7 @@ class GapAnalysis(Base):
 class StrengthAnalysis(Base):
     __tablename__ = "strength_analysis"
     id = Column(String, primary_key=True)
+    session_id = Column(String, nullable=True)
     type = Column(String, default="shared_understanding")  # shared_understanding|effective_communication|strong_relationship|mutual_trust
     description = Column(Text, default="")
     related_actors = Column(JSON, default=list)
@@ -182,3 +183,61 @@ __all__ = [
     "UnderstandingSession", "Insight", "ActionItem", "ConsultingReport",
     "MutualUnderstandingScores", "GapAnalysis", "StrengthAnalysis",
 ]
+
+
+def migrate_understanding_columns(engine):
+    """SQLite 영구 디스크에 구버전 이해모델 테이블이 남아있을 때 스키마를 최신화한다(멱등).
+
+    SQLAlchemy create_all 는 기존 테이블을 건드리지 않으므로, Render 재배포 시
+    understanding_* 테이블에 새 컬럼이 없어 500이 나는 것을 방지.
+    - 누락 컬럼이 없으면 그대로 둔다(기존 행 보존).
+    - 누락 컬럼이 하나라도 있으면 해당 이해모델 테이블만 DROP 후 recreate 한다.
+      (이해모델 테이블의 기존 행은 데모/샘플 데이터라 손실해도 무방; 크롤링
+      운영 데이터(raw_records 등 타 테이블)는 절대 건드리지 않는다.)
+    - PostgreSQL/신규 DB에서는 테이블이 create_all 로 이미 최신이므로 무해.
+    """
+    try:
+        from sqlalchemy import inspect, text
+    except Exception:
+        return
+    insp = inspect(engine)
+    if not insp or not getattr(insp, "dialect", None) or insp.dialect.name != "sqlite":
+        return
+    # 이해모델 테이블 → 모델에 정의된 전체 컬럼명
+    expected = {
+        "persona": {"id", "name", "description", "knowledge_level", "communication_style",
+                    "preferred_language", "accessibility_needs", "goals", "concerns"},
+        "actor_profile": {"id", "persona_id", "name", "age", "grade", "subject_interests",
+                          "learning_style", "current_understanding", "emotional_state", "interaction_history"},
+        "knowledge_node": {"id", "type", "label", "description", "domain", "difficulty",
+                           "prerequisites", "related_concepts", "explanations", "created_at",
+                           "updated_at", "source", "confidence"},
+        "relationship_edge": {"id", "source", "target", "type", "strength", "description", "interpretations"},
+        "understanding_session": {"id", "participants", "start_time", "end_time", "type",
+                                  "agenda", "discussion_nodes", "insights", "action_items", "mutual_understanding_score"},
+        "insight": {"id", "session_id", "type", "title", "description", "actionable", "evidence",
+                    "relevant_nodes", "relevant_relationships", "delivery", "priority", "status"},
+        "action_item": {"id", "session_id", "title", "description", "assigned_to", "due_date",
+                        "status", "steps", "success_metrics", "progress", "notes"},
+        "consulting_report": {"id", "session_id", "generated_at", "title", "summary", "sections",
+                              "versions", "attachments", "next_steps", "permissions"},
+        "mutual_understanding_scores": {"id", "session_id", "understanding", "empathy", "communication", "overall"},
+        "gap_analysis": {"id", "session_id", "type", "description", "severity", "related_actors",
+                         "related_concepts", "root_causes", "recommended_actions", "success_criteria"},
+        "strength_analysis": {"id", "session_id", "type", "description", "related_actors", "reinforcement_actions"},
+    }
+    with engine.connect() as conn:
+        for tbl, cols in expected.items():
+            if not insp.has_table(tbl):
+                continue
+            existing = {c["name"] for c in insp.get_columns(tbl)}
+            if cols.issubset(existing):
+                continue  # 최신 — 그대로
+            # 누락 컬럼 있음 → 이해모델 테이블만 안전하게 재생성
+            try:
+                conn.execute(text(f'DROP TABLE "{tbl}"'))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    # 누락 테이블/재생성분은 create_all 이 메워준다
+    Base.metadata.create_all(bind=engine)

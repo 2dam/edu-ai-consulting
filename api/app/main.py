@@ -77,6 +77,12 @@ async def lifespan(app: FastAPI):
     from app.auth import validate_auth_configuration
     validate_auth_configuration()
     Base.metadata.create_all(bind=engine)
+    # SQLite 영구 디스크에 구버전 테이블이 남아있을 때 누락 컬럼 추가(멱등/운영데이터 보존)
+    try:
+        from app.understanding_models import migrate_understanding_columns
+        migrate_understanding_columns(engine)
+    except Exception as _e:
+        logging.warning("understanding migration skipped: %s", _e)
     # 운영 DB의 raw_records가 수만 건 규모라 CREATE INDEX/ANALYZE를 앱 시작(lifespan) 경로에
     # 동기로 넣었더니 기동 자체가 헬스체크 타임아웃을 넘겨버려 502를 유발했다 — 되돌림.
     # 인덱스 보정은 별도 1회성 스크립트로 오프라인에서 실행할 것(앱 기동 경로에 넣지 않는다).
@@ -1215,8 +1221,10 @@ def understand_session(session_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="세션 없음")
     mus = db.query(understanding_models.MutualUnderstandingScores).filter(
         understanding_models.MutualUnderstandingScores.session_id == session_id).first()
-    gaps = db.query(understanding_models.GapAnalysis).all()
-    strengths = db.query(understanding_models.StrengthAnalysis).all()
+    gaps = db.query(understanding_models.GapAnalysis).filter(
+        understanding_models.GapAnalysis.session_id == session_id).all()
+    strengths = db.query(understanding_models.StrengthAnalysis).filter(
+        understanding_models.StrengthAnalysis.session_id == session_id).all()
     rep = db.query(understanding_models.ConsultingReport).filter(
         understanding_models.ConsultingReport.session_id == session_id).first()
     return {
