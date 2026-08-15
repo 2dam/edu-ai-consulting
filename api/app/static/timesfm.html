@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>시계열 성적·행동 예측 · doke-V</title>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" onerror="window.__mermaidFailed=true"></script>
   <style>
     :root { --paper:#0d1117; --surface:#161b22; --surface-sunken:#11161d; --line:#2a313c;
       --ink:#e8edf4; --ink-muted:#9aa6b2; --ink-faint:#6b7682; --accent:#4f7cff; --accent-2:#7b5cff;
@@ -110,7 +110,15 @@ graph TD
   </div>
 
   <script>
-    mermaid.initialize({ startOnLoad: true, theme: "dark" });
+    // mermaid 초기화 (CDN 실패 시에도 아래 버튼 바인딩에 영향 없음)
+    (function initMermaid(){
+      if (!window.mermaid || window.__mermaidFailed) {
+        var m = document.querySelector('.mermaid');
+        if (m) { m.style.whiteSpace='pre-wrap'; m.textContent='[아키텍처 다이어그램: CDN 차단으로 표시 불가 — 오프라인/방화벽 환경]'; }
+        return;
+      }
+      try { mermaid.initialize({ startOnLoad: true, theme: "dark" }); } catch(e) {}
+    })();
 
     function show(id, obj){ const el=document.getElementById(id); el.classList.add('show');
       el.innerHTML = '<pre>'+ (typeof obj==='string'?obj:JSON.stringify(obj, null, 2)) +'</pre>'; }
