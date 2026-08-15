@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>시계열 성적·행동 예측 · doke-V</title>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" onerror="window.__mermaidFailed=true"></script>
   <style>
     :root { --paper:#0d1117; --surface:#161b22; --surface-sunken:#11161d; --line:#2a313c;
       --ink:#e8edf4; --ink-muted:#9aa6b2; --ink-faint:#6b7682; --accent:#4f7cff; --accent-2:#7b5cff;
@@ -32,7 +31,6 @@
     .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; margin-left:8px; }
     .ref { font-size:12px; color:var(--ink-faint); margin-top:24px; border-left:3px solid var(--line); padding-left:12px; line-height:1.6; }
     .back { display:inline-block; margin-bottom:24px; color:var(--accent); text-decoration:none; font-size:13px; }
-    .mermaid { background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); padding:16px; margin-top:12px; white-space:pre-wrap; }
     .backend { font-size:12px; color:var(--warn); margin-top:8px; }
     /* 결과 렌더링 */
     .chart { width:100%; height:130px; display:block; }
@@ -60,23 +58,7 @@
       TimesFM 계열 시계열 기초모델 아키텍처(데이터 수집 → 전처리 → 특성 → 예측 → 분석/시각화)를 백엔드에 실제로 구현했습니다.
       환경에 FM이 없으면 통계적 시계열 모델로 자동 폴백합니다(외부 다운로드 0).</p>
 
-    <div class="card">
-      <h2 style="margin-top:0">시스템 아키텍처 개요</h2>
-      <div class="mermaid">
-graph TD
-  A[데이터 수집 계층] --> B[데이터 전처리 계층]
-  B --> C[특성 엔지니어링 계층]
-  C --> D[TimesFM 예측 모델]
-  D --> E[결과 분석 및 시각화 계층]
-  A1[학생 성적 데이터] --> A
-  A2[출결/행동 데이터] --> A
-  A3[시험 난이도 데이터] --> A
-  A4[시기별 데이터] --> A
-  E --> F[대시보드/리포트]
-  E --> G[알림/인터벤션]
-      </div>
-      <div class="backend" id="backend">백엔드: 로딩 중…</div>
-    </div>
+    <div class="backend" id="backend">백엔드: 로딩 중…</div>
 
     <div class="card">
       <h2 style="margin-top:0">① 학생 종합 예측 (모든 과목)</h2>
@@ -125,16 +107,6 @@ graph TD
   </div>
 
   <script>
-    // ── mermaid (CDN 실패해도 아래 버튼 바인딩에 영향 없음) ──
-    (function initMermaid(){
-      if (!window.mermaid || window.__mermaidFailed) {
-        var m = document.querySelector('.mermaid');
-        if (m) m.textContent='[아키텍처 다이어그램: CDN 차단으로 표시 불가 — 오프라인/방화벽 환경]';
-        return;
-      }
-      try { mermaid.initialize({ startOnLoad: true, theme: "dark" }); } catch(e) {}
-    })();
-
     function el(id){ return document.getElementById(id); }
     async function postJSON(path, body){
       const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
