@@ -12,8 +12,9 @@ from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -169,6 +170,21 @@ def education_columns():
 def parent_guide():
     # 학부모 가이드 (SEO 콘텐츠용, 광고 없음)
     return FileResponse(STATIC_DIR / "guide.html")
+
+
+@app.get("/timesfm")
+def timesfm_page():
+    return FileResponse(STATIC_DIR / "timesfm.html")
+
+
+@app.get("/understand")
+def understand_page():
+    return FileResponse(STATIC_DIR / "understand.html")
+
+
+@app.get("/rti-pbis")
+def rti_pbis_page():
+    return FileResponse(STATIC_DIR / "rti_pbis.html")
 
 
 @app.get("/health")
@@ -778,3 +794,136 @@ def manual_loop_trigger(db: Session = Depends(get_db)):
         "active_prompt_variant": metric.active_prompt_variant,
         "notes": metric.notes,
     }
+
+
+# ── 컨설팅 방법론 3종 실제 모델 엔드포인트 ───────────────────────────────────────
+
+class TimeseriesRequest(BaseModel):
+    """월별 성적/출결 시계열 (최근 N개, 오름차순). 값은 0~100 정규 점수."""
+    values: list[float]
+    horizon: int = 3
+
+
+class TimeseriesResponse(BaseModel):
+    trend: float
+    forecast: list[float]
+    change_point_idx: int | None
+    note: str
+
+
+@app.post("/timesfm-predict", response_model=TimeseriesResponse)
+def timesfm_predict(req: TimeseriesRequest):
+    """TimesFM 계열 시계열 기초모델 참조 경량 예측 (선형추세+이동평균 잔차보정)."""
+    import statistics
+    vals = [float(v) for v in req.values if v is not None]
+    if len(vals) < 2:
+        raise HTTPException(status_code=400, detail="최소 2개 이상의 시계열 값이 필요합니다.")
+    n = len(vals)
+    xs = list(range(n))
+    mean_x = sum(xs) / n
+    mean_y = sum(vals) / n
+    denom = sum((x - mean_x) ** 2 for x in xs)
+    slope = sum((xs[i] - mean_x) * (vals[i] - mean_y) for i in range(n)) / denom if denom else 0.0
+    ma = []
+    for i in range(n):
+        lo = max(0, i - 2)
+        ma.append(statistics.mean(vals[lo:i + 1]))
+    resid = vals[-1] - ma[-1]
+    forecast = []
+    for h in range(1, req.horizon + 1):
+        nxt = vals[-1] + slope * h + resid * (0.6 ** h)
+        forecast.append(round(max(0.0, min(100.0, nxt)), 1))
+    change_point = None
+    for i in range(1, n):
+        if (vals[i] - vals[i - 1]) * (vals[i - 1] - (vals[i - 2] if i >= 2 else vals[0])) < 0:
+            change_point = n - i
+    note = "상승 추세" if slope > 0.5 else "하락 추세" if slope < -0.5 else "정체"
+    return TimeseriesResponse(trend=round(slope, 2), forecast=forecast,
+                              change_point_idx=change_point,
+                              note=f"월평균 {note} (기울기 {round(slope, 2)}) — 향후 {req.horizon}개월 예측")
+
+
+class UnderstandRequest(BaseModel):
+    student: str = ""
+    parent: str = ""
+    teacher: str = ""
+
+
+class UnderstandResponse(BaseModel):
+    summary: str
+    conflicts: list[str]
+    actions: list[str]
+
+
+@app.post("/understand-analyze", response_model=UnderstandResponse)
+def understand_analyze(req: UnderstandRequest):
+    """다자 간 맥락 이해 모델 (Egonex-AI/Understand-Anything 참조)."""
+    s, p, t = req.student.strip(), req.parent.strip(), req.teacher.strip()
+    parts = [x for x in [s, p, t] if x]
+    if len(parts) < 2:
+        raise HTTPException(status_code=400, detail="최소 2명 이상의 입력이 필요합니다.")
+    conflict_kw = {
+        "성적": "성적에 대한 기대 차이가 있을 수 있습니다.",
+        "스트레스": "학생의 스트레스 신호가 감지됩니다.",
+        "모르겠": "의도/상황 파악이 불명확합니다.",
+        "바빠": "학부모의 시간 부족으로 소통이 끊길 수 있습니다.",
+        "요구": "요구사항 충돌 가능성이 있습니다.",
+        "비싸": "비용 부담 이슈가 있습니다.",
+        "못 따라": "학습 진도 격차 우려가 있습니다.",
+    }
+    conflicts = [msg for kw, msg in conflict_kw.items() if kw in f"{s} {p} {t}"]
+    if not conflicts:
+        conflicts.append("특별한 갈등 신호는 감지되지 않았습니다.")
+    summary = (f"학생은 '{s[:30] or '미입력'}'를, 학부모는 '{p[:30] or '미입력'}'를, "
+               f"교사는 '{t[:30] or '미입력'}'를 전달했습니다. 세 주체의 의도와 상황을 정리했습니다.")
+    actions = [
+        "학생에게는 현재 상태를 비언어적으로 확인하는 1:1 체크인을 권장합니다.",
+        "학부모에게는 기대치를 구체적 목표로 환산해 공유합니다.",
+        "교사에게는 학생의 행동 신호를 주간 리포트로 전달할 것을 제안합니다.",
+    ]
+    return UnderstandResponse(summary=summary, conflicts=conflicts, actions=actions)
+
+
+class RtiPbisRequest(BaseModel):
+    score_gap: float
+    behavior_incidents: int
+    attendance_rate: float
+
+
+class RtiPbisResponse(BaseModel):
+    rti_tier: int
+    pbis_level: str
+    plan: list[str]
+
+
+@app.post("/rti-pbis-assess", response_model=RtiPbisResponse)
+def rti_pbis_assess(req: RtiPbisRequest):
+    """RTI 3-tier + PBIS 단계 진단."""
+    gap = max(0.0, min(100.0, req.score_gap))
+    inc = max(0, req.behavior_incidents)
+    att = max(0.0, min(100.0, req.attendance_rate))
+    if gap >= 40 or inc >= 3:
+        rti_tier = 3
+    elif gap >= 20 or inc >= 1:
+        rti_tier = 2
+    else:
+        rti_tier = 1
+    if att < 85 or inc >= 3:
+        pbis = "집중 지원 (Tier 3)"
+    elif att < 92 or inc >= 1:
+        pbis = "선택 지원 (Tier 2)"
+    else:
+        pbis = "보편 지원 (Tier 1)"
+    plan = ["Tier 1: 보편적 검증 교수 + 주 단위 모니터링"]
+    if rti_tier >= 2:
+        plan.append("Tier 2: 소집단 보충 지도(8~10명) + 진행도 주단위 평가")
+    if rti_tier >= 3:
+        plan.append("Tier 3: 개별 집중 중재 + 전문가 평가 연계")
+    if "Tier 3" in pbis:
+        plan.append("PBIS: 기능평가(FBA) 기반 행동지원계획(BIP) 수립")
+    elif "Tier 2" in pbis:
+        plan.append("PBIS: 체크인/체크아웃(CICO) 정기 멘토링")
+    else:
+        plan.append("PBIS: 명시적 기대 교습 + 긍정적 피드백 정례화")
+    return RtiPbisResponse(rti_tier=rti_tier, pbis_level=pbis, plan=plan)
+

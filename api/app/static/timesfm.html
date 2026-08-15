@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>시계열 성적·행동 예측 · doke-V</title>
+  <style>
+    :root { --paper:#0d1117; --surface:#161b22; --surface-sunken:#11161d; --line:#2a313c;
+      --ink:#e8edf4; --ink-muted:#9aa6b2; --ink-faint:#6b7682; --accent:#4f7cff; --accent-2:#7b5cff;
+      --good:#3fb950; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+      font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
+      -webkit-font-smoothing:antialiased; }
+    .wrap { max-width:760px; margin:0 auto; padding:48px 28px 80px; }
+    .eyebrow { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.04em; margin-bottom:8px; }
+    h1 { font-size:26px; margin:0 0 12px; font-weight:600; }
+    h2 { font-size:16px; color:var(--ink-muted); margin:32px 0 12px; }
+    p.lead { color:var(--ink-muted); line-height:1.6; font-size:14px; }
+    .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:22px; box-shadow:var(--shadow-card); margin:16px 0; }
+    label { display:block; font-size:13px; color:var(--ink-muted); margin:12px 0 6px; }
+    input, textarea { width:100%; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm);
+      color:var(--ink); padding:10px 12px; font-size:14px; font-family:inherit; }
+    textarea { resize:vertical; min-height:64px; }
+    .btn { display:inline-block; margin-top:16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm);
+      padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+    .btn:hover { filter:brightness(1.1); }
+    .result { margin-top:18px; padding:16px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; }
+    .result.show { display:block; }
+    .result .big { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:22px; font-weight:700; color:var(--accent); }
+    .result .row { font-size:13px; color:var(--ink-muted); margin-top:6px; }
+    .ref { font-size:12px; color:var(--ink-faint); margin-top:24px; border-left:3px solid var(--line); padding-left:12px; line-height:1.6; }
+    .back { display:inline-block; margin-bottom:24px; color:var(--accent); text-decoration:none; font-size:13px; }
+    .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; margin-left:8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">← 메인으로</a>
+    <div class="eyebrow">방법 01 · TimesFM 참조</div>
+    <h1>시계열 성적·행동 예측 <span class="pill">실제 모델 연동</span></h1>
+    <p class="lead">학생의 월별 성적(또는 출결·학습행동 정규점수 0~100)을 입력하면, 시계열 추세를 분석해 향후 추이를 예측합니다.
+    TimesFM 계열 시계열 기초모델을 참조한 경량 예측(선형추세 + 이동평균 잔차보정)이 백엔드에서 실제로 계산됩니다.</p>
+
+    <div class="card">
+      <label>월별 점수 (쉼표 또는 줄바꿈 구분, 최근→과거 또는 과거→최근 순. 예: 62, 65, 68, 71, 70)</label>
+      <textarea id="vals" placeholder="62, 65, 68, 71, 70, 73">62, 65, 68, 71, 70, 73</textarea>
+      <label>예측할 향후 개월 수</label>
+      <input id="horizon" type="number" value="3" min="1" max="12" />
+      <button class="btn" onclick="predict()">예측 실행</button>
+
+      <div class="result" id="result">
+        <div class="big" id="r-forecast">—</div>
+        <div class="row" id="r-trend"></div>
+        <div class="row" id="r-cp"></div>
+        <div class="row" id="r-note"></div>
+      </div>
+    </div>
+
+    <div class="ref">
+      참조: google-research/timesfm (Foundation Model for Time Series). 본 데모는 거대 FM 대신 경량 시계열 회귀로 구현했으며,
+      실서비스에서는 TimesFM 추론을 백엔드 엔드포인트(<code>/timesfm-predict</code>)에 교체 연결합니다.
+    </div>
+  </div>
+
+  <script>
+    async function predict() {
+      const raw = document.getElementById('vals').value.split(/[\s,]+/).filter(Boolean).map(Number);
+      const vals = raw.filter(v => !isNaN(v));
+      const horizon = parseInt(document.getElementById('horizon').value) || 3;
+      const res = await fetch('/timesfm-predict', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ values: vals, horizon })
+      });
+      const box = document.getElementById('result');
+      if (!res.ok) {
+        const e = await res.json().catch(()=>({}));
+        box.classList.add('show');
+        document.getElementById('r-forecast').textContent = '오류';
+        document.getElementById('r-trend').textContent = e.detail || '입력값을 확인하세요.';
+        return;
+      }
+      const d = await res.json();
+      box.classList.add('show');
+      document.getElementById('r-forecast').textContent = '향후 ' + horizon + '개월: ' + d.forecast.join(' → ');
+      document.getElementById('r-trend').textContent = '월평균 기울기: ' + d.trend;
+      document.getElementById('r-cp').textContent = '변화 시작점(역순): ' + (d.change_point_idx ?? '없음');
+      document.getElementById('r-note').textContent = d.note;
+    }
+  </script>
+</body>
+</html>

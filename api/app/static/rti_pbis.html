@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RTI · PBIS 기반 중재 · doke-V</title>
+  <style>
+    :root { --paper:#0d1117; --surface:#161b22; --surface-sunken:#11161d; --line:#2a313c;
+      --ink:#e8edf4; --ink-muted:#9aa6b2; --ink-faint:#6b7682; --accent:#4f7cff;
+      --good:#3fb950; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+      font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
+      -webkit-font-smoothing:antialiased; }
+    .wrap { max-width:760px; margin:0 auto; padding:48px 28px 80px; }
+    .eyebrow { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.04em; margin-bottom:8px; }
+    h1 { font-size:26px; margin:0 0 12px; font-weight:600; }
+    h2 { font-size:16px; color:var(--ink-muted); margin:28px 0 12px; }
+    p.lead { color:var(--ink-muted); line-height:1.6; font-size:14px; }
+    .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:22px; box-shadow:var(--shadow-card); margin:16px 0; }
+    label { display:block; font-size:13px; color:var(--ink-muted); margin:12px 0 6px; }
+    input { width:100%; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm);
+      color:var(--ink); padding:10px 12px; font-size:14px; font-family:inherit; }
+    .btn { display:inline-block; margin-top:16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm);
+      padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+    .btn:hover { filter:brightness(1.1); }
+    .result { margin-top:18px; padding:16px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; }
+    .result.show { display:block; }
+    .result .big { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:22px; font-weight:700; color:var(--accent); }
+    .result .row { font-size:13px; color:var(--ink-muted); margin-top:6px; }
+    .result ul { margin:8px 0; padding-left:20px; }
+    .result li { font-size:13px; color:var(--ink-muted); line-height:1.6; }
+    .back { display:inline-block; margin-bottom:24px; color:var(--accent); text-decoration:none; font-size:13px; }
+    .ref { font-size:12px; color:var(--ink-faint); margin-top:24px; border-left:3px solid var(--line); padding-left:12px; line-height:1.6; }
+    .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; margin-left:8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">← 메인으로</a>
+    <div class="eyebrow">방법 03 · RTI / PBIS</div>
+    <h1>RTI · PBIS 기반 중재 진단 <span class="pill">실제 모델 연동</span></h1>
+    <p class="lead">학업 격차, 행동 문제, 출석률을 입력하면 RTI 3-tier와 PBIS 단계를 진단하고 맞춤 중재 계획을 제안합니다.
+    백엔드 <code>/rti-pbis-assess</code>에서 실제로 분류됩니다.</p>
+
+    <div class="card">
+      <label>또래 대비 학업 격차 (0~100, 클수록 심각)</label>
+      <input id="gap" type="number" value="35" min="0" max="100" />
+      <label>최근 행동 문제 횟수 (주 단위)</label>
+      <input id="inc" type="number" value="2" min="0" max="20" />
+      <label>출석률 (0~100)</label>
+      <input id="att" type="number" value="88" min="0" max="100" />
+      <button class="btn" onclick="assess()">진단 실행</button>
+
+      <div class="result" id="result">
+        <div class="big" id="r-tier"></div>
+        <div class="row" id="r-pbis"></div>
+        <h2 style="margin:16px 0 8px;">맞춤 중재 계획</h2>
+        <ul id="r-plan"></ul>
+      </div>
+    </div>
+
+    <div class="ref">
+      모델: RTI(Response to Intervention) · PBIS(Positive Behavioral Interventions and Supports).
+      본 데모는 격차/행동/출석 규칙 기반 티어 분류로 구현했으며, 실서비스에서는 학생별 진행도 데이터와 연동해 동적 조정합니다.
+    </div>
+  </div>
+
+  <script>
+    async function assess() {
+      const body = {
+        score_gap: parseFloat(document.getElementById('gap').value) || 0,
+        behavior_incidents: parseInt(document.getElementById('inc').value) || 0,
+        attendance_rate: parseFloat(document.getElementById('att').value) || 0,
+      };
+      const res = await fetch('/rti-pbis-assess', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      const box = document.getElementById('result');
+      if (!res.ok) {
+        const e = await res.json().catch(()=>({}));
+        box.classList.add('show');
+        document.getElementById('r-tier').textContent = '오류';
+        document.getElementById('r-pbis').textContent = e.detail || '입력값을 확인하세요.';
+        return;
+      }
+      const d = await res.json();
+      box.classList.add('show');
+      document.getElementById('r-tier').textContent = 'RTI Tier ' + d.rti_tier;
+      document.getElementById('r-pbis').textContent = 'PBIS: ' + d.pbis_level;
+      const pl = document.getElementById('r-plan'); pl.innerHTML='';
+      d.plan.forEach(p => { const li=document.createElement('li'); li.textContent=p; pl.appendChild(li); });
+    }
+  </script>
+</body>
+</html>
