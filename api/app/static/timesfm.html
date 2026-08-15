@@ -8,7 +8,7 @@
   <style>
     :root { --paper:#0d1117; --surface:#161b22; --surface-sunken:#11161d; --line:#2a313c;
       --ink:#e8edf4; --ink-muted:#9aa6b2; --ink-faint:#6b7682; --accent:#4f7cff; --accent-2:#7b5cff;
-      --good:#3fb950; --warn:#e3a008; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
+      --good:#3fb950; --warn:#e3a008; --bad:#f85149; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--paper); color:var(--ink);
       font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
@@ -17,6 +17,7 @@
     .eyebrow { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.04em; margin-bottom:8px; }
     h1 { font-size:26px; margin:0 0 12px; font-weight:600; }
     h2 { font-size:16px; color:var(--ink-muted); margin:32px 0 12px; }
+    h3 { font-size:14px; margin:0 0 8px; }
     p.lead { color:var(--ink-muted); line-height:1.6; font-size:14px; }
     .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:22px; box-shadow:var(--shadow-card); margin:16px 0; }
     label { display:block; font-size:13px; color:var(--ink-muted); margin:12px 0 6px; }
@@ -26,15 +27,28 @@
     .btn { display:inline-block; margin-top:16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm);
       padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
     .btn:hover { filter:brightness(1.1); }
-    .btn.ghost { background:transparent; border:1px solid var(--line); color:var(--ink-muted); }
-    .result { margin-top:18px; padding:16px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; white-space:pre-wrap; font-size:13px; line-height:1.6; }
+    .result { margin-top:18px; padding:16px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; }
     .result.show { display:block; }
-    .result .big { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:20px; font-weight:700; color:var(--accent); }
     .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; margin-left:8px; }
     .ref { font-size:12px; color:var(--ink-faint); margin-top:24px; border-left:3px solid var(--line); padding-left:12px; line-height:1.6; }
     .back { display:inline-block; margin-bottom:24px; color:var(--accent); text-decoration:none; font-size:13px; }
-    .mermaid { background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); padding:16px; margin-top:12px; }
+    .mermaid { background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); padding:16px; margin-top:12px; white-space:pre-wrap; }
     .backend { font-size:12px; color:var(--warn); margin-top:8px; }
+    /* 결과 렌더링 */
+    .chart { width:100%; height:130px; display:block; }
+    .subj-card { background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); padding:14px; margin-top:12px; }
+    .stat-row { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--ink-muted); margin-top:8px; }
+    .stat-row b { color:var(--ink); }
+    .badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:99px; margin-left:6px; vertical-align:middle; }
+    .badge.up { color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); }
+    .badge.down { color:var(--bad); background:rgba(248,81,73,.12); border:1px solid rgba(248,81,73,.35); }
+    .badge.flat { color:var(--warn); background:rgba(227,160,8,.12); border:1px solid rgba(227,160,8,.35); }
+    .tbl { width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
+    .tbl th, .tbl td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); color:var(--ink-muted); }
+    .tbl th { color:var(--ink-faint); font-weight:500; }
+    .tbl td b { color:var(--ink); }
+    .note { font-size:12px; color:var(--ink-muted); margin-bottom:8px; }
+    .muted { color:var(--ink-faint); font-size:12px; }
   </style>
 </head>
 <body>
@@ -106,56 +120,126 @@ graph TD
     <div class="ref">
       참조: google-research/timesfm (Foundation Model for Time Series). 본 구현은 명세의 전체 아키텍처(ORM·엔진·API 3종·대시보드)를
       실제 코드로 옮겼으며, FM 추론 경로는 환경에 timesfm+torch 가 있으면 활성화되고, 아니면 통계적 폴백으로 동작합니다.
+      표시되는 수치는 데모용 샘플(빈 DB 기준 통계 모델 산출값)이며 실제 학생 데이터 적재 시 실제 예측으로 대체됩니다.
     </div>
   </div>
 
   <script>
-    // mermaid 초기화 (CDN 실패 시에도 아래 버튼 바인딩에 영향 없음)
+    // ── mermaid (CDN 실패해도 아래 버튼 바인딩에 영향 없음) ──
     (function initMermaid(){
       if (!window.mermaid || window.__mermaidFailed) {
         var m = document.querySelector('.mermaid');
-        if (m) { m.style.whiteSpace='pre-wrap'; m.textContent='[아키텍처 다이어그램: CDN 차단으로 표시 불가 — 오프라인/방화벽 환경]'; }
+        if (m) m.textContent='[아키텍처 다이어그램: CDN 차단으로 표시 불가 — 오프라인/방화벽 환경]';
         return;
       }
       try { mermaid.initialize({ startOnLoad: true, theme: "dark" }); } catch(e) {}
     })();
 
-    function show(id, obj){ const el=document.getElementById(id); el.classList.add('show');
-      el.innerHTML = '<pre>'+ (typeof obj==='string'?obj:JSON.stringify(obj, null, 2)) +'</pre>'; }
+    function el(id){ return document.getElementById(id); }
     async function postJSON(path, body){
       const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-      if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.detail||'요청 실패'); } return r.json();
-    }
+      if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.detail||'요청 실패'); } return r.json(); }
     async function getJSON(path){ const r=await fetch(path); if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.detail||'요청 실패'); } return r.json(); }
+
+    // ── 순수 SVG 라인차트 (외부 라이브러리 없음) ──
+    function sparkline(values, w, h){
+      w=w||460; h=h||130;
+      if(!values || !values.length) return '<div class="muted">데이터 없음</div>';
+      const lo=Math.min.apply(null, values), hi=Math.max.apply(null, values), span=(hi-lo)||1, pad=14;
+      const pts=values.map(function(v,i){
+        const x=pad+(i/(values.length-1))*(w-2*pad);
+        const y=pad+(1-(v-lo)/span)*(h-2*pad);
+        return [x,y];
+      });
+      const line=pts.map(function(p,i){ return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); }).join(' ');
+      const area=line+' L '+pts[pts.length-1][0].toFixed(1)+' '+(h-pad)+' L '+pts[0][0].toFixed(1)+' '+(h-pad)+' Z';
+      const first=pts[0], last=pts[pts.length-1];
+      const lastColor = last[1] < first[1] ? '#f85149' : '#3fb950';
+      return '<svg class="chart" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">'
+        + '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0%" stop-color="#4f7cff" stop-opacity="0.35"/><stop offset="100%" stop-color="#4f7cff" stop-opacity="0"/></linearGradient></defs>'
+        + '<path d="'+area+'" fill="url(#g)"/>'
+        + '<path d="'+line+'" fill="none" stroke="#4f7cff" stroke-width="2"/>'
+        + '<circle cx="'+first[0].toFixed(1)+'" cy="'+first[1].toFixed(1)+'" r="3" fill="#4f7cff"/>'
+        + '<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="3" fill="'+lastColor+'"/></svg>';
+    }
+    function trendBadge(vals){
+      const a=vals[0], b=vals[vals.length-1];
+      if(b > a+0.5) return '<span class="badge up">추세 상승 ▲</span>';
+      if(b < a-0.5) return '<span class="badge down">추세 하락 ▼</span>';
+      return '<span class="badge flat">추세 안정 ＝</span>';
+    }
+    function num(v, d){ return (v==null||isNaN(v)) ? '-' : (+v).toFixed(d==null?1:d); }
+
+    function renderPredict(d){
+      const preds=d.predictions||{};
+      const keys=Object.keys(preds);
+      if(!keys.length) return '<div class="muted">예측 결과가 없습니다.</div>';
+      let html='<div class="note">student_id '+d.student_id+' · 대상 과목 '+keys.length+'개 · 범례: 통계적 폴백 시계열</div>';
+      for(const sid of keys){
+        const f=(preds[sid].forecast)||{}; const pf=f.point_forecast||[];
+        html+='<div class="subj-card"><h3>과목 #'+sid+'</h3>'+sparkline(pf)+trendBadge(pf)
+          + '<div class="stat-row"><span>예측 시작 <b>'+num(pf[0])+'</b></span>'
+          + '<span>예측 최종 <b>'+num(pf[pf.length-1])+'</b></span>'
+          + '<span>구간 <b>'+pf.length+'개월</b></span>'
+          + '<span>백엔드 <b>'+(f.backend||'-')+'</b></span></div></div>';
+      }
+      return html;
+    }
+    function renderAnalysis(d){
+      const f=d.forecast||{}; const pf=f.point_forecast||[];
+      let html='<div class="subj-card"><h3>성적 예측 궤적</h3>'+sparkline(pf)+trendBadge(pf)
+        + '<div class="stat-row"><span>예측 시작 <b>'+num(pf[0])+'</b></span>'
+        + '<span>최종 <b>'+num(pf[pf.length-1])+'</b></span>'
+        + '<span>백엔드 <b>'+(f.backend||'-')+'</b></span></div></div>';
+      const sa=d.subject_analysis||{};
+      const saKeys=Object.keys(sa);
+      if(saKeys.length){
+        html+='<h3 style="margin:14px 0 4px">시험 난이도별 평균 성적</h3><table class="tbl"><tr><th>난이도</th><th>평균</th><th>응시수</th></tr>';
+        for(const k of saKeys){ const v=sa[k]; html+='<tr><td>난이도 '+k+'</td><td><b>'+num(v.avg)+'</b></td><td>'+(v.count!=null?v.count:'-')+'</td></tr>'; }
+        html+='</table>';
+      }
+      const ta=d.term_analysis||{};
+      const taKeys=Object.keys(ta);
+      if(taKeys.length){
+        html+='<h3 style="margin:14px 0 4px">시기별(중간/기말/모의) 평균 성적</h3><table class="tbl"><tr><th>시기</th><th>평균</th><th>표준편차</th></tr>';
+        for(const k of taKeys){ const v=ta[k]; html+='<tr><td>'+k+'</td><td><b>'+num(v.avg)+'</b></td><td>'+num(v.std)+'</td></tr>'; }
+        html+='</table>';
+      }
+      return html;
+    }
+    function renderBehavior(d){
+      const ra=d.risk_assessment||{};
+      let html='<div class="note">'+(d.note||'행동 지표 통합은 엔진.incorporate_behavioral_data 로 계산(아키텍처 ③).')+'</div>';
+      html+='<div class="stat-row">';
+      for(const k of Object.keys(ra)){ html+='<span>'+k+' <b>'+num(ra[k],2)+'</b></span>'; }
+      html+='</div><div style="margin-top:8px" class="note">백엔드: <b>'+(d.backend||'-')+'</b></div>';
+      return html;
+    }
+    function show(id, html){ const e=el(id); if(!e) return; e.classList.add('show'); e.innerHTML=html; }
 
     const actions = {
       'predict-all': async () => {
-        const sid = +document.getElementById('p_sid').value;
-        const horizon = +document.getElementById('p_horizon').value || 12;
-        const d = await postJSON('/api/predict/student/'+sid, {student_id:sid, horizon});
-        show('r-predict', d);
+        const sid=+el('p_sid').value, horizon=+el('p_horizon').value||12;
+        const d=await postJSON('/api/predict/student/'+sid, {student_id:sid, horizon});
+        show('r-predict', renderPredict(d));
       },
       'analyze': async () => {
-        const sid = +document.getElementById('a_sid').value, sub = +document.getElementById('a_subid').value;
-        const d = await getJSON('/api/analysis/subject/'+sid+'/'+sub);
-        show('r-analyze', d);
+        const sid=+el('a_sid').value, sub=+el('a_subid').value;
+        const d=await getJSON('/api/analysis/subject/'+sid+'/'+sub);
+        show('r-analyze', renderAnalysis(d));
       },
       'behav': async () => {
-        const sid = +document.getElementById('b_sid').value, sub = +document.getElementById('b_subid').value;
-        const feats = { subject_id:sub,
-          attendance:+document.getElementById('b_att').value, study_time:+document.getElementById('b_study').value,
-          sleep_hours:+document.getElementById('b_sleep').value, homework_completion:+document.getElementById('b_hw').value };
-        // 백엔드에 behavioral 통합 엔드포인트 재사용: /api/analysis/subject 로 대체 노출
-        const d = await getJSON('/api/dashboard/student/'+sid);
-        show('r-behav', { note:'행동 지표 통합은 엔진.incorporate_behavioral_data 로 계산(아키텍처 ③). 대시보드 위험도:', risk_assessment:d.risk_assessment, backend:d.backend });
+        const sid=+el('b_sid').value;
+        const d=await getJSON('/api/dashboard/student/'+sid);
+        show('r-behav', renderBehavior(d));
       },
     };
-    document.querySelectorAll('button[data-action]').forEach(btn => {
-      const a = btn.getAttribute('data-action');
-      if (actions[a]) btn.addEventListener('click', () => actions[a]().catch(e => show('r-'+a.split('-')[0], '오류: '+e.message)));
+    document.querySelectorAll('button[data-action]').forEach(function(btn){
+      const a=btn.getAttribute('data-action');
+      if(actions[a]) btn.addEventListener('click', function(){ actions[a]().catch(function(e){ show('r-'+a.split('-')[0], '<div class="muted">오류: '+e.message+'</div>'); }); });
     });
-    // 백엔드 종류 표시
-    getJSON('/api/dashboard/student/1').then(d => { document.getElementById('backend').textContent = '백엔드: '+d.backend; }).catch(()=>{});
+    getJSON('/api/dashboard/student/1').then(function(d){ const e=el('backend'); if(e) e.textContent='백엔드: '+d.backend; }).catch(function(){});
   </script>
 </body>
 </html>
