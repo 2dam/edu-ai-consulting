@@ -7,7 +7,7 @@
   <style>
     :root { --paper:#0d1117; --surface:#161b22; --surface-sunken:#11161d; --line:#2a313c;
       --ink:#e8edf4; --ink-muted:#9aa6b2; --ink-faint:#6b7682; --accent:#4f7cff;
-      --good:#3fb950; --warn:#e3b341; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
+      --good:#3fb950; --warn:#e3b341; --bad:#f85149; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--paper); color:var(--ink);
       font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
@@ -23,22 +23,36 @@
     label { display:block; font-size:12px; color:var(--ink-muted); margin:10px 0 5px; }
     input, textarea { width:100%; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm);
       color:var(--ink); padding:9px 11px; font-size:13px; font-family:inherit; }
-    textarea { resize:vertical; min-height:54px; }
+    textarea { resize:vertical; min-height:90px; }
     .btn { display:inline-block; margin-top:14px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm);
       padding:10px 18px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; }
     .btn:hover { filter:brightness(1.1); }
     .btn.ghost { background:transparent; border:1px solid var(--line); color:var(--ink-muted); }
     .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; }
-    .result { margin-top:14px; padding:14px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; white-space:pre-wrap; font-family:'SFMono-Regular',ui-monospace,monospace; font-size:12px; line-height:1.6; color:var(--ink-muted); max-height:380px; overflow:auto; }
-    .result.show { display:block; }
     .back { display:inline-block; margin-bottom:24px; color:var(--accent); text-decoration:none; font-size:13px; }
     .tag { font-size:11px; padding:2px 7px; border-radius:6px; margin-right:6px; }
     .tag.t1 { background:rgba(79,124,255,.15); color:var(--accent); }
     .tag.t2 { background:rgba(227,179,65,.15); color:var(--warn); }
-    .tag.t3 { background:rgba(248,81,73,.15); color:#f85149; }
+    .tag.t3 { background:rgba(248,81,73,.15); color:var(--bad); }
     .ref { font-size:12px; color:var(--ink-faint); margin-top:24px; border-left:3px solid var(--line); padding-left:12px; line-height:1.7; }
     .arch { font-size:12px; color:var(--ink-faint); line-height:1.7; }
     .arch code { background:var(--surface-sunken); padding:1px 5px; border-radius:4px; color:var(--ink-muted); }
+    /* 결과 영역 (섹션마다 배치) */
+    .result { margin-top:14px; padding:14px 16px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; font-size:13px; line-height:1.6; }
+    .result.show { display:block; }
+    .result .ok { color:var(--good); font-weight:600; }
+    .result .err { color:var(--bad); font-weight:600; }
+    .result .card-mini { margin-top:8px; }
+    .result .rflags { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+    .result .flag { font-size:12px; color:var(--warn); background:rgba(227,179,65,.12); border:1px solid rgba(227,179,65,.35); padding:2px 8px; border-radius:6px; }
+    .result .tier { font-size:13px; margin:6px 0; }
+    .result .tier b { color:var(--accent); }
+    .result .sum { color:var(--ink-muted); font-size:12px; }
+    .result table.rt { width:100%; border-collapse:collapse; margin-top:8px; }
+    .result table.rt td { padding:5px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+    .result table.rt td:first-child { color:var(--ink-faint); width:42%; font-size:12px; }
+    .result table.rt td:last-child { color:var(--ink); }
+    .result table.rt td pre { margin:0; white-space:pre-wrap; color:var(--ink-muted); font-size:12px; }
   </style>
 </head>
 <body>
@@ -58,6 +72,7 @@
       </div>
       <label>demographics</label><input id="s_demo" value="여, 13세">
       <button class="btn" data-action="student">학생 등록</button>
+      <div class="result" id="r-student"></div>
     </div>
 
     <h2>② 보편적 스크리닝 + 위험도 식별</h2>
@@ -70,6 +85,7 @@
         <div><label>behavioral_risk_index (&gt;70 위험)</label><input id="sc_risk" type="number" value="74"></div>
       </div>
       <button class="btn" data-action="screening">스크리닝 등록</button>
+      <div class="result" id="r-screening"></div>
     </div>
 
     <h2>③ 중재 배정 (Intervention)</h2>
@@ -82,6 +98,7 @@
       </div>
       <label>delivery_details</label><input id="iv_del" value="주 5회, 30분, 소집단(8명)">
       <button class="btn" data-action="intervention">중재 배정</button>
+      <div class="result" id="r-intervention"></div>
     </div>
 
     <h2>④ 진도 모니터링 (Progress Monitoring)</h2>
@@ -94,6 +111,8 @@
       </div>
       <button class="btn" data-action="pm-academic">학업 진도 기록</button>
       <button class="btn ghost" data-action="pm-behavior">행동 진도 기록</button>
+      <div class="result" id="r-pm-academic"></div>
+      <div class="result" id="r-pm-behavior"></div>
     </div>
 
     <h2>⑤ FBA 지원 (A-B-C → 가설)</h2>
@@ -105,6 +124,7 @@
   {"antecedent":"혼자 시험","behavior":"고개 숙임","consequence":"쉬운 문제로 교체→회피"}
 ]</textarea>
       <button class="btn" data-action="fba">FBA 분석</button>
+      <div class="result" id="r-fba"></div>
     </div>
 
     <h2>⑥ 통합 학생 프로필</h2>
@@ -113,6 +133,7 @@
         <div><label>student_id</label><input id="p_id" value="STU-001"></div>
         <div style="display:flex;align-items:flex-end;"><button class="btn" data-action="profile">프로필 조회</button></div>
       </div>
+      <div class="result" id="r-profile"></div>
     </div>
 
     <div class="arch" style="margin-top:24px;">
@@ -127,47 +148,75 @@
       모델: RTI(Response to Intervention) · PBIS(Positive Behavioral Interventions and Supports).
       본 시스템은 MTSS 관점에서 학업·행동 데이터를 통합해 증거기반 의사결정을 지원합니다.
     </div>
-
-    <div class="result" id="result"></div>
   </div>
 
   <script>
-    const R = () => document.getElementById('result');
-    function show(j){ const r=R(); r.classList.add('show'); r.textContent = typeof j==='string'?j:JSON.stringify(j, null, 2); }
-    async function call(path, body){
-      const res = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)});
-      const d = await res.json().catch(()=>({error:'응답 파싱 실패'}));
-      show(res.ok? d : {error:d.detail||'요청 실패', status:res.status});
+    function esc(s){ return String(s==null?'':s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+    function show(id, html){ const e=document.getElementById(id); if(!e) return; e.classList.add('show'); e.innerHTML=html; }
+    function kvTable(j, skip){
+      let h='<table class="rt">';
+      for(const k of Object.keys(j)){
+        if(skip.indexOf(k)>=0) continue;
+        const v=j[k];
+        if(v && typeof v==='object') h+='<tr><td>'+esc(k)+'</td><td><pre>'+esc(JSON.stringify(v,null,1))+'</pre></td></tr>';
+        else h+='<tr><td>'+esc(k)+'</td><td><b>'+esc(v)+'</b></td></tr>';
+      }
+      return h+'</table>';
     }
-    async function callJson(path, raw){
-      let body; try { body = JSON.parse(raw); } catch(e){ show({error:'JSON 파싱 오류: '+e.message}); return; }
-      const res = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
-      const d = await res.json().catch(()=>({})); show(d);
+    function fmt(j){
+      if(!j) return '<div class="muted">응답 없음</div>';
+      if(j.error) return '<div class="err">⚠ '+esc(j.error)+(j.status?(' ('+esc(j.status)+')'):'')+'</div>';
+      if(j.risk && j.risk.risk_flags){
+        const r=j.risk; let h='<div class="card-mini"><div class="rflags">';
+        (r.risk_flags||[]).forEach(function(f){ h+='<span class="flag">'+esc(f)+'</span>'; });
+        h+='</div>';
+        if(r.recommended_tier) h+='<div class="tier">권장 Tier <b>'+esc(r.recommended_tier)+'</b></div>';
+        if(r.summary) h+='<div class="sum">'+esc(r.summary)+'</div>';
+        h+='</div>'+kvTable(j,['risk']); return h;
+      }
+      if(j.hypothesis || j.functions){
+        let h='<div class="card-mini">';
+        if(j.hypothesis) h+='<div class="sum"><b>가설:</b> '+esc(j.hypothesis)+'</div>';
+        if(Array.isArray(j.functions)){ h+='<div class="rflags">'; j.functions.forEach(function(f){ h+='<span class="flag">'+esc(f)+'</span>'; }); h+='</div>'; }
+        h+=kvTable(j,['hypothesis','functions']); return h+'</div>';
+      }
+      if(j.status){ let h='<div class="ok">✓ '+esc(j.status)+'</div>'; h+=kvTable(j,['status']); return h; }
+      return kvTable(j,[]);
     }
-    async function profile(){
-      const id = document.getElementById('p_id').value;
-      const res = await fetch('/rti/profile/'+encodeURIComponent(id));
-      const d = await res.json().catch(()=>({})); show(d);
+    async function call(target, path, body){
+      try {
+        const res = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+        const d = await res.json().catch(function(){ return {error:'응답 파싱 실패'}; });
+        show(target, fmt(res.ok ? d : Object.assign({error: d.detail||'요청 실패', status: res.status}, d)));
+      } catch(e){ show(target, '<div class="err">⚠ 네트워크 오류: '+esc(e.message)+'</div>'); }
     }
-    const v = id => document.getElementById(id).value;
-    const studentBody = () => ({student_id:v('s_id'), school_id:v('s_school'), grade_level:+v('s_grade'), classroom:v('s_class'), demographics:v('s_demo')});
-    const screeningBody = () => ({student_id:v('sc_id'), math_percentile_rank:+v('sc_math'), reading_benchmark_score:+v('sc_read'), social_skills_rating:+v('sc_social'), behavioral_risk_index:+v('sc_risk')});
-    const interventionBody = () => ({student_id:v('iv_sid'), intervention_id:v('iv_type'), tier:+v('iv_tier'), status:v('iv_status'), delivery_details:v('iv_del')});
-    const academicBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), curriculum_based_measurement_score:+v('pm_cbm')});
-    const behaviorBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), daily_behavior_rating:+v('pm_beh')});
+    async function callGet(target, path){
+      try {
+        const res = await fetch(path, {method:'GET'});
+        const d = await res.json().catch(function(){ return {error:'응답 파싱 실패'}; });
+        show(target, fmt(res.ok ? d : Object.assign({error: d.detail||'요청 실패', status: res.status}, d)));
+      } catch(e){ show(target, '<div class="err">⚠ 네트워크 오류: '+esc(e.message)+'</div>'); }
+    }
+    const v = function(id){ return document.getElementById(id).value; };
+    const studentBody = function(){ return {student_id:v('s_id'), school_id:v('s_school'), grade_level:+v('s_grade'), classroom:v('s_class'), demographics:v('s_demo')}; };
+    const screeningBody = function(){ return {student_id:v('sc_id'), math_percentile_rank:+v('sc_math'), reading_benchmark_score:+v('sc_read'), social_skills_rating:+v('sc_social'), behavioral_risk_index:+v('sc_risk')}; };
+    const interventionBody = function(){ return {student_id:v('iv_sid'), intervention_id:v('iv_type'), tier:+v('iv_tier'), status:v('iv_status'), delivery_details:v('iv_del')}; };
+    const academicBody = function(){ return {student_id:v('pm_sid'), intervention_id:+v('pm_iv'), curriculum_based_measurement_score:+v('pm_cbm')}; };
+    const behaviorBody = function(){ return {student_id:v('pm_sid'), intervention_id:+v('pm_iv'), daily_behavior_rating:+v('pm_beh')}; };
 
-    // 버튼 바인딩: 인라인 onclick 대신 addEventListener — 캐시/스코프/CSP 무관하게 동작
     const actions = {
-      student: () => call('/rti/student', studentBody()),
-      screening: () => call('/rti/screening', screeningBody()),
-      intervention: () => call('/rti/intervention', interventionBody()),
-      'pm-academic': () => call('/rti/pm-academic', academicBody()),
-      'pm-behavior': () => call('/rti/pm-behavior', behaviorBody()),
-      fba: () => callJson('/rti/fba', document.getElementById('fba').value),
-      profile: () => profile(),
+      student: function(){ call('r-student', '/rti/student', studentBody()); },
+      screening: function(){ call('r-screening', '/rti/screening', screeningBody()); },
+      intervention: function(){ call('r-intervention', '/rti/intervention', interventionBody()); },
+      'pm-academic': function(){ call('r-pm-academic', '/rti/pm-academic', academicBody()); },
+      'pm-behavior': function(){ call('r-pm-behavior', '/rti/pm-behavior', behaviorBody()); },
+      fba: function(){
+        let body; try { body = JSON.parse(document.getElementById('fba').value); } catch(e){ show('r-fba','<div class="err">⚠ JSON 파싱 오류: '+esc(e.message)+'</div>'); return; }
+        call('r-fba', '/rti/fba', body);
+      },
+      profile: function(){ callGet('r-profile', '/rti/profile/'+encodeURIComponent(v('p_id'))); },
     };
-    document.querySelectorAll('button[data-action]').forEach(btn => {
+    document.querySelectorAll('button[data-action]').forEach(function(btn){
       const a = btn.getAttribute('data-action');
       if (actions[a]) btn.addEventListener('click', actions[a]);
     });
