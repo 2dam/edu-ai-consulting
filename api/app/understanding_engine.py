@@ -124,7 +124,7 @@ class EducationConsultingPipeline:
         gaps = self._identify_gaps(profiles)
         for g in gaps:
             ga = GapAnalysis(
-                id=f"gap-{uuid.uuid4().hex[:8]}", type=g["type"],
+                id=f"gap-{uuid.uuid4().hex[:8]}", session_id=session_id, type=g["type"],
                 description=g["description"], severity=g["severity"],
                 related_actors=g["actors"], related_concepts=g.get("concepts", []),
                 root_causes=g["root"], recommended_actions=g["actions"],
@@ -147,9 +147,7 @@ class EducationConsultingPipeline:
     def report_generator(self, session_id, profiles):
         # 세션 주체들의 감정/갭 요약 → 페르소나별 버전
         emos = self._aggregate_emotion(profiles)
-        gaps = self.db.query(GapAnalysis).filter(
-            GapAnalysis.related_actors.contains(profiles[0].split("-")[0]) if profiles else True
-        ).all()
+        gaps = self.db.query(GapAnalysis).filter(GapAnalysis.session_id == session_id).all()
         summary = "세 주체 간 상호이해 점수와 갭을 정리한 컨설팅 결과입니다."
         versions = {
             "forStudent": "## 너를 위한 요약\n- 네 고민이 어른들에게 전달되었어. 함께 해결해보자.",
@@ -298,7 +296,7 @@ def run_full_analysis(db, raw_inputs: dict):
     pipe.knowledge_graph_builder(prof_ids)
     mus_id = pipe.mutual_understanding_analyzer(prof_ids, sid)
     rep_id = pipe.report_generator(sid, prof_ids)
-    gaps = db.query(GapAnalysis).all()
+    gaps = db.query(GapAnalysis).filter(GapAnalysis.session_id == sid).all()
     gap_dicts = [{
         "type": g.type, "description": g.description, "severity": g.severity,
         "actors": g.related_actors, "actions": g.recommended_actions,

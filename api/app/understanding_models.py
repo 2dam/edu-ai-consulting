@@ -156,6 +156,7 @@ class MutualUnderstandingScores(Base):
 class GapAnalysis(Base):
     __tablename__ = "gap_analysis"
     id = Column(String, primary_key=True)
+    session_id = Column(String, nullable=True)
     type = Column(String, default="knowledge_gap")  # knowledge_gap|expectation_gap|communication_gap|emotional_gap
     description = Column(Text, default="")
     severity = Column(Integer, default=1)  # 1-3
