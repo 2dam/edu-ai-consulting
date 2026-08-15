@@ -25,6 +25,8 @@ from app.models_community import Comment, CommunityPost, User
 from app import models_reputation  # noqa: F401 - Base.metadata에 학원 평판 테이블을 등록시키기 위한 import
 from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
+from app import understanding_models  # noqa: F401 - 상호이해 모델 등록
+from app import understanding_engine
 from app.routers import admin, authentication, committee, community, mom_cafe, news, reputation, videos
 from app.schemas import (
     CctvInfo,
@@ -1175,5 +1177,86 @@ def get_student_dashboard(student_id: int, db: Session = Depends(get_db)):
         "interventions": report["intervention_recommendations"],
         "trends": report["performance_trends"],
         "backend": report["backend"],
+    }
+
+
+# ─────────────────────────────────────────────────────────────
+# 방법 02 · 교육 컨설팅 상호이해 모델 (Understand-Anything 아키텍처 변환)
+# ─────────────────────────────────────────────────────────────
+class UnderstandAnalyzeRequest(BaseModel):
+    student: str = ""
+    parent: str = ""
+    teacher: str = ""
+
+
+class UnderstandSessionRequest(BaseModel):
+    student: str = ""
+    parent: str = ""
+    teacher: str = ""
+
+
+@app.post("/api/understand/analyze")
+def understand_analyze(req: UnderstandAnalyzeRequest, db: Session = Depends(get_db)):
+    """다중 에이전트 파이프라인 전체 실행 (프로필→지식그래프→분석→리포트→실행계획)."""
+    raw = {"student": req.student, "parent": req.parent, "teacher": req.teacher}
+    try:
+        result = understanding_engine.run_full_analysis(db, raw)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/understand/session/{session_id}")
+def understand_session(session_id: str, db: Session = Depends(get_db)):
+    """세션의 상호이해 점수·갭·강점·리포트 조회."""
+    sess = db.query(understanding_models.UnderstandingSession).filter(
+        understanding_models.UnderstandingSession.id == session_id).first()
+    if not sess:
+        raise HTTPException(status_code=404, detail="세션 없음")
+    mus = db.query(understanding_models.MutualUnderstandingScores).filter(
+        understanding_models.MutualUnderstandingScores.session_id == session_id).first()
+    gaps = db.query(understanding_models.GapAnalysis).all()
+    strengths = db.query(understanding_models.StrengthAnalysis).all()
+    rep = db.query(understanding_models.ConsultingReport).filter(
+        understanding_models.ConsultingReport.session_id == session_id).first()
+    return {
+        "session_id": session_id,
+        "type": sess.type,
+        "participants": sess.participants,
+        "mutual_scores": {
+            "understanding": mus.understanding if mus else {},
+            "empathy": mus.empathy if mus else {},
+            "communication": mus.communication if mus else {},
+            "overall": mus.overall if mus else None,
+        },
+        "gaps": [{"type": g.type, "description": g.description, "severity": g.severity,
+                  "actors": g.related_actors, "actions": g.recommended_actions} for g in gaps],
+        "strengths": [{"type": s.type, "description": s.description,
+                       "actors": s.related_actors} for s in strengths],
+        "report": {
+            "id": rep.id if rep else None,
+            "title": rep.title if rep else None,
+            "summary": rep.summary if rep else None,
+            "versions": rep.versions if rep else {},
+        } if rep else None,
+        "backend": "statistical-fallback",
+    }
+
+
+@app.get("/api/understand/report/{report_id}")
+def understand_report(report_id: str, db: Session = Depends(get_db)):
+    """페르소나별 컨설팅 리포트 버전 조회."""
+    rep = db.query(understanding_models.ConsultingReport).filter(
+        understanding_models.ConsultingReport.id == report_id).first()
+    if not rep:
+        raise HTTPException(status_code=404, detail="리포트 없음")
+    return {
+        "id": rep.id,
+        "title": rep.title,
+        "summary": rep.summary,
+        "versions": rep.versions,
+        "next_steps": rep.next_steps,
+        "permissions": rep.permissions,
+        "backend": "statistical-fallback",
     }
 

@@ -7,91 +7,167 @@
   <style>
     :root { --paper:#0d1117; --surface:#161b22; --surface-sunken:#11161d; --line:#2a313c;
       --ink:#e8edf4; --ink-muted:#9aa6b2; --ink-faint:#6b7682; --accent:#4f7cff;
-      --good:#3fb950; --warn:#e3b341; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
+      --good:#3fb950; --warn:#e3b341; --bad:#f85149; --radius-md:12px; --radius-sm:8px; --shadow-card:0 1px 2px rgba(0,0,0,.3); }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--paper); color:var(--ink);
       font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;
       -webkit-font-smoothing:antialiased; }
-    .wrap { max-width:760px; margin:0 auto; padding:48px 28px 80px; }
+    .wrap { max-width:860px; margin:0 auto; padding:48px 28px 80px; }
     .eyebrow { font-family:'SFMono-Regular',ui-monospace,monospace; font-size:12px; color:var(--ink-faint); letter-spacing:.04em; margin-bottom:8px; }
-    h1 { font-size:26px; margin:0 0 12px; font-weight:600; }
-    h2 { font-size:16px; color:var(--ink-muted); margin:32px 0 12px; }
+    h1 { font-size:26px; margin:0 0 8px; font-weight:600; }
+    h2 { font-size:16px; color:var(--ink-muted); margin:28px 0 12px; }
     p.lead { color:var(--ink-muted); line-height:1.6; font-size:14px; }
     .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md); padding:22px; box-shadow:var(--shadow-card); margin:16px 0; }
-    label { display:block; font-size:13px; color:var(--ink-muted); margin:12px 0 6px; }
+    .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    @media (max-width:640px){ .grid3 { grid-template-columns:1fr; } }
+    label { display:block; font-size:12px; color:var(--ink-muted); margin:10px 0 5px; }
     textarea { width:100%; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm);
-      color:var(--ink); padding:10px 12px; font-size:14px; font-family:inherit; resize:vertical; min-height:60px; }
-    .btn { display:inline-block; margin-top:16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm);
-      padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; text-decoration:none; }
+      color:var(--ink); padding:9px 11px; font-size:12px; font-family:inherit; resize:vertical; min-height:64px; }
+    .btn { display:inline-block; margin-top:14px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm);
+      padding:10px 18px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; }
     .btn:hover { filter:brightness(1.1); }
-    .result { margin-top:18px; padding:16px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; }
-    .result.show { display:block; }
-    .result p { font-size:14px; line-height:1.6; margin:0 0 12px; }
-    .result ul { margin:8px 0; padding-left:20px; }
-    .result li { font-size:13px; color:var(--ink-muted); line-height:1.6; }
-    .tag-warn { color:var(--warn); }
+    .btn.ghost { background:transparent; border:1px solid var(--line); color:var(--ink-muted); }
+    .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; }
     .back { display:inline-block; margin-bottom:24px; color:var(--accent); text-decoration:none; font-size:13px; }
     .ref { font-size:12px; color:var(--ink-faint); margin-top:24px; border-left:3px solid var(--line); padding-left:12px; line-height:1.6; }
-    .pill { display:inline-block; font-size:11px; color:var(--good); background:rgba(63,185,80,.12); border:1px solid rgba(63,185,80,.35); padding:2px 8px; border-radius:99px; margin-left:8px; }
+    /* 결과 영역 */
+    .result { margin-top:14px; padding:14px 16px; background:var(--surface-sunken); border:1px solid var(--line); border-radius:var(--radius-sm); display:none; font-size:13px; line-height:1.6; }
+    .result.show { display:block; }
+    .result .ok { color:var(--good); font-weight:600; }
+    .result .err { color:var(--bad); font-weight:600; }
+    .result h3 { font-size:13px; color:var(--ink-muted); margin:14px 0 6px; }
+    .score-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; }
+    .score-box { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px; }
+    .score-box .k { font-size:11px; color:var(--ink-faint); }
+    .score-box .v { font-size:20px; font-weight:600; color:var(--accent); }
+    .score-box .v.warn { color:var(--warn); }
+    .score-box .v.bad { color:var(--bad); }
+    .gap { border-left:3px solid var(--warn); padding:8px 12px; margin:8px 0; background:var(--surface); border-radius:0 var(--radius-sm) var(--radius-sm) 0; }
+    .gap .sev { font-size:11px; color:var(--bad); font-weight:600; }
+    .gap ul { margin:6px 0 0; padding-left:18px; }
+    .gap li { font-size:12px; color:var(--ink-muted); }
+    .ver { margin-top:8px; }
+    .ver .t { font-size:12px; color:var(--accent); margin-bottom:2px; }
+    .ver pre { margin:0; white-space:pre-wrap; color:var(--ink-muted); font-size:12px; background:var(--surface); padding:8px 10px; border-radius:var(--radius-sm); border:1px solid var(--line); }
+    .backend { font-size:12px; color:var(--warn); margin-top:8px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <a class="back" href="/">← 메인으로</a>
     <div class="eyebrow">방법 02 · Understand-Anything 참조</div>
-    <h1>학생·학부모·교사 상호이해 모델 <span class="pill">실제 모델 연동</span></h1>
-    <p class="lead">세 주체 각각의 발화(의도·상황)를 입력하면, 맥락 이해 모델이 오해 지점을 정리하고 실질적인 도움 액션을 제안합니다.
-    백엔드 <code>/understand-analyze</code>에서 실제로 분석됩니다.</p>
+    <h1>학생·학부모·교사 상호이해 모델 <span class="pill">실제 백엔드 연동</span></h1>
+    <p class="lead">세 주체 각각의 발화(의도·상황)를 입력하면, 다중 에이전트 파이프라인(프로필 수집 → 지식그래프 구축 → 상호이해 분석 → 리포트 생성 → 실행계획)이 오해 지점을 정리하고 실질적인 도움 액션을 제안합니다. 백엔드 <code>/api/understand/analyze</code>에서 실제로 분석됩니다.</p>
 
     <div class="card">
-      <label>학생의 입력 (상황·고민)</label>
-      <textarea id="student" placeholder="예: 수학을 못 따라가서 스트레스 받아요. 성적 오르는 게 안 보여요.">수학을 못 따라가서 스트레스 받아요. 성적 오르는 게 안 보여요.</textarea>
-      <label>학부모의 입력</label>
-      <textarea id="parent" placeholder="예: 사교육에 많이 쓰는데 성적이 안 오르면 답답해요. 바빠서 자주 못 만나요.">사교육에 많이 쓰는데 성적이 안 오르면 답답해요. 바빠서 자주 못 만나요.</textarea>
-      <label>교사의 입력</label>
-      <textarea id="teacher" placeholder="예: 학생이 수업 중 집중이 떨어지고 출석도 조금 불안정해요.">학생이 수업 중 집중이 떨어지고 출석도 조금 불안정해요.</textarea>
-      <button class="btn" onclick="analyze()">이해 분석 실행</button>
-
-      <div class="result" id="result">
-        <p id="r-summary"></p>
-        <h2 style="margin:16px 0 8px;">탐지된 오해·갈등</h2>
-        <ul id="r-conflicts"></ul>
-        <h2 style="margin:16px 0 8px;">실질 도움 액션</h2>
-        <ul id="r-actions"></ul>
+      <div class="grid3">
+        <div><label>학생의 입력 (상황·고민)</label><textarea id="student">수학을 못 따라가서 스트레스 받아요. 성적 오르는 게 안 보여요.</textarea></div>
+        <div><label>학부모의 입력</label><textarea id="parent">사교육에 많이 쓰는데 성적이 안 오르면 답답해요. 바빠서 자주 못 만나요.</textarea></div>
+        <div><label>교사의 입력</label><textarea id="teacher">학생이 수업 중 집중이 떨어지고 출석도 조금 불안정해요.</textarea></div>
       </div>
+      <button class="btn" data-action="analyze">이해 분석 실행 (다중 에이전트)</button>
+      <div class="result" id="r-analyze"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">② 상호이해 점수 / 갭 / 리포트</h2>
+      <p class="lead">위 ① 분석 실행 후 세션이 생성됩니다. 세션 ID로 점수·갭·페르소나별 리포트를 조회합니다.</p>
+      <label>session_id (① 실행 시 자동 채움)</label><input id="sid" placeholder="analyze 실행 후 자동 입력">
+      <button class="btn ghost" data-action="session">세션 결과 조회</button>
+      <button class="btn" data-action="report">리포트 버전 조회</button>
+      <div class="result" id="r-session"></div>
+      <div class="result" id="r-report"></div>
     </div>
 
     <div class="ref">
-      참조: Egonex-AI/Understand-Anything (다자 간 이해 모델). 본 데모는 키워드 기반 갈등 탐지 + 3주체 입장 정리로 구현했으며,
-      실서비스에서는 Understand-Anything 추론을 백엔드 엔드포인트에 교체 연결합니다.
+      참조: Egonex-AI/Understand-Anything (다자 간 이해 모델). 본 구현은 명세의 지식그래프 + 6개 에이전트 파이프라인을
+      실제 SQLAlchemy 모델·백엔드로 옮겼으며, LLM 미설치 시 통계·휴리스틱 폴백(statistical-fallback)으로 동작합니다.
+      표시 수치는 데모용 샘플(빈 입력 기준 산출값)이며 실제 입력 적재 시 실제 분석으로 대체됩니다.
     </div>
   </div>
 
   <script>
-    async function analyze() {
-      const body = {
-        student: document.getElementById('student').value,
-        parent: document.getElementById('parent').value,
-        teacher: document.getElementById('teacher').value,
-      };
-      const res = await fetch('/understand-analyze', {
-        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    function esc(s){ return String(s==null?'':s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+    function show(id, html){ const e=document.getElementById(id); if(!e) return; e.classList.add('show'); e.innerHTML=html; }
+    const v = function(id){ return document.getElementById(id).value; };
+    function fmtScore(v){ const n=+v; if(isNaN(n)) return esc(v); let cls=''; if(n<40) cls='bad'; else if(n<60) cls='warn'; return '<span class="v '+cls+'">'+n+'</span>'; }
+    function renderAnalyze(d){
+      let h='<div class="ok">✓ 분석 완료 (세션 '+esc(d.session_id)+')</div>';
+      h+='<div class="backend">백엔드: '+esc(d.backend)+'</div>';
+      const ms=d.mutual_scores||{};
+      h+='<h3>상호이해 종합 점수: '+fmtScore(ms.overall)+'</h3>';
+      h+='<div class="score-grid">';
+      const u=ms.understanding||{}, e=ms.empathy||{}, c=ms.communication||{};
+      for(const k of Object.keys(u)) h+='<div class="score-box"><div class="k">'+esc(k)+'</div>'+fmtScore(u[k])+'</div>';
+      for(const k of Object.keys(e)) h+='<div class="score-box"><div class="k">공감 '+esc(k)+'</div>'+fmtScore(e[k])+'</div>';
+      for(const k of Object.keys(c)) h+='<div class="score-box"><div class="k">소통 '+esc(k)+'</div>'+fmtScore(c[k])+'</div>';
+      h+='</div>';
+      const gaps=d.gaps||[];
+      h+='<h3>탐지된 갭 ('+gaps.length+')</h3>';
+      gaps.forEach(function(g){
+        h+='<div class="gap"><span class="sev">심각도 '+esc(g.severity)+' · '+esc(g.type)+'</span><div>'+esc(g.description)+'</div>';
+        if(g.actions&&g.actions.length){ h+='<ul>'; g.actions.forEach(function(a){ h+='<li>'+esc(a)+'</li>'; }); h+='</ul>'; }
+        h+='</div>';
       });
-      const box = document.getElementById('result');
-      if (!res.ok) {
-        const e = await res.json().catch(()=>({}));
-        box.classList.add('show');
-        document.getElementById('r-summary').textContent = '오류: ' + (e.detail || '최소 2명 입력 필요');
-        return;
-      }
-      const d = await res.json();
-      box.classList.add('show');
-      document.getElementById('r-summary').textContent = d.summary;
-      const cf = document.getElementById('r-conflicts'); cf.innerHTML='';
-      d.conflicts.forEach(c => { const li=document.createElement('li'); li.className='tag-warn'; li.textContent=c; cf.appendChild(li); });
-      const ac = document.getElementById('r-actions'); ac.innerHTML='';
-      d.actions.forEach(a => { const li=document.createElement('li'); li.textContent=a; ac.appendChild(li); });
+      h+='<div class="backend">리포트: '+esc(d.report_id)+' · 실행계획 '+esc((d.action_item_ids||[]).length)+'건</div>';
+      // 세션 ID / 리포트 ID 자동 채움
+      document.getElementById('sid').value = d.session_id;
+      document.getElementById('sid').dataset.report = d.report_id;
+      return h;
     }
+    function renderSession(d){
+      let h='<div class="ok">✓ 세션 '+esc(d.session_id)+'</div>';
+      const ms=d.mutual_scores||{};
+      h+='<h3>종합 점수: '+fmtScore(ms.overall)+'</h3>';
+      h+='<div class="score-grid">';
+      for(const k of Object.keys(ms.understanding||{})) h+='<div class="score-box"><div class="k">'+esc(k)+'</div>'+fmtScore(ms.understanding[k])+'</div>';
+      for(const k of Object.keys(ms.communication||{})) h+='<div class="score-box"><div class="k">소통 '+esc(k)+'</div>'+fmtScore(ms.communication[k])+'</div>';
+      h+='</div>';
+      const gaps=d.gaps||[];
+      h+='<h3>갭 ('+gaps.length+')</h3>';
+      gaps.forEach(function(g){ h+='<div class="gap"><span class="sev">'+esc(g.severity)+' · '+esc(g.type)+'</span><div>'+esc(g.description)+'</div></div>'; });
+      const st=d.strengths||[];
+      if(st.length){ h+='<h3>강점</h3>'; st.forEach(function(s){ h+='<div class="gap" style="border-color:var(--good)"><div>'+esc(s.description)+'</div></div>'; }); }
+      return h;
+    }
+    function renderReport(d){
+      let h='<div class="ok">✓ 리포트 '+esc(d.id)+'</div>';
+      h+='<p class="lead">'+esc(d.summary)+'</p>';
+      const ver=d.versions||{};
+      ['forStudent','forParent','forTeacher'].forEach(function(k){
+        if(ver[k]) h+='<div class="ver"><div class="t">'+esc(k)+'</div><pre>'+esc(ver[k])+'</pre></div>';
+      });
+      return h;
+    }
+    async function callJson(target, path, body){
+      try {
+        const res = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})});
+        const d = await res.json().catch(function(){ return {error:'응답 파싱 실패'}; });
+        if(!res.ok){ show(target, '<div class="err">⚠ '+(d.detail||'요청 실패')+'</div>'); return; }
+        if(target==='r-analyze') show(target, renderAnalyze(d));
+        else if(target==='r-session') show(target, renderSession(d));
+        else if(target==='r-report') show(target, renderReport(d));
+      } catch(e){ show(target, '<div class="err">⚠ 네트워크 오류: '+esc(e.message)+'</div>'); }
+    }
+    async function callGet(target, path){
+      try {
+        const res = await fetch(path, {method:'GET'});
+        const d = await res.json().catch(function(){ return {error:'응답 파싱 실패'}; });
+        if(!res.ok){ show(target, '<div class="err">⚠ '+(d.detail||'요청 실패')+'</div>'); return; }
+        show(target, target==='r-session'?renderSession(d):renderReport(d));
+      } catch(e){ show(target, '<div class="err">⚠ 네트워크 오류: '+esc(e.message)+'</div>'); }
+    }
+    const actions = {
+      analyze: function(){
+        callJson('r-analyze', '/api/understand/analyze', {student:v('student'), parent:v('parent'), teacher:v('teacher')});
+      },
+      session: function(){ const s=v('sid'); if(!s){ show('r-session','<div class="err">⚠ session_id를 입력하세요 (① 실행 시 자동 채움)</div>'); return; } callGet('r-session', '/api/understand/session/'+encodeURIComponent(s)); },
+      report: function(){ const s=v('sid'); const rid=s && document.getElementById('sid').dataset.report; if(!rid){ show('r-report','<div class="err">⚠ ① 분석을 먼저 실행해 리포트를 생성하세요</div>'); return; } callGet('r-report', '/api/understand/report/'+encodeURIComponent(rid)); },
+    };
+    document.querySelectorAll('button[data-action]').forEach(function(btn){
+      const a = btn.getAttribute('data-action');
+      if (actions[a]) btn.addEventListener('click', actions[a]);
+    });
   </script>
 </body>
 </html>
