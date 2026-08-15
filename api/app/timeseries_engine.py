@@ -299,12 +299,16 @@ class ComprehensivePredictionSystem:
             out.append("기말고사 집중 학습 프로그램 필요")
         return out
 
-    @staticmethod
-    def _get_current_performance(student_id, subject_id):
+    def _get_current_performance(self, student_id, subject_id):
+        """최근 성적 조회 (요청 세션 self.db 재사용 — 중첩 세션 금지)."""
         row = (
-            db_query_last_score(student_id, subject_id)
+            self.db.query(M.TSScore.score)
+            .join(M.TSExam, M.TSScore.exam_id == M.TSExam.id)
+            .filter(M.TSScore.student_id == student_id, M.TSExam.subject_id == subject_id)
+            .order_by(M.TSExam.exam_date.desc())
+            .first()
         )
-        return row if row is not None else 75
+        return float(row[0]) if row else 75
 
     @staticmethod
     def _calculate_trajectory(forecast):
@@ -317,21 +321,3 @@ class ComprehensivePredictionSystem:
         if last < first:
             return "declining"
         return "stable"
-
-
-def db_query_last_score(student_id, subject_id):
-    """최근 성적 조회 헬퍼(세션 주입이 어려운 정적 메서드용)."""
-    from app.database import SessionLocal
-    db = SessionLocal()
-    try:
-        from app import timeseries_models as MM
-        row = (
-            db.query(MM.TSScore.score)
-            .join(MM.TSExam, MM.TSScore.exam_id == MM.TSExam.id)
-            .filter(MM.TSScore.student_id == student_id, MM.TSExam.subject_id == subject_id)
-            .order_by(MM.TSExam.exam_date.desc())
-            .first()
-        )
-        return float(row[0]) if row else None
-    finally:
-        db.close()
