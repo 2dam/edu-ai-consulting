@@ -57,7 +57,7 @@
         <div><label>classroom</label><input id="s_class" value="2반"></div>
       </div>
       <label>demographics</label><input id="s_demo" value="여, 13세">
-      <button class="btn" onclick="call('/rti/student', studentBody())">학생 등록</button>
+      <button class="btn" data-action="student">학생 등록</button>
     </div>
 
     <h2>② 보편적 스크리닝 + 위험도 식별</h2>
@@ -69,7 +69,7 @@
         <div><label>social_skills_rating (&lt;40 보완)</label><input id="sc_social" type="number" value="35"></div>
         <div><label>behavioral_risk_index (&gt;70 위험)</label><input id="sc_risk" type="number" value="74"></div>
       </div>
-      <button class="btn" onclick="call('/rti/screening', screeningBody())">스크리닝 등록</button>
+      <button class="btn" data-action="screening">스크리닝 등록</button>
     </div>
 
     <h2>③ 중재 배정 (Intervention)</h2>
@@ -81,7 +81,7 @@
         <div><label>status</label><input id="iv_status" value="진행 중"></div>
       </div>
       <label>delivery_details</label><input id="iv_del" value="주 5회, 30분, 소집단(8명)">
-      <button class="btn" onclick="call('/rti/intervention', interventionBody())">중재 배정</button>
+      <button class="btn" data-action="intervention">중재 배정</button>
     </div>
 
     <h2>④ 진도 모니터링 (Progress Monitoring)</h2>
@@ -92,8 +92,8 @@
         <div><label>CBM 점수(학업)</label><input id="pm_cbm" type="number" value="42"></div>
         <div><label>일일행동점수(행동)</label><input id="pm_beh" type="number" value="68"></div>
       </div>
-      <button class="btn" onclick="call('/rti/pm-academic', academicBody())">학업 진도 기록</button>
-      <button class="btn ghost" onclick="call('/rti/pm-behavior', behaviorBody())">행동 진도 기록</button>
+      <button class="btn" data-action="pm-academic">학업 진도 기록</button>
+      <button class="btn ghost" data-action="pm-behavior">행동 진도 기록</button>
     </div>
 
     <h2>⑤ FBA 지원 (A-B-C → 가설)</h2>
@@ -104,14 +104,14 @@
   {"antecedent":"조별 활동","behavior":"떠들기","consequence":"친구들 웃음→주의 획득"},
   {"antecedent":"혼자 시험","behavior":"고개 숙임","consequence":"쉬운 문제로 교체→회피"}
 ]</textarea>
-      <button class="btn" onclick="callJson('/rti/fba', document.getElementById('fba').value)">FBA 분석</button>
+      <button class="btn" data-action="fba">FBA 분석</button>
     </div>
 
     <h2>⑥ 통합 학생 프로필</h2>
     <div class="card">
       <div class="grid2">
         <div><label>student_id</label><input id="p_id" value="STU-001"></div>
-        <div style="display:flex;align-items:flex-end;"><button class="btn" onclick="profile()">프로필 조회</button></div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn" data-action="profile">프로필 조회</button></div>
       </div>
     </div>
 
@@ -151,11 +151,26 @@
       const d = await res.json().catch(()=>({})); show(d);
     }
     const v = id => document.getElementById(id).value;
-    window.studentBody = () => ({student_id:v('s_id'), school_id:v('s_school'), grade_level:+v('s_grade'), classroom:v('s_class'), demographics:v('s_demo')});
-    window.screeningBody = () => ({student_id:v('sc_id'), math_percentile_rank:+v('sc_math'), reading_benchmark_score:+v('sc_read'), social_skills_rating:+v('sc_social'), behavioral_risk_index:+v('sc_risk')});
-    window.interventionBody = () => ({student_id:v('iv_sid'), intervention_id:v('iv_type'), tier:+v('iv_tier'), status:v('iv_status'), delivery_details:v('iv_del')});
-    window.academicBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), curriculum_based_measurement_score:+v('pm_cbm')});
-    window.behaviorBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), daily_behavior_rating:+v('pm_beh')});
+    const studentBody = () => ({student_id:v('s_id'), school_id:v('s_school'), grade_level:+v('s_grade'), classroom:v('s_class'), demographics:v('s_demo')});
+    const screeningBody = () => ({student_id:v('sc_id'), math_percentile_rank:+v('sc_math'), reading_benchmark_score:+v('sc_read'), social_skills_rating:+v('sc_social'), behavioral_risk_index:+v('sc_risk')});
+    const interventionBody = () => ({student_id:v('iv_sid'), intervention_id:v('iv_type'), tier:+v('iv_tier'), status:v('iv_status'), delivery_details:v('iv_del')});
+    const academicBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), curriculum_based_measurement_score:+v('pm_cbm')});
+    const behaviorBody = () => ({student_id:v('pm_sid'), intervention_id:+v('pm_iv'), daily_behavior_rating:+v('pm_beh')});
+
+    // 버튼 바인딩: 인라인 onclick 대신 addEventListener — 캐시/스코프/CSP 무관하게 동작
+    const actions = {
+      student: () => call('/rti/student', studentBody()),
+      screening: () => call('/rti/screening', screeningBody()),
+      intervention: () => call('/rti/intervention', interventionBody()),
+      'pm-academic': () => call('/rti/pm-academic', academicBody()),
+      'pm-behavior': () => call('/rti/pm-behavior', behaviorBody()),
+      fba: () => callJson('/rti/fba', document.getElementById('fba').value),
+      profile: () => profile(),
+    };
+    document.querySelectorAll('button[data-action]').forEach(btn => {
+      const a = btn.getAttribute('data-action');
+      if (actions[a]) btn.addEventListener('click', actions[a]);
+    });
   </script>
 </body>
 </html>

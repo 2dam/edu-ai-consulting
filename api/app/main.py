@@ -128,7 +128,20 @@ app.include_router(committee.router)
 app.include_router(reputation.router)
 
 STATIC_DIR = Path(__file__).parent / "static"
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+class NoCacheStaticFiles(StaticFiles):
+    """정적 파일(특히 대시보드 HTML) 캐시 무력화 — 버튼 수정 즉시 반영되도록."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def file_response(self, full_path, stat_result, scope, status_code=200):
+        resp = super().file_response(full_path, stat_result, scope, status_code)
+        resp.headers.update({"Cache-Control": "no-store, max-age=0"})
+        return resp
+
+
+app.mount("/static", NoCacheStaticFiles(directory=STATIC_DIR), name="static")
 
 
 # ── 정적 페이지 ───────────────────────────────────────────────────────────────
@@ -184,7 +197,9 @@ def understand_page():
 
 @app.get("/rti-pbis")
 def rti_pbis_page():
-    return FileResponse(STATIC_DIR / "rti_pbis.html")
+    resp = FileResponse(STATIC_DIR / "rti_pbis.html")
+    resp.headers.update({"Cache-Control": "no-store, max-age=0"})
+    return resp
 
 
 @app.get("/health")
