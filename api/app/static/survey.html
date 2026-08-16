@@ -50,6 +50,20 @@
   .score-row .meta{font-family:var(--font-mono);font-size:13px;font-weight:700}
   .pill{font-size:11px;font-weight:800;padding:2px 9px;border-radius:99px;margin-left:8px}
   .note{font-size:12px;color:var(--ink-faint);margin-top:16px;line-height:1.7}
+  .tip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:5px;font-size:10px;font-weight:800;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);border-radius:50%;cursor:help;vertical-align:middle}
+  .tip:hover{background:color-mix(in srgb,var(--accent) 28%,transparent)}
+  .tip[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 7px);width:min(260px,72vw);padding:9px 11px;background:#0a0e14;border:1px solid var(--line);border-radius:9px;color:var(--ink);font-size:11.5px;font-weight:500;line-height:1.5;white-space:normal;text-align:left;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+  .tip[data-tip]{position:relative}
+  .report{margin-top:26px;border-top:1px dashed var(--line);padding-top:18px}
+  .report h4{font-size:15px;margin:0 0 8px;color:var(--accent-2)}
+  .report .summary{font-size:13.5px;line-height:1.7;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+  .report .group{margin:12px 0}
+  .report .gtitle{font-size:13px;font-weight:800;margin:0 0 6px;display:flex;align-items:center;gap:6px}
+  .report .gtitle.s{color:var(--high)} .report .gtitle.c{color:var(--low)}
+  .report ul{margin:0;padding-left:18px}
+  .report li{font-size:13px;line-height:1.6;margin-bottom:5px}
+  .report .gh{font-weight:700;color:var(--ink)}
+  .report .srcnote{font-size:11.5px;color:var(--ink-faint);margin-top:14px;padding:9px 11px;background:var(--sunken);border-radius:8px;line-height:1.6}
   .home{display:inline-block;margin-bottom:10px;color:var(--accent);font-size:13px;text-decoration:none}
 </style>
 </head>
@@ -247,6 +261,22 @@
     if (level === '보통') return 'var(--mid)';
     return 'var(--low)';
   }
+  const SUB_TIP = {
+    sdt_autonomy:'자율성 — 스스로 학습 목표·방법을 고를 수 있다는 느낌. 높을수록 내재적 동기 강함.',
+    sdt_competence:'유능성 — 자신의 학습 능력에 대한 확신. "나도 해낼 수 있다"는 자기효능감.',
+    sdt_relatedness:'관계성 — 교사·동료와의 정서적 연결과 지지. 낮으면 고립·소외감.',
+    srl_planning:'계획 — 학습 목표와 시간을 미리 세우는 능력.',
+    srl_monitoring:'점검 — 공부 중 스스로 "지금 집중되는가·맞는가"를 캐치하는 메타인지.',
+    srl_evaluation:'평가 — 결과를 보고 스스로 부족함을 파악하고 다음 학습을 조정하는 능력.',
+    pp_strengths:'강점 인식 — 자기 강점을 스스로 아는 정도. 강점 기반 성장의 출발점.',
+    pp_wellbeing:'안녕감 — 전반적 정서 안정과 스트레스 회복력.',
+    eco_classroom:'교실 적합도 — 수업 방식·평가·분위기가 학생에게 맞는 정도. (낮을수록 불일치 큼)',
+    eco_home:'가정 지원 — 가정의 학습 지원 환경. (낮을수록 불일치·지지 부족)'
+  };
+  function tipHtml(sub) {
+    const t = SUB_TIP[sub]; if (!t) return '';
+    return `<span class="tip" data-tip="${t}">?</span>`;
+  }
   function renderResult(scores) {
     const THEORY_ORDER = [
       ['self_determination','자기결정성(SDT)'],
@@ -260,7 +290,16 @@
       pp_strengths:'강점 인식', pp_wellbeing:'안녕감',
       eco_classroom:'교실 적합도', eco_home:'가정 지원'
     };
-    let html = `<h3>진단 결과 · ${currentSrc === 'student' ? '학생 자가' : currentSrc === 'parent' ? '학부모 보고' : '교육기관 자료'}</h3>`;
+    const SRC_LABEL = { student:'학생 자가', parent:'학부모 보고', institution:'교육기관 자료' };
+
+    // 점수 평탄화: 모든 하위척도를 [sub,{score,level}] 로 수집
+    const flat = {};
+    THEORY_ORDER.forEach(([key]) => {
+      const subs = scores[key] || {};
+      Object.entries(subs).forEach(([sub, info]) => { flat[sub] = info; });
+    });
+    const tip = (s) => tipHtml(s);
+    let html = `<h3>진단 결과 · ${SRC_LABEL[currentSrc] || currentSrc}</h3>`;
     THEORY_ORDER.forEach(([key, label]) => {
       const subs = scores[key] || {};
       const entries = Object.entries(subs);
@@ -268,14 +307,58 @@
       html += `<div class="cat" style="margin:18px 0 4px"><div class="st" style="color:var(--accent-2);font-weight:800;font-size:14px">${label}</div></div>`;
       entries.forEach(([sub, info]) => {
         const c = colorFor(info.level);
-        html += `<div class="score-row"><span class="nm">${SUB_LABEL[sub] || sub}</span>`+
+        html += `<div class="score-row"><span class="nm">${SUB_LABEL[sub] || sub}${tip(sub)}</span>`+
                 `<span class="meta" style="color:${c}">${info.score}/5<span class="pill" style="background:${c}22;color:${c}">${info.level}</span></span></div>`;
       });
     });
+
+    // ── 학부모용 요약 리포트 + 상담 가이드 ──
+    const strong = [], weak = [];
+    Object.entries(flat).forEach(([sub, info]) => {
+      const val = info.score;
+      const item = `<span class="gh">${SUB_LABEL[sub]||sub}</span>(${val}/5, ${info.level})`;
+      if (val >= 3.6) strong.push(item);
+      else if (val <= 2.39) weak.push(item);
+    });
+    const guide = buildGuide(flat, SUB_LABEL);
+    html += `<div class="report">
+      <h4>학부모용 요약 리포트</h4>
+      <div class="summary">
+        종합적으로 볼 때, <b>${strong.length ? strong.join('·')+'</b> 등은 양호합니다.' : '두드러진 강점 영역이 아직 작습니다.'}
+        반면 <b>${weak.length ? weak.join('·')+'</b> 등이 보완이 필요한 영역입니다.' : '취약한 영역도 현재 응답 기준으로는 특별히 드러나지 않았습니다.'}
+        점수는 <b>${SRC_LABEL[currentSrc]}</b> 기준이며, 학생·학부모·교육기관 3소스가 모두 입력되면 가중 융합(학생40·학부모30·교육기관30)된 종합 점수로 갱신됩니다.
+      </div>
+      <h4>상담 가이드 (보완 제안)</h4>
+      ${guide}
+      <div class="srcnote">※ 본 리포트는 교육 컨설팅 보조용 자가/관찰 평가이며 임상 진단·의학적 판정이 아닙니다. 생태학적(교실·가정) 항목은 점수가 낮을수록 환경과의 불일치가 큼을 뜻하므로, 학생 개인의 결함이 아닌 환경 조정 관점에서 검토하세요.</div>
+    </div>`;
+
     const el = document.getElementById('result');
     el.innerHTML = html;
     el.style.display = 'block';
     el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function buildGuide(flat, SUB_LABEL) {
+    const low = Object.entries(flat).filter(([,i]) => i.score <= 2.39);
+    if (!low.length) return `<div class="group"><div class="gtitle s">✓ 현재 응답 기준 보완이 시급한 취약 영역은 없습니다.</div><div class="summary" style="margin-top:8px">꾸준한 강점 활용과 환경 점검이 좋습니다.</div></div>`;
+    let g = `<div class="group"><div class="gtitle c">▼ 우선 보완 영역 (낮음)</div><ul>`;
+    const ACTIONS = {
+      sdt_competence:'작은 성공 경험을 설계하세요. 한 단계만 잘 풀 수 있는 과제부터 시작해 "나도 된다"는 경험을 쌓는 것이 우선입니다.',
+      srl_monitoring:'공부 중간에 "지금 내가 뭘 하고 있지?"를 묻는 1분 점검 루틴을 만드세요. 타이머·체크리스트가 도움이 됩니다.',
+      pp_wellbeing:'잠·운동·취미 같은 정서 회복 루틴을 먼저 챙기세요. 학습량보다 회복력이 우선입니다.',
+      eco_home:'집중할 수 있는 학습 공간과 규칙을 안정적으로 마련하고, 기대보다 구체적 지원(옆에서 함께·리듬 맞추기)에 집중하세요.',
+      sdt_autonomy:'학습 목표나 방법을 아이가 고르게 해주세요. 선택권이 주는 동기가 큽니다.',
+      srl_planning:'한 주 단위로 작게 계획을 세우고, 끝낸 항목을 직접 체크하게 하세요.',
+      srl_evaluation:'시험 후 오답 원인을 아이 스스로 정리하게 하고, 칭찬을 "결과"보다 "과정"에 두세요.',
+      pp_strengths:'아이가 잘하는 것을 구체적으로 찾아 말해주세요. 강점 기반 대화가 동기를 만듭니다.',
+      sdt_relatedness:'선생님·친구와의 관계를 살피고, 필요하면 교우·상담 지원을 연결하세요.',
+      eco_classroom:'교실 불일치 신호가 보이면 담임/교과 선생님과 소통 방식·평가 맞춤을 상의하세요.'
+    };
+    low.sort((a,b)=>a[1].score-b[1].score).forEach(([sub, info]) => {
+      g += `<li><span class="gh">${SUB_LABEL[sub]||sub} (${info.score}/5)</span> — ${ACTIONS[sub]||'해당 영역의 지지를 강화하세요.'}</li>`;
+    });
+    return g + `</ul></div>`;
   }
 
   render();
