@@ -161,12 +161,16 @@
   .qcrm-intake-note { font-size: 12px; color: var(--ink-faint); margin: 0 0 16px; line-height: 1.5; word-break: keep-all; }
   .qcrm-intake { margin-bottom: 24px; }
   .qcrm-intake-h { font-size: 13px; color: var(--ink-muted); margin: 0 0 12px; line-height: 1.5; word-break: keep-all; }
-  .qcrm-qgrid { display: grid; gap: 14px; }
-  .qcrm-q { display: grid; gap: 6px; }
-  .qcrm-q .q-text { font-size: 13px; color: var(--ink); line-height: 1.5; word-break: keep-all; }
-  .qcrm-q .q-opts { display: flex; gap: 6px; }
-  .qcrm-q .q-opts button { flex: 1; min-width: 0; font-size: 12px; padding: 7px 0; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-sunken); color: var(--ink-muted); cursor: pointer; transition: border-color .12s, color .12s, background .12s; }
-  .qcrm-q .q-opts button.is-sel { border-color: var(--accent); color: #fff; background: color-mix(in srgb, var(--accent) 28%, transparent); }
+  .qcrm-qgrid { display: grid; gap: 18px; }
+  .qcrm-q { display: grid; gap: 8px; }
+  .qcrm-q .q-text { font-size: 13.5px; font-weight: 600; color: var(--ink); line-height: 1.5; word-break: keep-all; }
+  .qcrm-q .q-opts { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  .qcrm-q .q-opts button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-sunken); color: var(--ink-muted); cursor: pointer; transition: border-color .12s, color .12s, background .12s; }
+  .qcrm-q .q-opts button:hover { color: var(--ink); }
+  .qcrm-q .q-opts button .q-rank { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
+  .qcrm-q .q-opts button .q-crit { font-size: 12.5px; line-height: 1.4; word-break: keep-all; }
+  .qcrm-q .q-opts button.is-sel { border-color: var(--accent); color: #fff; background: color-mix(in srgb, var(--accent) 20%, transparent); }
+  .qcrm-q .q-opts button.is-sel .q-rank { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 28%, transparent); }
   .qcrm-datagrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 18px; }
   .qcrm-datagrid label { display: flex; flex-direction: column; font-size: 12px; color: var(--ink-muted); gap: 5px; }
   .qcrm-datagrid input { width: 100%; background: var(--surface-sunken); border: 1px solid var(--line); border-radius: var(--radius-md); color: var(--ink); padding: 9px 10px; font-size: 13px; font-family: var(--font-mono); }
@@ -515,7 +519,7 @@
 
       <!-- ① 자가진단 질문지 -->
       <div class="qcrm-intake" id="qcrm-questionnaire" role="tabpanel">
-        <p class="qcrm-intake-h">각 문항을 1(전혀 아니다)〜5(매우 그렇다)로 평가하세요. 응답이 자동으로 요인 점수로 환산됩니다.</p>
+        <p class="qcrm-intake-h">각 문항의 객관적 기준 중 본인 상황과 가장 가까운 것을 선택하세요. 선택한 기준이 해당 요인 점수(1~5 → 20~100)로 환산됩니다.</p>
         <div class="qcrm-qgrid" id="qcrm-qgrid"></div>
         <div class="qcrm-intake-actions">
           <button type="button" class="btn btn-ghost" id="qcrm-apply-questionnaire">응답을 진단값으로 반영</button>
@@ -800,34 +804,77 @@
     document.getElementById('qcrm_' + f + '_val').textContent = input.value;
   };
 
-  // ① 자가진단 질문지
+  // ① 자가진단 질문지 — 각 요인별 객관적 기준(1~5)
   const QCRM_QUESTIONS = [
-    { id: 'q1', text: '새로운 단원 개념을 교과서만으로 스스로 이해하는 편이다.' },
-    { id: 'q2', text: '문제의 조건·요구사항을 정확히 파악하고 풀어나간다.' },
-    { id: 'q3', text: '비슷한 유형을 본 뒤에도 풀이 전략을 스스로 세운다.' },
-    { id: 'q4', text: '시험에서 계산 실수 없이 답을 맞히는 편이다.' },
-    { id: 'q5', text: '한 가지 과목에 30분 이상 집중해서 매달릴 수 있다.' },
-    { id: 'q6', text: '세운 주간 학습 계획을 대부분 지켜나간다.' }
+    { id: 'q1', label: '개념 이해',
+      criteria: [
+        '교과서만 봐도 새 단원을 대부분 혼자 이해한다',
+        '교과서 + 인터넷 검색으로 대부분 이해한다',
+        '예시·풀이를 곁들여야 절반 정도 이해한다',
+        '강의나 질문으로 설명들을 때만 이해한다',
+        '반복 설명에도 개념이 잡히기 어렵다'
+      ] },
+    { id: 'q2', label: '문제 해석',
+      criteria: [
+        '조건·함의를 빠뜨림 없이 정확히 파악한다',
+        '대부분 정확히 파악하나 가끔 세부 조건을 놓친다',
+        '절반 정도는 풀이 전 요구사항을 정리한다',
+        '조건을 자주 생략해 엉뚱한 풀이로 들어간다',
+        '문제를 읽어도 무엇을 구하는지 잘 모르겠다'
+      ] },
+    { id: 'q3', label: '전략 선택',
+      criteria: [
+        '유형을 봐도 스스로 풀이 순서·전략을 세운다',
+        '비슷한 예시를 떠올리며 전략을 세운다',
+        '힌트나 풀이 예시가 있어야 전략을 세운다',
+        '접근법을 자주 바꾸고 헷갈린다',
+        '어떤 방법으로 풀지 막막하다'
+      ] },
+    { id: 'q4', label: '계산 정확도',
+      criteria: [
+        '시험에서 계산 실수가 거의 없다(5% 미만)',
+        '가끔 실수한다(약 10%)',
+        '간혹 실수한다(약 20%)',
+        '자주 실수한다(약 35%)',
+        '계산 실수가 매우 잦다(40% 이상)'
+      ] },
+    { id: 'q5', label: '주의 조절',
+      criteria: [
+        '한 과목에 50분 이상 몰입한다',
+        '약 35~50분 집중한다',
+        '약 20~35분 집중한다',
+        '약 10~20분 집중한다',
+        '10분도 집중하기 어렵다'
+      ] },
+    { id: 'q6', label: '시간 관리',
+      criteria: [
+        '세운 주간 계획을 대부분(80%+) 지킨다',
+        '계획의 약 60~80%를 지킨다',
+        '계획의 약 40~60%를 지킨다',
+        '계획의 약 20~40%만 지킨다',
+        '계획을 세워도 거의 지키지 않는다'
+      ] }
   ];
   const qgrid = document.getElementById('qcrm-qgrid');
   QCRM_QUESTIONS.forEach((q) => {
     const wrap = document.createElement('div');
     wrap.className = 'qcrm-q';
-    wrap.innerHTML = `<div class="q-text">${q.text}</div>`;
+    wrap.innerHTML = `<div class="q-text">${q.label}</div>`;
     const opts = document.createElement('div');
     opts.className = 'q-opts';
-    for (let i = 1; i <= 5; i++) {
+    q.criteria.forEach((c, idx) => {
+      const rank = idx + 1;
       const b = document.createElement('button');
       b.type = 'button';
-      b.textContent = i;
       b.dataset.q = q.id;
-      b.dataset.v = i;
+      b.dataset.v = rank;
+      b.innerHTML = `<span class="q-rank">${rank}</span><span class="q-crit">${c}</span>`;
       b.addEventListener('click', () => {
         opts.querySelectorAll('button').forEach((x) => x.classList.remove('is-sel'));
         b.classList.add('is-sel');
       });
       opts.appendChild(b);
-    }
+    });
     wrap.appendChild(opts);
     qgrid.appendChild(wrap);
   });
