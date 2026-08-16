@@ -154,6 +154,25 @@
   #qcrm-submit-btn { width: 100%; justify-content: center; }
   #qcrm-error { margin-top: 14px; color: var(--err); display: none; font-size: 13.5px; }
   #qcrm-result { margin-top: 20px; display: none; border-top: 1px solid var(--line); padding-top: 18px; }
+  .qcrm-modebar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .qcrm-mode { font-size: 12.5px; font-weight: 600; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface-sunken); color: var(--ink-muted); cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+  .qcrm-mode:hover { color: var(--ink); }
+  .qcrm-mode.is-active { border-color: var(--accent); color: #fff; background: color-mix(in srgb, var(--accent) 22%, transparent); }
+  .qcrm-intake-note { font-size: 12px; color: var(--ink-faint); margin: 0 0 16px; line-height: 1.5; word-break: keep-all; }
+  .qcrm-intake { margin-bottom: 24px; }
+  .qcrm-intake-h { font-size: 13px; color: var(--ink-muted); margin: 0 0 12px; line-height: 1.5; word-break: keep-all; }
+  .qcrm-qgrid { display: grid; gap: 14px; }
+  .qcrm-q { display: grid; gap: 6px; }
+  .qcrm-q .q-text { font-size: 13px; color: var(--ink); line-height: 1.5; word-break: keep-all; }
+  .qcrm-q .q-opts { display: flex; gap: 6px; }
+  .qcrm-q .q-opts button { flex: 1; min-width: 0; font-size: 12px; padding: 7px 0; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-sunken); color: var(--ink-muted); cursor: pointer; transition: border-color .12s, color .12s, background .12s; }
+  .qcrm-q .q-opts button.is-sel { border-color: var(--accent); color: #fff; background: color-mix(in srgb, var(--accent) 28%, transparent); }
+  .qcrm-datagrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 18px; }
+  .qcrm-datagrid label { display: flex; flex-direction: column; font-size: 12px; color: var(--ink-muted); gap: 5px; }
+  .qcrm-datagrid input { width: 100%; background: var(--surface-sunken); border: 1px solid var(--line); border-radius: var(--radius-md); color: var(--ink); padding: 9px 10px; font-size: 13px; font-family: var(--font-mono); }
+  .qcrm-intake-actions { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  .qcrm-intake-hint { font-size: 11.5px; color: var(--ink-faint); }
+  @media (max-width: 600px) { .qcrm-datagrid { grid-template-columns: 1fr; } }
   .qcrm-readiness { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
   .qcrm-readiness .score { font-family: var(--font-display); font-size: 34px; }
   .qcrm-readiness .level { font-family: var(--font-mono); font-size: 11px; padding: 4px 10px; border-radius: 12px; }
@@ -487,6 +506,40 @@
       </div>
     </div>
     <div class="qcrm-tool">
+      <div class="qcrm-modebar" role="tablist" aria-label="진단 입력 방식">
+        <button type="button" class="qcrm-mode is-active" data-mode="questionnaire" role="tab" aria-selected="true">① 자가진단 질문지</button>
+        <button type="button" class="qcrm-mode" data-mode="data" role="tab" aria-selected="false">② 실데이터 입력</button>
+        <button type="button" class="qcrm-mode" data-mode="manual" role="tab" aria-selected="false">③ 직접 슬라이더</button>
+      </div>
+      <p class="qcrm-intake-note">진단은 6개 인지 요인(개념 이해·문제 해석·전략 선택·계산 정확도·주의 조절·시간 관리)을 기준으로 합니다. 아래 방식 중 하나로 입력하면 우측 슬라이더에 반영되어 진단됩니다.</p>
+
+      <!-- ① 자가진단 질문지 -->
+      <div class="qcrm-intake" id="qcrm-questionnaire" role="tabpanel">
+        <p class="qcrm-intake-h">각 문항을 1(전혀 아니다)〜5(매우 그렇다)로 평가하세요. 응답이 자동으로 요인 점수로 환산됩니다.</p>
+        <div class="qcrm-qgrid" id="qcrm-qgrid"></div>
+        <div class="qcrm-intake-actions">
+          <button type="button" class="btn btn-ghost" id="qcrm-apply-questionnaire">응답을 진단값으로 반영</button>
+          <span class="qcrm-intake-hint">미응답 문항은 현재 슬라이더 값으로 유지됩니다.</span>
+        </div>
+      </div>
+
+      <!-- ② 실데이터 입력 -->
+      <div class="qcrm-intake" id="qcrm-data" role="tabpanel" hidden>
+        <p class="qcrm-intake-h">보유한 실측치를 붙여넣으면 6요인으로 환산합니다. 모르는 항목은 비워두세요.</p>
+        <div class="qcrm-datagrid">
+          <label>최근 모의고사/내신 백분위<input type="number" id="qcrm_d_grade" min="0" max="100" placeholder="예: 72"></label>
+          <label>오답 중 개념·이해 오류 비중(%)<input type="number" id="qcrm_d_concept_err" min="0" max="100" placeholder="예: 40"></label>
+          <label>서술형/서술형 풀이 점수 비중(%)<input type="number" id="qcrm_d_open" min="0" max="100" placeholder="예: 55"></label>
+          <label>시험 내 계산 실수 감점 비중(%)<input type="number" id="qcrm_d_calc_err" min="0" max="100" placeholder="예: 20"></label>
+          <label>집중 지속 시간(분, 자가보고)<input type="number" id="qcrm_d_focus" min="0" max="300" placeholder="예: 35"></label>
+          <label>계획 대비 학습 달성률(%)<input type="number" id="qcrm_d_plan" min="0" max="100" placeholder="예: 50"></label>
+        </div>
+        <div class="qcrm-intake-actions">
+          <button type="button" class="btn btn-ghost" id="qcrm-apply-data">실데이터를 진단값으로 반영</button>
+          <span class="qcrm-intake-hint">미입력 항목은 현재 슬라이더 값으로 유지됩니다.</span>
+        </div>
+      </div>
+
       <div class="qcrm-sliders">
         <div class="qcrm-field">
           <label for="qcrm_concept_mastery">개념 이해 <span class="qcrm-val" id="qcrm_concept_mastery_val">62</span></label>
@@ -729,6 +782,93 @@
     const input = document.getElementById('qcrm_' + f);
     const val = document.getElementById('qcrm_' + f + '_val');
     input.addEventListener('input', () => { val.textContent = input.value; });
+  });
+
+  // ── 진단 입력 모드 (질문지 / 실데이터 / 직접 슬라이더) ──
+  const QCRM_SET_BY = {
+    concept_mastery:   ['q1', 'd_grade', 'd_concept_err'],
+    problem_interpretation: ['q2', 'd_open'],
+    strategy_selection: ['q3', 'd_open'],
+    calculation_accuracy: ['q4', 'd_calc_err'],
+    attention_control: ['q5', 'd_focus'],
+    time_management:   ['q6', 'd_plan']
+  };
+  const clamp = (n) => Math.max(0, Math.min(100, Math.round(n)));
+  const setSlider = (f, v) => {
+    const input = document.getElementById('qcrm_' + f);
+    input.value = clamp(v);
+    document.getElementById('qcrm_' + f + '_val').textContent = input.value;
+  };
+
+  // ① 자가진단 질문지
+  const QCRM_QUESTIONS = [
+    { id: 'q1', text: '새로운 단원 개념을 교과서만으로 스스로 이해하는 편이다.' },
+    { id: 'q2', text: '문제의 조건·요구사항을 정확히 파악하고 풀어나간다.' },
+    { id: 'q3', text: '비슷한 유형을 본 뒤에도 풀이 전략을 스스로 세운다.' },
+    { id: 'q4', text: '시험에서 계산 실수 없이 답을 맞히는 편이다.' },
+    { id: 'q5', text: '한 가지 과목에 30분 이상 집중해서 매달릴 수 있다.' },
+    { id: 'q6', text: '세운 주간 학습 계획을 대부분 지켜나간다.' }
+  ];
+  const qgrid = document.getElementById('qcrm-qgrid');
+  QCRM_QUESTIONS.forEach((q) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'qcrm-q';
+    wrap.innerHTML = `<div class="q-text">${q.text}</div>`;
+    const opts = document.createElement('div');
+    opts.className = 'q-opts';
+    for (let i = 1; i <= 5; i++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = i;
+      b.dataset.q = q.id;
+      b.dataset.v = i;
+      b.addEventListener('click', () => {
+        opts.querySelectorAll('button').forEach((x) => x.classList.remove('is-sel'));
+        b.classList.add('is-sel');
+      });
+      opts.appendChild(b);
+    }
+    wrap.appendChild(opts);
+    qgrid.appendChild(wrap);
+  });
+  document.getElementById('qcrm-apply-questionnaire').addEventListener('click', () => {
+    QCRM_FIELDS.forEach((f) => {
+      const ids = QCRM_SET_BY[f].filter((x) => x.startsWith('q'));
+      let sum = 0, n = 0;
+      ids.forEach((id) => {
+        const sel = qgrid.querySelector(`button[data-q="${id}"].is-sel`);
+        if (sel) { sum += Number(sel.dataset.v); n++; }
+      });
+      if (n > 0) setSlider(f, (sum / n) * 20); // 1~5 → 20~100
+    });
+  });
+
+  // ② 실데이터 입력 → 6요인 환산
+  document.getElementById('qcrm-apply-data').addEventListener('click', () => {
+    const num = (id) => { const v = document.getElementById('qcrm_' + id).value; return v === '' ? null : Number(v); };
+    const grade = num('d_grade'), conceptErr = num('d_concept_err'), open = num('d_open'),
+          calcErr = num('d_calc_err'), focus = num('d_focus'), plan = num('d_plan');
+    const map = {
+      concept_mastery: grade != null ? grade - (conceptErr != null ? conceptErr * 0.4 : 0) : null,
+      problem_interpretation: open != null ? open : null,
+      strategy_selection: open != null ? open - (grade != null ? (100 - grade) * 0.2 : 0) : null,
+      calculation_accuracy: calcErr != null ? 100 - calcErr : null,
+      attention_control: focus != null ? Math.min(100, (focus / 60) * 100) : null,
+      time_management: plan != null ? plan : null
+    };
+    QCRM_FIELDS.forEach((f) => { if (map[f] != null) setSlider(f, map[f]); });
+  });
+
+  // 모드 전환
+  const qcrmModes = document.querySelectorAll('.qcrm-mode');
+  qcrmModes.forEach((m) => {
+    m.addEventListener('click', () => {
+      qcrmModes.forEach((x) => { x.classList.remove('is-active'); x.setAttribute('aria-selected', 'false'); });
+      m.classList.add('is-active'); m.setAttribute('aria-selected', 'true');
+      const mode = m.dataset.mode;
+      document.getElementById('qcrm-questionnaire').hidden = mode !== 'questionnaire';
+      document.getElementById('qcrm-data').hidden = mode !== 'data';
+    });
   });
 
   const QCRM_LEVEL_COLOR = { stable: '#3FCB93', developing: '#eab308', needs_support: '#FF8A80' };
