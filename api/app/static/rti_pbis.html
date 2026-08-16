@@ -53,6 +53,34 @@
     .result table.rt td:first-child { color:var(--ink-faint); width:42%; font-size:12px; }
     .result table.rt td:last-child { color:var(--ink); }
     .result table.rt td pre { margin:0; white-space:pre-wrap; color:var(--ink-muted); font-size:12px; }
+    /* 용어/계량기준 참고 */
+    .rti-ref { margin:0 0 16px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface-sunken); }
+    .rti-ref summary { cursor:pointer; padding:11px 14px; font-size:13px; color:var(--ink-muted); font-weight:600; }
+    .rti-ref .body { padding:0 14px 14px; }
+    .rti-reftable { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+    .rti-reftable th, .rti-reftable td { border:1px solid var(--line); padding:7px 9px; vertical-align:top; text-align:left; line-height:1.5; word-break:keep-all; }
+    .rti-reftable th { background:var(--surface); color:var(--ink-muted); font-weight:600; }
+    .rti-reftable td small { color:var(--ink-faint); font-family:monospace; }
+    .rti-refnote { font-size:11.5px; color:var(--ink-faint); margin:10px 0 0; line-height:1.6; }
+    /* 입력 모드 */
+    .rti-modebar { display:flex; gap:8px; margin:4px 0 14px; flex-wrap:wrap; }
+    .rti-mode { font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:99px; border:1px solid var(--line); background:var(--surface-sunken); color:var(--ink-muted); cursor:pointer; transition:border-color .15s,color .15s,background .15s; }
+    .rti-mode:hover { color:var(--ink); }
+    .rti-mode.is-active { border-color:var(--accent); color:#fff; background:color-mix(in srgb,var(--accent) 22%,transparent); }
+    .rti-intake { margin-bottom:18px; }
+    .rti-intake-h { font-size:13px; color:var(--ink-muted); margin:0 0 12px; line-height:1.5; word-break:keep-all; }
+    .rti-qgrid { display:grid; gap:18px; }
+    .rti-q { display:grid; gap:8px; }
+    .rti-q .q-head { font-size:13px; font-weight:600; color:var(--ink); }
+    .rti-q .q-opts { display:grid; grid-template-columns:1fr; gap:6px; }
+    .rti-q .q-opts button { display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:9px 12px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface-sunken); color:var(--ink-muted); cursor:pointer; transition:border-color .12s,color .12s,background .12s; }
+    .rti-q .q-opts button:hover { color:var(--ink); }
+    .rti-q .q-opts button .q-rank { flex:0 0 auto; width:22px; height:22px; border-radius:50%; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-family:monospace; font-size:12px; font-weight:700; }
+    .rti-q .q-opts button .q-crit { font-size:12.5px; line-height:1.4; word-break:keep-all; }
+    .rti-q .q-opts button.is-sel { border-color:var(--accent); color:#fff; background:color-mix(in srgb,var(--accent) 20%,transparent); }
+    .rti-q .q-opts button.is-sel .q-rank { border-color:var(--accent); color:var(--accent); background:color-mix(in srgb,var(--accent) 28%,transparent); }
+    .rti-intake-actions { display:flex; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+    .rti-intake-hint { font-size:11.5px; color:var(--ink-faint); }
   </style>
 </head>
 <body>
@@ -76,11 +104,59 @@
     </div>
 
     <h2>② 보편적 스크리닝 + 위험도 식별</h2>
+    <details class="rti-ref">
+      <summary>용어 · 계량 기준 · 데이터 근거 보기</summary>
+      <div class="body">
+        <table class="rti-reftable">
+          <thead><tr><th>지표</th><th>정의</th><th>단위 / 범위</th><th>위험(계량) 기준</th><th>데이터 근거 (입력 출처)</th></tr></thead>
+          <tbody>
+            <tr><td><b>math_percentile_rank</b><br>수학 백분위</td><td>표준화 학업성취도에서의 수학 백분위. 또래 대비 상대 위치.</td><td>백분위 0–100</td><td><small>&lt; 25</small> → 학업 위험 (하위 25%)</td><td>국가/교육청 학업성취도 평가, 표준화 진단(예: K-CT, CBM)의 백분위</td></tr>
+            <tr><td><b>reading_benchmark_score</b><br>읽기 벤치마크</td><td>읽기(국어/영어) 성취 벤치마크 점수. 수학과 동일 계량선 적용.</td><td>점수 0–100</td><td><small>&lt; 25</small> → 학업 위험 (벤치마크 미도달)</td><td>읽기 진단(예: DIBELS/K-CT 읽기), 표준화 읽기 평가 점수</td></tr>
+            <tr><td><b>behavioral_risk_index</b><br>행동 위험지수</td><td>문제행동 빈도·강도·지속을 종합한 지수. 높을수록 위험.</td><td>지수 0–100</td><td><small>&gt; 70</small> → 행동 위험</td><td>교사 평정(SSBD), CICO 일일점수, 사건 로그 빈도 환산</td></tr>
+            <tr><td><b>social_skills_rating</b><br>사회성 기술</td><td>또래관계·협동·자기조절 등 사회성 기술 평정.</td><td>평정 0–100</td><td><small>&lt; 40</small> → 보완 필요</td><td>사회성 평정(예: SSIS, BASC-3) 표준점수 환산</td></tr>
+          </tbody>
+        </table>
+        <p class="rti-refnote">계량 기준은 미국 RTI/MTSS 보편적 스크리닝 관행(학업 하위 25% 위험선, 행동 고위험 컷)을 참고해 설정한 참고값입니다. 실제 적용 시 학교·지역 표준화 데이터로 재보정 권장. Tier = 학업 또는 행동 위험 영역 수에 따라 1(안전)·2(단일 영역)·3(학업+행동 동시).</p>
+      </div>
+    </details>
+
     <div class="card">
-      <div class="grid2">
+      <div class="rti-modebar">
+        <button type="button" class="rti-mode is-active" data-mode="survey">① 설문지 (사회성·행동)</button>
+        <button type="button" class="rti-mode" data-mode="data">② 실측치 (수학·읽기 표준화검사)</button>
+        <button type="button" class="rti-mode" data-mode="manual">③ 직접 입력</button>
+      </div>
+
+      <!-- ① 설문지 -->
+      <div class="rti-intake" id="rti-survey">
+        <p class="rti-intake-h">사회성(SSIS/BASC형)·행동 위험(SSBD형) 자기/교사 평정 문항입니다. 각 문항의 객관적 기준 중 본인 상황과 가장 가까운 것을 선택하세요(1~5 → 0~100 환산).</p>
+        <div class="rti-qgrid" id="rti-qgrid"></div>
+        <div class="rti-intake-actions">
+          <button type="button" class="btn ghost" id="rti-apply-survey">설문 응답을 지표로 반영</button>
+          <span class="rti-intake-hint">미응답 문항은 현재 값(직접 입력)으로 유지됩니다.</span>
+        </div>
+      </div>
+
+      <!-- ② 실측치 -->
+      <div class="rti-intake" id="rti-data" hidden>
+        <p class="rti-intake-h">표준화 검사 결과를 붙여넣으면 4지표로 환산합니다. 모르는 항목은 비워두세요.</p>
+        <div class="grid2">
+          <div><label>수학 백분위 (0~100)</label><input id="rd_math" type="number" placeholder="예: 18"></div>
+          <div><label>읽기 벤치마크 점수 (0~100)</label><input id="rd_read" type="number" placeholder="예: 22"></div>
+          <div><label>행동 위험지수 (0~100, 높을수록 위험)</label><input id="rd_risk" type="number" placeholder="예: 74"></div>
+          <div><label>사회성 표준점수 (0~100)</label><input id="rd_social" type="number" placeholder="예: 35"></div>
+        </div>
+        <div class="rti-intake-actions">
+          <button type="button" class="btn ghost" id="rti-apply-data">실측치를 지표로 반영</button>
+          <span class="rti-intake-hint">미입력 항목은 현재 값(직접 입력)으로 유지됩니다.</span>
+        </div>
+      </div>
+
+      <!-- ③ 직접 입력 -->
+      <div class="grid2" id="rti-manual">
         <div><label>student_id</label><input id="sc_id" value="STU-001"></div>
         <div><label>math_percentile_rank (위험&lt;25)</label><input id="sc_math" type="number" value="18"></div>
-        <div><label>reading_benchmark_score</label><input id="sc_read" type="number" value="22"></div>
+        <div><label>reading_benchmark_score (위험&lt;25)</label><input id="sc_read" type="number" value="22"></div>
         <div><label>social_skills_rating (&lt;40 보완)</label><input id="sc_social" type="number" value="35"></div>
         <div><label>behavioral_risk_index (&gt;70 위험)</label><input id="sc_risk" type="number" value="74"></div>
       </div>
@@ -119,9 +195,9 @@
     <div class="card">
       <label>사건 로그 (JSON 배열: antecedent/behavior/consequence)</label>
       <textarea id="fba">[
-  {"antecedent":"수학 과제 시작 전","behavior":"책상 두드리기","consequence":"선생님 주의→과제 미룸"},
+  {"antecedent":"과제 시작 전","behavior":"책상 두드리기","consequence":"선생님 주의→과제 미룸"},
   {"antecedent":"조별 활동","behavior":"떠들기","consequence":"친구들 웃음→주의 획득"},
-  {"antecedent":"혼자 시험","behavior":"고개 숙임","consequence":"쉬운 문제로 교체→회피"}
+  {"antecedent":"혼자 평가 상황","behavior":"고개 숙임","consequence":"쉬운 과제로 교체→회피"}
 ]</textarea>
       <button class="btn" data-action="fba">FBA 분석</button>
       <div class="result" id="r-fba"></div>
@@ -200,6 +276,79 @@
     const v = function(id){ return document.getElementById(id).value; };
     const studentBody = function(){ return {student_id:v('s_id'), school_id:v('s_school'), grade_level:+v('s_grade'), classroom:v('s_class'), demographics:v('s_demo')}; };
     const screeningBody = function(){ return {student_id:v('sc_id'), math_percentile_rank:+v('sc_math'), reading_benchmark_score:+v('sc_read'), social_skills_rating:+v('sc_social'), behavioral_risk_index:+v('sc_risk')}; };
+
+    // ── ② 스크리닝 입력 모드 (설문지 / 실측치 / 직접입력) ──
+    const RTI_SET_BY = {
+      behavioral_risk_index: ['sq1', 'rd_risk'],
+      social_skills_rating:  ['sq2', 'rd_social'],
+      math_percentile_rank:  ['rd_math'],
+      reading_benchmark_score: ['rd_read']
+    };
+    const rclamp = (n) => Math.max(0, Math.min(100, Math.round(n)));
+    const setRti = (f, val) => {
+      const el = document.getElementById('sc_' + (f === 'behavioral_risk_index' ? 'risk' : f.replace('_score','').replace('math_percentile_rank','math').replace('social_skills_rating','social').replace('reading_benchmark','read')));
+      if (el) { el.value = rclamp(val); }
+    };
+    // ① 설문지 — 사회성(sq1, 역산: 점수 높을수록 사회성 좋음) / 행동위험(sq2, 정산)
+    const RTI_SURVEY = [
+      { id:'sq1', head:'사회성 기술 (SSIS/BASC형 평정)', criteria:[
+        '또래와 원활히 어울리고 갈등을 잘 조율한다',
+        '대부분 상황에서 협동적이나 가끔 다툼이 있다',
+        '보통 수준의 사회성, 도움받으면 협동한다',
+        '또래 관계가 어색하고 충돌이 잦다',
+        '또래와의 상호작용이 매우 어렵다' ] },
+      { id:'sq2', head:'행동 위험 (SSBD형 평정)', criteria:[
+        '문제행동이 거의 없고 규칙을 잘 지킨다',
+        '가끔 규칙을 어기나 크게 문제되지 않는다',
+        '간혹 충동·따돌림 등 문제행동이 관찰된다',
+        '자주 문제행동이 있고 주의가 필요하다',
+        '심각·지속적 문제행동으로 일상지장이 크다' ] }
+    ];
+    const rqg = document.getElementById('rti-qgrid');
+    RTI_SURVEY.forEach((q) => {
+      const wrap = document.createElement('div'); wrap.className = 'rti-q';
+      wrap.innerHTML = `<div class="q-head">${q.head}</div>`;
+      const opts = document.createElement('div'); opts.className = 'q-opts';
+      q.criteria.forEach((c, idx) => {
+        const rank = idx + 1;
+        const b = document.createElement('button');
+        b.type = 'button'; b.dataset.q = q.id; b.dataset.v = rank;
+        b.innerHTML = `<span class="q-rank">${rank}</span><span class="q-crit">${c}</span>`;
+        b.addEventListener('click', () => {
+          opts.querySelectorAll('button').forEach((x) => x.classList.remove('is-sel'));
+          b.classList.add('is-sel');
+        });
+        opts.appendChild(b);
+      });
+      wrap.appendChild(opts); rqg.appendChild(wrap);
+    });
+    document.getElementById('rti-apply-survey').addEventListener('click', () => {
+      // sq1: 1순위(매우 좋음)→100, 5순위(매우 어려움)→0  /  sq2: 1순위(안전)→0, 5순위(위험)→100
+      const s1 = rqg.querySelector('button[data-q="sq1"].is-sel');
+      if (s1) setRti('social_skills_rating', (5 - Number(s1.dataset.v)) * 25);
+      const s2 = rqg.querySelector('button[data-q="sq2"].is-sel');
+      if (s2) setRti('behavioral_risk_index', (Number(s2.dataset.v) - 1) * 25);
+    });
+    document.getElementById('rti-apply-data').addEventListener('click', () => {
+      const num = (id) => { const x = document.getElementById(id); return x.value === '' ? null : Number(x.value); };
+      const m = num('rd_math'), r = num('rd_read'), risk = num('rd_risk'), soc = num('rd_social');
+      if (m != null) setRti('math_percentile_rank', m);
+      if (r != null) setRti('reading_benchmark_score', r);
+      if (risk != null) setRti('behavioral_risk_index', risk);
+      if (soc != null) setRti('social_skills_rating', soc);
+    });
+    // 모드 전환
+    const rtiModes = document.querySelectorAll('.rti-mode');
+    rtiModes.forEach((m) => {
+      m.addEventListener('click', () => {
+        rtiModes.forEach((x) => x.classList.remove('is-active'));
+        m.classList.add('is-active');
+        const mode = m.dataset.mode;
+        document.getElementById('rti-survey').hidden = mode !== 'survey';
+        document.getElementById('rti-data').hidden = mode !== 'data';
+        document.getElementById('rti-manual').style.display = (mode === 'manual') ? '' : 'none';
+      });
+    });
     const interventionBody = function(){ return {student_id:v('iv_sid'), intervention_id:v('iv_type'), tier:+v('iv_tier'), status:v('iv_status'), delivery_details:v('iv_del')}; };
     const academicBody = function(){ return {student_id:v('pm_sid'), intervention_id:+v('pm_iv'), curriculum_based_measurement_score:+v('pm_cbm')}; };
     const behaviorBody = function(){ return {student_id:v('pm_sid'), intervention_id:+v('pm_iv'), daily_behavior_rating:+v('pm_beh')}; };
