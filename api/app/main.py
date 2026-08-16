@@ -674,7 +674,7 @@ def predict_missing_cutoffs(db: Session = Depends(get_db)):
 
 @app.post("/psych-assessment", response_model=PsychAssessmentResponse)
 def psych_assessment(req: PsychAssessmentRequest):
-    scores = psychology_engine.score_assessment(req.answers)
+    scores = psychology_engine.score_assessment(req.answers, req.answers_by_source)
     return PsychAssessmentResponse(scores=scores, narrative=psychology_engine.to_consulting_context(scores))
 
 
@@ -686,7 +686,7 @@ def predict_dropout_risk(req: DropoutRiskRequest, db: Session = Depends(get_db))
 
 @app.post("/qcrm-assessment", response_model=QcrmAssessmentResponse)
 def qcrm_assessment(req: QcrmAssessmentRequest):
-    result = qcrm_engine.run_mini_qcrm(req.profile, req.iterations)
+    result = qcrm_engine.run_mini_qcrm(req.profile, req.profiles_by_source, req.iterations)
     return QcrmAssessmentResponse(**result, narrative=qcrm_engine.to_consulting_context(result))
 
 

@@ -157,6 +157,24 @@
   .qcrm-modebar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
   .qcrm-mode { font-size: 12.5px; font-weight: 600; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface-sunken); color: var(--ink-muted); cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
   .qcrm-mode:hover { color: var(--ink); }
+  .src-subbar { display: flex; gap: 6px; margin: 16px 0 12px; flex-wrap: wrap; }
+  .src-tab { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface-sunken); color: var(--ink-muted); cursor: pointer; }
+  .src-tab.is-active { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .qcrm-qgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 16px; }
+  .qcrm-q { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 14px 12px; background: var(--surface); }
+  .qcrm-q .q-head { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 10px; line-height: 1.5; }
+  .qcrm-q .q-opts { display: flex; flex-direction: column; gap: 6px; }
+  .qcrm-q .q-opts button { text-align: left; font-size: 11.5px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-sunken); color: var(--ink-muted); cursor: pointer; display: flex; gap: 8px; align-items: flex-start; line-height: 1.4; }
+  .qcrm-q .q-opts button .q-rank { font-weight: 800; color: var(--accent); flex: 0 0 auto; }
+  .qcrm-q .q-opts button.is-sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--ink); }
+  .psy-grid { display: grid; grid-template-columns: 1fr; gap: 18px; margin-bottom: 16px; }
+  .psy-group-title { font-size: 12.5px; font-weight: 800; color: var(--accent); margin: 4px 0 2px; }
+  .psy-q { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; background: var(--surface); }
+  .psy-q .q-text { font-size: 12px; font-weight: 600; margin-bottom: 9px; line-height: 1.5; }
+  .psy-q .q-likert { display: flex; gap: 6px; }
+  .psy-q .q-likert button { flex: 1; font-size: 11px; padding: 8px 0; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-sunken); color: var(--ink-muted); cursor: pointer; font-weight: 700; }
+  .psy-q .q-likert button.is-sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); }
+  .qcrm-intake-h { font-size: 12px; color: var(--ink-muted); margin: 0 0 12px; line-height: 1.6; }
   .qcrm-mode.is-active { border-color: var(--accent); color: #fff; background: color-mix(in srgb, var(--accent) 22%, transparent); }
   .qcrm-intake-note { font-size: 12px; color: var(--ink-faint); margin: 0 0 16px; line-height: 1.5; word-break: keep-all; }
   .qcrm-intake { margin-bottom: 24px; }
@@ -510,67 +528,43 @@
       </div>
     </div>
     <div class="qcrm-tool">
-      <div class="qcrm-modebar" role="tablist" aria-label="진단 입력 방식">
-        <button type="button" class="qcrm-mode is-active" data-mode="questionnaire" role="tab" aria-selected="true">① 자가진단 질문지</button>
-        <button type="button" class="qcrm-mode" data-mode="data" role="tab" aria-selected="false">② 실데이터 입력</button>
-        <button type="button" class="qcrm-mode" data-mode="manual" role="tab" aria-selected="false">③ 직접 슬라이더</button>
+      <div class="qcrm-modebar" role="tablist" aria-label="진단 모듈">
+        <button type="button" class="qcrm-mode is-active" data-mode="cognition" role="tab" aria-selected="true">① 인지준비도 (QCRM) 3소스</button>
+        <button type="button" class="qcrm-mode" data-mode="psych" role="tab" aria-selected="false">② 표준화 심리검사 3소스</button>
       </div>
-      <p class="qcrm-intake-note">진단은 6개 인지 요인(개념 이해·문제 해석·전략 선택·계산 정확도·주의 조절·시간 관리)을 기준으로 합니다. 아래 방식 중 하나로 입력하면 우측 슬라이더에 반영되어 진단됩니다.</p>
+      <p class="qcrm-intake-note">교사 평가 없이 <b>학생 자가 · 학부모 보고 · 교육기관 공개자료</b> 3소스만으로 진단합니다. 3소스를 모두 입력하면 가중 융합(학생 40%·학부모 30%·교육기관 30%)해 더 정밀한 진단이 가능합니다(미입력 소스는 융합에서 제외).</p>
 
-      <!-- ① 자가진단 질문지 -->
-      <div class="qcrm-intake" id="qcrm-questionnaire" role="tabpanel">
-        <p class="qcrm-intake-h">각 문항의 객관적 기준 중 본인 상황과 가장 가까운 것을 선택하세요. 선택한 기준이 해당 요인 점수(1~5 → 20~100)로 환산됩니다.</p>
-        <div class="qcrm-qgrid" id="qcrm-qgrid"></div>
-        <div class="qcrm-intake-actions">
-          <button type="button" class="btn btn-ghost" id="qcrm-apply-questionnaire">응답을 진단값으로 반영</button>
-          <span class="qcrm-intake-hint">미응답 문항은 현재 슬라이더 값으로 유지됩니다.</span>
+      <!-- ① 인지준비도 QCRM 3소스 -->
+      <div id="qcrm-cognition" role="tabpanel">
+        <div class="src-subbar" id="qcrm-cog-srcbar">
+          <button type="button" class="src-tab is-active" data-src="student">학생 자가</button>
+          <button type="button" class="src-tab" data-src="parent">학부모 보고</button>
+          <button type="button" class="src-tab" data-src="institution">교육기관 자료</button>
+          <button type="button" class="src-tab" data-src="manual">직접 입력</button>
         </div>
-      </div>
-
-      <!-- ② 실데이터 입력 -->
-      <div class="qcrm-intake" id="qcrm-data" role="tabpanel" hidden>
-        <p class="qcrm-intake-h">보유한 실측치를 붙여넣으면 6요인으로 환산합니다. 모르는 항목은 비워두세요.</p>
-        <div class="qcrm-datagrid">
-          <label>최근 모의고사/내신 백분위<input type="number" id="qcrm_d_grade" min="0" max="100" placeholder="예: 72"></label>
-          <label>오답 중 개념·이해 오류 비중(%)<input type="number" id="qcrm_d_concept_err" min="0" max="100" placeholder="예: 40"></label>
-          <label>서술형/서술형 풀이 점수 비중(%)<input type="number" id="qcrm_d_open" min="0" max="100" placeholder="예: 55"></label>
-          <label>시험 내 계산 실수 감점 비중(%)<input type="number" id="qcrm_d_calc_err" min="0" max="100" placeholder="예: 20"></label>
-          <label>집중 지속 시간(분, 자가보고)<input type="number" id="qcrm_d_focus" min="0" max="300" placeholder="예: 35"></label>
-          <label>계획 대비 학습 달성률(%)<input type="number" id="qcrm_d_plan" min="0" max="100" placeholder="예: 50"></label>
-        </div>
-        <div class="qcrm-intake-actions">
-          <button type="button" class="btn btn-ghost" id="qcrm-apply-data">실데이터를 진단값으로 반영</button>
-          <span class="qcrm-intake-hint">미입력 항목은 현재 슬라이더 값으로 유지됩니다.</span>
+        <div class="qcrm-qgrid" id="qcrm-cog-grid"></div>
+        <div class="qcrm-sliders" id="qcrm-cog-manual" hidden>
+          <div class="qcrm-field"><label for="qcrm_concept_mastery">개념 이해 <span class="qcrm-val" id="qcrm_concept_mastery_val">62</span></label><input type="range" id="qcrm_concept_mastery" min="0" max="100" value="62"></div>
+          <div class="qcrm-field"><label for="qcrm_problem_interpretation">문제 해석 <span class="qcrm-val" id="qcrm_problem_interpretation_val">56</span></label><input type="range" id="qcrm_problem_interpretation" min="0" max="100" value="56"></div>
+          <div class="qcrm-field"><label for="qcrm_strategy_selection">전략 선택 <span class="qcrm-val" id="qcrm_strategy_selection_val">48</span></label><input type="range" id="qcrm_strategy_selection" min="0" max="100" value="48"></div>
+          <div class="qcrm-field"><label for="qcrm_calculation_accuracy">계산 정확도 <span class="qcrm-val" id="qcrm_calculation_accuracy_val">68</span></label><input type="range" id="qcrm_calculation_accuracy" min="0" max="100" value="68"></div>
+          <div class="qcrm-field"><label for="qcrm_attention_control">주의 조절 <span class="qcrm-val" id="qcrm_attention_control_val">52</span></label><input type="range" id="qcrm_attention_control" min="0" max="100" value="52"></div>
+          <div class="qcrm-field"><label for="qcrm_time_management">시간 관리 <span class="qcrm-val" id="qcrm_time_management_val">46</span></label><input type="range" id="qcrm_time_management" min="0" max="100" value="46"></div>
         </div>
       </div>
 
-      <div class="qcrm-sliders">
-        <div class="qcrm-field">
-          <label for="qcrm_concept_mastery">개념 이해 <span class="qcrm-val" id="qcrm_concept_mastery_val">62</span></label>
-          <input type="range" id="qcrm_concept_mastery" min="0" max="100" value="62">
+      <!-- ② 표준화 심리검사 3소스 -->
+      <div id="qcrm-psych" role="tabpanel" hidden>
+        <div class="src-subbar" id="qcrm-psy-srcbar">
+          <button type="button" class="src-tab is-active" data-psrc="student">학생 자가</button>
+          <button type="button" class="src-tab" data-psrc="parent">학부모 보고</button>
+          <button type="button" class="src-tab" data-psrc="institution">교육기관 자료</button>
         </div>
-        <div class="qcrm-field">
-          <label for="qcrm_problem_interpretation">문제 해석 <span class="qcrm-val" id="qcrm_problem_interpretation_val">56</span></label>
-          <input type="range" id="qcrm_problem_interpretation" min="0" max="100" value="56">
-        </div>
-        <div class="qcrm-field">
-          <label for="qcrm_strategy_selection">전략 선택 <span class="qcrm-val" id="qcrm_strategy_selection_val">48</span></label>
-          <input type="range" id="qcrm_strategy_selection" min="0" max="100" value="48">
-        </div>
-        <div class="qcrm-field">
-          <label for="qcrm_calculation_accuracy">계산 정확도 <span class="qcrm-val" id="qcrm_calculation_accuracy_val">68</span></label>
-          <input type="range" id="qcrm_calculation_accuracy" min="0" max="100" value="68">
-        </div>
-        <div class="qcrm-field">
-          <label for="qcrm_attention_control">주의 조절 <span class="qcrm-val" id="qcrm_attention_control_val">52</span></label>
-          <input type="range" id="qcrm_attention_control" min="0" max="100" value="52">
-        </div>
-        <div class="qcrm-field">
-          <label for="qcrm_time_management">시간 관리 <span class="qcrm-val" id="qcrm_time_management_val">46</span></label>
-          <input type="range" id="qcrm_time_management" min="0" max="100" value="46">
-        </div>
+        <p class="qcrm-intake-h">표준화 심리검사(1~5점 리커트): 자기결정성(SDT)·자기조절학습(SRL)·긍정심리·생태학적(PBS) 4이론 11하위척도. 각 소스별 문항에 응답하세요.</p>
+        <div class="psy-grid" id="qcrm-psy-grid"></div>
       </div>
-      <button class="btn btn-primary" type="button" id="qcrm-submit-btn">진단하기</button>
+
+      <button class="btn btn-primary" type="button" id="qcrm-submit-btn">통합 진단하기</button>
       <div id="qcrm-error"></div>
       <div id="qcrm-result"></div>
     </div>
@@ -788,194 +782,252 @@
     input.addEventListener('input', () => { val.textContent = input.value; });
   });
 
-  // ── 진단 입력 모드 (질문지 / 실데이터 / 직접 슬라이더) ──
-  const QCRM_SET_BY = {
-    concept_mastery:   ['q1', 'd_grade', 'd_concept_err'],
-    problem_interpretation: ['q2', 'd_open'],
-    strategy_selection: ['q3', 'd_open'],
-    calculation_accuracy: ['q4', 'd_calc_err'],
-    attention_control: ['q5', 'd_focus'],
-    time_management:   ['q6', 'd_plan']
-  };
+  // ── QCRM 3소스 다면적 진단 + 표준화 심리검사 ─────────────────────────
   const clamp = (n) => Math.max(0, Math.min(100, Math.round(n)));
   const setSlider = (f, v) => {
     const input = document.getElementById('qcrm_' + f);
-    input.value = clamp(v);
-    document.getElementById('qcrm_' + f + '_val').textContent = input.value;
+    if (input) { input.value = clamp(v); const lab = document.getElementById('qcrm_' + f + '_val'); if (lab) lab.textContent = input.value; }
   };
+  const SOURCE_W = { student: 0.40, parent: 0.30, institution: 0.30 };
 
-  // ① 자가진단 질문지 — 각 요인별 객관적 기준(1~5)
-  const QCRM_QUESTIONS = [
-    { id: 'q1', label: '개념 이해',
-      criteria: [
-        '교과서만 봐도 새 단원을 대부분 혼자 이해한다',
-        '교과서 + 인터넷 검색으로 대부분 이해한다',
-        '예시·풀이를 곁들여야 절반 정도 이해한다',
-        '강의나 질문으로 설명들을 때만 이해한다',
-        '반복 설명에도 개념이 잡히기 어렵다'
-      ] },
-    { id: 'q2', label: '문제 해석',
-      criteria: [
-        '조건·함의를 빠뜨림 없이 정확히 파악한다',
-        '대부분 정확히 파악하나 가끔 세부 조건을 놓친다',
-        '절반 정도는 풀이 전 요구사항을 정리한다',
-        '조건을 자주 생략해 엉뚱한 풀이로 들어간다',
-        '문제를 읽어도 무엇을 구하는지 잘 모르겠다'
-      ] },
-    { id: 'q3', label: '전략 선택',
-      criteria: [
-        '유형을 봐도 스스로 풀이 순서·전략을 세운다',
-        '비슷한 예시를 떠올리며 전략을 세운다',
-        '힌트나 풀이 예시가 있어야 전략을 세운다',
-        '접근법을 자주 바꾸고 헷갈린다',
-        '어떤 방법으로 풀지 막막하다'
-      ] },
-    { id: 'q4', label: '계산 정확도',
-      criteria: [
-        '시험에서 계산 실수가 거의 없다(5% 미만)',
-        '가끔 실수한다(약 10%)',
-        '간혹 실수한다(약 20%)',
-        '자주 실수한다(약 35%)',
-        '계산 실수가 매우 잦다(40% 이상)'
-      ] },
-    { id: 'q5', label: '주의 조절',
-      criteria: [
-        '한 과목에 50분 이상 몰입한다',
-        '약 35~50분 집중한다',
-        '약 20~35분 집중한다',
-        '약 10~20분 집중한다',
-        '10분도 집중하기 어렵다'
-      ] },
-    { id: 'q6', label: '시간 관리',
-      criteria: [
-        '세운 주간 계획을 대부분(80%+) 지킨다',
-        '계획의 약 60~80%를 지킨다',
-        '계획의 약 40~60%를 지킨다',
-        '계획의 약 20~40%만 지킨다',
-        '계획을 세워도 거의 지키지 않는다'
-      ] }
+  // 인지준비도 6요인 × 3소스 객관 질문지 (dir:true=높을수록 양호)
+  const QCRM_SRC = {
+    student: { title: '학생 자가', qs: [
+      { f:'concept_mastery', dir:true, q:'새 단원을 혼자 이해하는 정도', c:['교과서만 봐도 대부분 혼자','교과서+검색으로 대부분','예시 곁들여야 절반','강의 들어야 이해','반복 설명에도 어렵다'] },
+      { f:'problem_interpretation', dir:true, q:'문제 조건·함의를 정확히 파악하는 정도', c:['빠뜨림 없이 정확히','대부분 정확, 가끔 세부 놓침','절반 정도 정리','조건 자주 생략','무엇을 구하는지 모름'] },
+      { f:'strategy_selection', dir:true, q:'풀이 전략을 스스로 세우는 정도', c:['유형 봐도 스스로 순서 세움','비슷한 예시로 전략 세움','힌트 있어야 세움','접근법 자주 바꿈','어떤 방법 막막'] },
+      { f:'calculation_accuracy', dir:true, q:'계산 실수가 없는 정도', c:['실수 거의 없음(5%미만)','가끔(약10%)','간혹(약20%)','자주(약35%)','매우 잦음(40%+)'] },
+      { f:'attention_control', dir:true, q:'한 과목에 몰입하는 정도', c:['50분 이상','약35~50분','약20~35분','약10~20분','10분도 어려움'] },
+      { f:'time_management', dir:true, q:'세운 주간 계획을 지키는 정도', c:['80% 이상 지킴','약60~80%','약40~60%','약20~40%','거의 못 지킴'] }
+    ] },
+    parent: { title: '학부모 보고', qs: [
+      { f:'concept_mastery', dir:true, q:'자녀가 개념을 스스로 이해하는 정도', c:['대부분 혼자 이해','검색하며 대부분','설명 곁들이면 절반','강의 들을 때만','반복해도 어려움'] },
+      { f:'problem_interpretation', dir:true, q:'자녀가 문제 조건을 정확히 파악하는 정도', c:['매우 정확','대체로 정확','보통','자주 놓침','많이 어려워함'] },
+      { f:'strategy_selection', dir:true, q:'자녀가 풀이 접근법을 스스로 찾는 정도', c:['스스로 잘 찾음','비슷한 예시로 찾음','힌트 필요','자주 헷갈림','막막해함'] },
+      { f:'calculation_accuracy', dir:true, q:'자녀의 계산 정확도', c:['매우 정확','정확한 편','보통','자주 실수','실수 매우 잦음'] },
+      { f:'attention_control', dir:true, q:'자녀의 집중 지속 시간', c:['한 시간 가까이','30~50분','20~30분','10~20분','10분 미만'] },
+      { f:'time_management', dir:true, q:'자녀의 계획 이행 정도', c:['잘 지킴','대체로 지킴','보통','자주 어김','거의 못 지킴'] }
+    ] },
+    institution: { title: '교육기관 자료', qs: [
+      { f:'concept_mastery', dir:true, q:'내신/성적표 개념 이해도(석차백분위)', c:['상위25%','상위50%','중위','하위50%','하위25%'] },
+      { f:'problem_interpretation', dir:true, q:'서술형/논술 점수 비중', c:['상위권','중상위','중위','하위권','최하위'] },
+      { f:'strategy_selection', dir:true, q:'과목별 성취도 안정성', c:['매우 안정','안정','보통','불안정','매우 불안정'] },
+      { f:'calculation_accuracy', dir:true, q:'오답 중 계산 실수 비중', c:['매우 낮음','낮음','보통','높음','매우 높음'] },
+      { f:'attention_control', dir:true, q:'출결·수업 참여 기록', c:['우수(무단결석0)','양호','보통','미흡(지각잦음)','부족(결석많음)'] },
+      { f:'time_management', dir:true, q:'비교과·과제 제출 기록', c:['모두 제때','대체로 제때','보통','자주 지연','잦은 미제출'] }
+    ] }
+  };
+  const COG_RAW = { student:{}, parent:{}, institution:{} };
+  const MANUAL_PROFILE = {};
+
+  function renderCogSource(src) {
+    const grid = document.getElementById('qcrm-cog-grid');
+    const manual = document.getElementById('qcrm-cog-manual');
+    if (src === 'manual') { grid.hidden = true; manual.hidden = false; return; }
+    grid.hidden = false; manual.hidden = true;
+    grid.innerHTML = '';
+    QCRM_SRC[src].qs.forEach((qi) => {
+      const wrap = document.createElement('div'); wrap.className = 'qcrm-q';
+      wrap.innerHTML = `<div class="q-head">${QCRM_SRC[src].title} · ${qi.q}</div>`;
+      const opts = document.createElement('div'); opts.className = 'q-opts';
+      qi.c.forEach((c, idx) => {
+        const rank = idx + 1;
+        const b = document.createElement('button'); b.type = 'button';
+        b.innerHTML = `<span class="q-rank">${rank}</span><span class="q-crit">${c}</span>`;
+        const prev = COG_RAW[src][qi.f];
+        const prevRank = qi.dir ? (5 - (prev/25|0)) : ((prev/25|0) + 1);
+        if (prev != null && prevRank === rank) b.classList.add('is-sel');
+        b.addEventListener('click', () => {
+          opts.querySelectorAll('button').forEach((x) => x.classList.remove('is-sel'));
+          b.classList.add('is-sel');
+          const raw = qi.dir ? (5 - rank) * 25 : (rank - 1) * 25;
+          COG_RAW[src][qi.f] = raw;
+        });
+        opts.appendChild(b);
+      });
+      wrap.appendChild(opts); grid.appendChild(wrap);
+    });
+  }
+  // 인지 3소스 탭
+  const cogTabs = document.querySelectorAll('#qcrm-cog-srcbar .src-tab');
+  cogTabs.forEach((t) => t.addEventListener('click', () => {
+    cogTabs.forEach((x) => x.classList.remove('is-active'));
+    t.classList.add('is-active');
+    renderCogSource(t.dataset.src);
+  }));
+  document.querySelectorAll('#qcrm-cog-manual input[type=range]').forEach((inp) => {
+    inp.addEventListener('input', () => { MANUAL_PROFILE[inp.id.replace('qcrm_','')] = Number(inp.value); document.getElementById(inp.id + '_val').textContent = inp.value; });
+  });
+  renderCogSource('student');
+
+  // 표준화 심리검사 문항 (4이론 11하위척도 × 3소스) — 백엔드 PSY_ITEMS와 동일
+  const PSY_THEORY = [
+    { key:'self_determination', label:'자기결정성(SDT)', subs:[
+      { sub:'sdt_autonomy', label:'자율성' }, { sub:'sdt_competence', label:'유능성' }, { sub:'sdt_relatedness', label:'관계성' } ] },
+    { key:'self_regulated_learning', label:'자기조절학습(SRL)', subs:[
+      { sub:'srl_planning', label:'계획' }, { sub:'srl_monitoring', label:'점검' }, { sub:'srl_evaluation', label:'평가' } ] },
+    { key:'positive_psychology', label:'긍정심리학', subs:[
+      { sub:'pp_strengths', label:'강점 인식' }, { sub:'pp_wellbeing', label:'안녕감' } ] },
+    { key:'ecological_fit', label:'생태학적(PBS)', subs:[
+      { sub:'eco_classroom', label:'교실 적합도' }, { sub:'eco_home', label:'가정 지원' } ] }
   ];
-  const qgrid = document.getElementById('qcrm-qgrid');
-  QCRM_QUESTIONS.forEach((q) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'qcrm-q';
-    wrap.innerHTML = `<div class="q-text">${q.label}</div>`;
-    const opts = document.createElement('div');
-    opts.className = 'q-opts';
-    q.criteria.forEach((c, idx) => {
-      const rank = idx + 1;
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.dataset.q = q.id;
-      b.dataset.v = rank;
-      b.innerHTML = `<span class="q-rank">${rank}</span><span class="q-crit">${c}</span>`;
-      b.addEventListener('click', () => {
-        opts.querySelectorAll('button').forEach((x) => x.classList.remove('is-sel'));
-        b.classList.add('is-sel');
-      });
-      opts.appendChild(b);
-    });
-    wrap.appendChild(opts);
-    qgrid.appendChild(wrap);
-  });
-  document.getElementById('qcrm-apply-questionnaire').addEventListener('click', () => {
-    QCRM_FIELDS.forEach((f) => {
-      const ids = QCRM_SET_BY[f].filter((x) => x.startsWith('q'));
-      let sum = 0, n = 0;
-      ids.forEach((id) => {
-        const sel = qgrid.querySelector(`button[data-q="${id}"].is-sel`);
-        if (sel) { sum += Number(sel.dataset.v); n++; }
-      });
-      if (n > 0) setSlider(f, (sum / n) * 20); // 1~5 → 20~100
-    });
-  });
+  const PSY_ITEMS = [
+    {id:'sdt_a1',sub:'sdt_autonomy',src:['student'],q:'스스로 학습 목표나 방법을 고를 수 있는 느낌이 듭니다.'},
+    {id:'sdt_a2',sub:'sdt_autonomy',src:['student'],q:'하고 싶은 과목/주제를 스스로 정할 기회가 많습니다.'},
+    {id:'sdt_a3',sub:'sdt_autonomy',src:['student','parent'],q:'내 방식으로 해보는 시간이 있습니다(부모/선생 지시 외).'},
+    {id:'sdt_a4',sub:'sdt_autonomy',src:['parent'],q:'학습 계획 세울 때 아이 의견을 충분히 묻습니다.'},
+    {id:'sdt_c1',sub:'sdt_competence',src:['student'],q:'내 학습이 잘 풀리고 있다는 확신이 있습니다.'},
+    {id:'sdt_c2',sub:'sdt_competence',src:['student'],q:'어려운 문제도 방법을 찾아내면 해낼 수 있다 믿습니다.'},
+    {id:'sdt_c3',sub:'sdt_competence',src:['student','parent'],q:'최근 스스로 해낸 일이 하나 이상 있습니다.'},
+    {id:'sdt_c4',sub:'sdt_competence',src:['parent'],q:'아이가 "나도 할 수 있다"는 태도를 보입니다.'},
+    {id:'sdt_r1',sub:'sdt_relatedness',src:['student'],q:'선생님이나 친구와 마음이 통한다고 느낍니다.'},
+    {id:'sdt_r2',sub:'sdt_relatedness',src:['student'],q:'학교/학원에서 도움 요청하기 편한 사람이 있습니다.'},
+    {id:'sdt_r3',sub:'sdt_relatedness',src:['student','parent'],q:'또래 관계에서 외롭거나 소외된 느낌을 자주 받습니다.'},
+    {id:'sdt_r4',sub:'sdt_relatedness',src:['parent'],q:'아이가 교우/선생님과 관계에서 안정적입니다.'},
+    {id:'srl_p1',sub:'srl_planning',src:['student'],q:'공부 전 무엇을 언제까지 할지 구체적으로 계획합니다.'},
+    {id:'srl_p2',sub:'srl_planning',src:['student'],q:'한 주 단위 학습 목표를 적어두고 따릅니다.'},
+    {id:'srl_p3',sub:'srl_planning',src:['student','parent'],q:'시험 일정을 미리 확인하고 공부를 배분합니다.'},
+    {id:'srl_p4',sub:'srl_planning',src:['parent'],q:'아이가 스스로 주간 학습 계획을 세웁니다.'},
+    {id:'srl_m1',sub:'srl_monitoring',src:['student'],q:'공부 중 "지금 집중되는가"를 스스로 체크합니다.'},
+    {id:'srl_m2',sub:'srl_monitoring',src:['student'],q:'잘 모르겠는 부분을 풀이 중 스스로 알아챕니다.'},
+    {id:'srl_m3',sub:'srl_monitoring',src:['student','parent'],q:'막히면 어디서 틀렸는지 스스로 짚어봅니다.'},
+    {id:'srl_m4',sub:'srl_monitoring',src:['parent'],q:'아이가 혼자 공부할 때 흐름을 스스로 점검합니다.'},
+    {id:'srl_e1',sub:'srl_evaluation',src:['student'],q:'시험/과제 후 오답 원인을 스스로 정리합니다.'},
+    {id:'srl_e2',sub:'srl_evaluation',src:['student'],q:'공부 방법 효과였는지 돌아보고 고칩니다.'},
+    {id:'srl_e3',sub:'srl_evaluation',src:['student','parent'],q:'성적표 받고 부족한 부분을 스스로 파악합니다.'},
+    {id:'srl_e4',sub:'srl_evaluation',src:['parent'],q:'아이가 결과 보고 다음 학습을 스스로 조정합니다.'},
+    {id:'pp_s1',sub:'pp_strengths',src:['student'],q:'내 강점이 무엇인지 명확히 압니다.'},
+    {id:'pp_s2',sub:'pp_strengths',src:['student','parent'],q:'강점 살릴 활동에 자주 참여합니다.'},
+    {id:'pp_s3',sub:'pp_strengths',src:['parent'],q:'아이가 자신의 좋은 점을 스스로 말할 수 있습니다.'},
+    {id:'pp_s4',sub:'pp_strengths',src:['institution'],q:'생활기록/비교과에서 두드러진 강점 영역이 보입니다.'},
+    {id:'pp_w1',sub:'pp_wellbeing',src:['student'],q:'전반적으로 학습 생활에 즐거움이 있습니다.'},
+    {id:'pp_w2',sub:'pp_wellbeing',src:['student'],q:'스트레스 쌓여도 회복하는 나만의 방법이 있습니다.'},
+    {id:'pp_w3',sub:'pp_wellbeing',src:['parent'],q:'아이가 전반적으로 안정적·긍정적 기분 상태입니다.'},
+    {id:'pp_w4',sub:'pp_wellbeing',src:['institution'],q:'상담/생활기록상 정서 안정 지표가 양호합니다.'},
+    {id:'eco_cl1',sub:'eco_classroom',src:['student','parent','institution'],q:'수업 방식/평가가 아이에게 맞지 않는 경우가 잦습니다.'},
+    {id:'eco_cl2',sub:'eco_classroom',src:['student','parent','institution'],q:'교실 분위기/규칙이 아이에게 부담이 됩니다.'},
+    {id:'eco_cl3',sub:'eco_classroom',src:['institution'],q:'생활기록상 교우/수업 참여 불일치 신호가 보입니다.'},
+    {id:'eco_cl4',sub:'eco_classroom',src:['parent','institution'],q:'선생님과 마찰/소통 단절이 잦습니다.'},
+    {id:'eco_h1',sub:'eco_home',src:['student','parent'],q:'집에서 공부 공간/규칙이 자주 바뀌어 불안정합니다.'},
+    {id:'eco_h2',sub:'eco_home',src:['student','parent'],q:'부모 기대와 실제 지원 사이 괴리가 느껴집니다.'},
+    {id:'eco_h3',sub:'eco_home',src:['parent'],q:'가정 학습 지원이 아이 필요에 비해 부족합니다.'},
+    {id:'eco_h4',sub:'eco_home',src:['institution'],q:'학부모 상담 기록상 가정 지지 자원이 제한적입니다.'}
+  ];
+  const PSY_RAW = { student:{}, parent:{}, institution:{} };
+  const PSY_SUB_LABEL = {}; PSY_THEORY.forEach((t) => t.subs.forEach((s) => PSY_SUB_LABEL[s.sub] = s.label));
+  const REVERS = { eco_classroom:true, eco_home:true }; // 역방향(점수 높을수록 불일치)
 
-  // ② 실데이터 입력 → 6요인 환산
-  document.getElementById('qcrm-apply-data').addEventListener('click', () => {
-    const num = (id) => { const v = document.getElementById('qcrm_' + id).value; return v === '' ? null : Number(v); };
-    const grade = num('d_grade'), conceptErr = num('d_concept_err'), open = num('d_open'),
-          calcErr = num('d_calc_err'), focus = num('d_focus'), plan = num('d_plan');
-    const map = {
-      concept_mastery: grade != null ? grade - (conceptErr != null ? conceptErr * 0.4 : 0) : null,
-      problem_interpretation: open != null ? open : null,
-      strategy_selection: open != null ? open - (grade != null ? (100 - grade) * 0.2 : 0) : null,
-      calculation_accuracy: calcErr != null ? 100 - calcErr : null,
-      attention_control: focus != null ? Math.min(100, (focus / 60) * 100) : null,
-      time_management: plan != null ? plan : null
-    };
-    QCRM_FIELDS.forEach((f) => { if (map[f] != null) setSlider(f, map[f]); });
-  });
+  function renderPsySource(src) {
+    const grid = document.getElementById('qcrm-psy-grid');
+    grid.innerHTML = '';
+    PSY_THEORY.forEach((t) => {
+      const items = PSY_ITEMS.filter((it) => it.src.includes(src));
+      if (!items.length) return;
+      const grp = document.createElement('div');
+      grp.innerHTML = `<div class="psy-group-title">${t.label}</div>`;
+      items.forEach((it) => {
+        const wrap = document.createElement('div'); wrap.className = 'psy-q';
+        wrap.innerHTML = `<div class="q-text">${it.q}</div>`;
+        const lk = document.createElement('div'); lk.className = 'q-likert';
+        for (let n = 1; n <= 5; n++) {
+          const b = document.createElement('button'); b.type = 'button'; b.textContent = n;
+          if (PSY_RAW[src][it.id] === n) b.classList.add('is-sel');
+          b.addEventListener('click', () => {
+            lk.querySelectorAll('button').forEach((x) => x.classList.remove('is-sel'));
+            b.classList.add('is-sel');
+            PSY_RAW[src][it.id] = n;
+          });
+          lk.appendChild(b);
+        }
+        wrap.appendChild(lk); grp.appendChild(wrap);
+      });
+      grid.appendChild(grp);
+    });
+  }
+  const psyTabs = document.querySelectorAll('#qcrm-psy-srcbar .src-tab');
+  psyTabs.forEach((t) => t.addEventListener('click', () => {
+    psyTabs.forEach((x) => x.classList.remove('is-active'));
+    t.classList.add('is-active');
+    renderPsySource(t.dataset.psrc);
+  }));
+  renderPsySource('student');
 
-  // 모드 전환
+  // 모듈 탭(인지/심리) 전환
   const qcrmModes = document.querySelectorAll('.qcrm-mode');
-  qcrmModes.forEach((m) => {
-    m.addEventListener('click', () => {
-      qcrmModes.forEach((x) => { x.classList.remove('is-active'); x.setAttribute('aria-selected', 'false'); });
-      m.classList.add('is-active'); m.setAttribute('aria-selected', 'true');
-      const mode = m.dataset.mode;
-      document.getElementById('qcrm-questionnaire').hidden = mode !== 'questionnaire';
-      document.getElementById('qcrm-data').hidden = mode !== 'data';
-    });
-  });
+  qcrmModes.forEach((m) => m.addEventListener('click', () => {
+    qcrmModes.forEach((x) => { x.classList.remove('is-active'); x.setAttribute('aria-selected','false'); });
+    m.classList.add('is-active'); m.setAttribute('aria-selected','true');
+    const mode = m.dataset.mode;
+    document.getElementById('qcrm-cognition').hidden = mode !== 'cognition';
+    document.getElementById('qcrm-psych').hidden = mode !== 'psych';
+  }));
 
-  const QCRM_LEVEL_COLOR = { stable: '#3FCB93', developing: '#eab308', needs_support: '#FF8A80' };
-  const QCRM_LEVEL_LABEL = { stable: '안정', developing: '발전 중', needs_support: '지원 필요' };
+  const QCRM_LEVEL_COLOR = { stable:'#3FCB93', developing:'#eab308', needs_support:'#FF8A80' };
+  const QCRM_LEVEL_LABEL = { stable:'안정', developing:'발전 중', needs_support:'지원 필요' };
   const qcrmBtn = document.getElementById('qcrm-submit-btn');
   const qcrmError = document.getElementById('qcrm-error');
   const qcrmResult = document.getElementById('qcrm-result');
 
   qcrmBtn.addEventListener('click', async () => {
-    qcrmError.style.display = 'none';
-    qcrmResult.style.display = 'none';
-    qcrmBtn.disabled = true;
-    qcrmBtn.textContent = '진단 중...';
-
-    const profile = {};
-    QCRM_FIELDS.forEach((f) => { profile[f] = Number(document.getElementById('qcrm_' + f).value) / 100; });
-
+    qcrmError.style.display = 'none'; qcrmResult.style.display = 'none';
+    qcrmBtn.disabled = true; qcrmBtn.textContent = '진단 중...';
+    // 인지 3소스 프로파일 구성
+    const cog = {};
+    ['student','parent','institution'].forEach((s) => { if (Object.keys(COG_RAW[s]).length) cog[s] = COG_RAW[s]; });
+    if (Object.keys(MANUAL_PROFILE).length) {
+      ['student','parent','institution'].forEach((s) => { if (!cog[s]) cog[s] = Object.assign({}, MANUAL_PROFILE); });
+    }
+    // 심리 3소스 응답 구성
+    const psy = {};
+    ['student','parent','institution'].forEach((s) => { if (Object.keys(PSY_RAW[s]).length) psy[s] = PSY_RAW[s]; });
     try {
-      const res = await fetch('/qcrm-assessment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, iterations: 3 })
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || `요청 실패 (${res.status})`);
+      let qdata = null, pdata = null;
+      if (Object.keys(cog).length) {
+        const r1 = await fetch('/qcrm-assessment', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ profiles_by_source: cog, iterations: 3 }) });
+        if (!r1.ok) { const e = await r1.json().catch(()=>({})); throw new Error(e.detail || 'QCRM 요청 실패('+r1.status+')'); }
+        qdata = await r1.json();
       }
-      const data = await res.json();
-      const color = QCRM_LEVEL_COLOR[data.readiness_level] || '#9B84FF';
-      const levelLabel = QCRM_LEVEL_LABEL[data.readiness_level] || data.readiness_level;
-      const weakest = data.weakest_links.map((l) => `<span class="qcrm-chip" style="border-color:${color}66;color:${color}">${l.label} ${Math.round(l.score * 100)}</span>`).join('');
-      const strongest = data.strongest_links.map((l) => `<span class="qcrm-chip">${l.label} ${Math.round(l.score * 100)}</span>`).join('');
-      const recs = data.recommendations.map((r) => `<li>${r}</li>`).join('');
-      const adj = data.decision_adjustment || {};
-      const adjustmentBlock = adj.recommendation_level
-        ? `<div class="qcrm-section-title">판단 보정</div><div class="qcrm-decision">개입안 적합도 ${Math.round((adj.adjusted_success_probability || 0) * 100)}% · 추천 모드 ${adj.recommendation_level} · 신뢰도 ${Math.round((adj.confidence || 0) * 100)}%</div>`
-        : '';
-      qcrmResult.innerHTML = `
-        <div class="qcrm-readiness">
-          <span class="score">${Math.round(data.readiness_score * 100)}</span>
-          <span class="level" style="background:${color}22;color:${color}">${levelLabel}</span>
-        </div>
-        <div class="qcrm-section-title">우선 개입 지점</div>
-        <div class="qcrm-links">${weakest}</div>
-        <div class="qcrm-section-title">강점</div>
-        <div class="qcrm-links">${strongest}</div>
-        <div class="qcrm-section-title">추천 상담 액션</div>
-        <ol class="qcrm-recs">${recs}</ol>
-        ${adjustmentBlock}
-      `;
+      if (Object.keys(psy).length) {
+        const r2 = await fetch('/psych-assessment', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ answers_by_source: psy }) });
+        if (!r2.ok) { const e = await r2.json().catch(()=>({})); throw new Error(e.detail || '심리검사 요청 실패('+r2.status+')'); }
+        pdata = await r2.json();
+      }
+      if (!qdata && !pdata) throw new Error('학생·학부모·교육기관 중 한 소스라도 응답을 입력하세요.');
+
+      let html = '';
+      if (qdata) {
+        const d = qdata; const color = QCRM_LEVEL_COLOR[d.readiness_level] || '#9B84FF'; const lv = QCRM_LEVEL_LABEL[d.readiness_level] || d.readiness_level;
+        const weakest = d.weakest_links.map((l) => `<span class="qcrm-chip" style="border-color:${color}66;color:${color}">${l.label} ${Math.round(l.score*100)}</span>`).join('');
+        const strongest = d.strongest_links.map((l) => `<span class="qcrm-chip">${l.label} ${Math.round(l.score*100)}</span>`).join('');
+        const recs = d.recommendations.map((r) => `<li>${r}</li>`).join('');
+        const adj = d.decision_adjustment || {};
+        const adjBlock = adj.recommendation_level ? `<div class="qcrm-section-title">판단 보정 (QRL)</div><div class="qcrm-decision">개입안 적합도 ${Math.round((adj.adjusted_success_probability||0)*100)}% · 추천 모드 ${adj.recommendation_level} · 신뢰도 ${Math.round((adj.confidence||0)*100)}%</div>` : '';
+        html += `<div class="qcrm-arch">Quantum Reasoning Layer · Entangling Rule → Phase Penalty → Mixing</div>`;
+        html += `<div class="qcrm-readiness"><span class="score">${Math.round(d.readiness_score*100)}</span><span class="level" style="background:${color}22;color:${color}">인지준비도 ${lv}</span></div>`;
+        html += `<div class="qcrm-section-title">우선 개입 지점</div><div class="qcrm-links">${weakest}</div>`;
+        html += `<div class="qcrm-section-title">강점</div><div class="qcrm-links">${strongest}</div>`;
+        html += `<div class="qcrm-section-title">추천 상담 액션</div><ol class="qcrm-recs">${recs}</ol>${adjBlock}`;
+      }
+      if (pdata) {
+        const sc = pdata.scores || {};
+        let pblock = '';
+        for (const [theory, subs] of Object.entries(sc)) {
+          if (!subs || !Object.keys(subs).length) continue;
+          const rows = Object.entries(subs).map(([sub, info]) => `<div class="psy-row"><span>${PSY_SUB_LABEL[sub] || sub}</span><span class="psy-val">${info.score}/5 (${info.level})</span></div>`).join('');
+          pblock += `<div class="qcrm-section-title">${theory}</div>${rows}`;
+        }
+        html += `<div class="qcrm-arch" style="margin-top:18px">표준화 심리검사 · 4이론 11하위척도 (3소스 융합)</div>${pblock}`;
+      }
+      qcrmResult.innerHTML = html;
       qcrmResult.style.display = 'block';
-      qcrmResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      qcrmResult.scrollIntoView({ behavior:'smooth', block:'nearest' });
     } catch (err) {
-      qcrmError.textContent = '오류: ' + err.message;
-      qcrmError.style.display = 'block';
+      qcrmError.textContent = '오류: ' + err.message; qcrmError.style.display = 'block';
     } finally {
-      qcrmBtn.disabled = false;
-      qcrmBtn.textContent = '진단하기';
+      qcrmBtn.disabled = false; qcrmBtn.textContent = '통합 진단하기';
     }
   });
+
 
   // Chapter 4 "여론 평가" — 키워드를 넘겨 /news/issue-sentiment(실시간 네이버 뉴스 검색 +
   // FinBERT/규칙 기반 감정분석)를 호출하는 공개 위젯. 로그인 불필요.

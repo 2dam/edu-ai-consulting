@@ -24,7 +24,10 @@ class ReportRequest(BaseModel):
 
 
 class PsychAssessmentRequest(BaseModel):
-    answers: dict[str, int]
+    # 기존 단일 dict 방식(하위호환)
+    answers: dict[str, int] | None = None
+    # 3소스(학생/학부모/교육기관) 방식: {student/parent/institution: {item_id: 1~5}}
+    answers_by_source: dict[str, dict[str, int]] | None = None
 
 
 class PsychAssessmentResponse(BaseModel):
@@ -48,7 +51,10 @@ class DropoutRiskResponse(BaseModel):
 
 
 class QcrmAssessmentRequest(BaseModel):
+    # 기존 단일 profile 방식(하위호환)
     profile: dict[str, Any] | None = None
+    # 3소스(학생/학부모/교육기관) 방식: {student/parent/institution: {factor: 0~100}}
+    profiles_by_source: dict[str, dict[str, Any]] | None = None
     iterations: int = 3
 
 
@@ -61,7 +67,7 @@ class QcrmAssessmentResponse(BaseModel):
     weakest_links: list[dict[str, Any]]
     strongest_links: list[dict[str, Any]]
     recommendations: list[str]
-    trace: list[dict[str, Any]]
+    qrl_trace: list[dict[str, Any]]
     method_note: str
     narrative: str
 

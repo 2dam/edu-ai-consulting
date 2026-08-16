@@ -1,7 +1,20 @@
 """Mini QCRM engine for education consulting.
 
-Learning factors are represented as proposition-like probabilities, rules boost
-dependent states, and contradiction penalties dampen unstable patterns.
+Learning factors are represented as proposition-like probabilities (qubits).
+The reasoning is organised as a Quantum Reasoning Layer (QRL) following
+Kiruluta (2025, arXiv:2512.07871):
+
+  U_QRL = U_mix(γ) · U_penalty(φ) · U_rule(θ)
+
+  • Entangling Rule Layer   — multi-controlled gates propagate logical
+    implications between factors (RULES).
+  • Phase Penalty Layer     — phase penalties dampen contradictory /
+    inconsistent states (CONFLICTS).
+  • Mixing Layer            — single-qubit rotations explore alternative
+    hypotheses over repeated iterations (the `iterations` loop).
+
+This is a simplified educational-diagnosis model inspired by quantum concepts.
+It is NOT quantum-hardware execution and NOT a standardized psychological test.
 """
 
 from __future__ import annotations
@@ -31,6 +44,7 @@ class Rule:
     rationale: str
 
 
+# Entangling Rule Layer — logical implications propagated between factors.
 RULES = [
     Rule(("concept_mastery", "problem_interpretation"), "strategy_selection", 0.30, "개념 이해와 조건 해석이 함께 올라가면 풀이 전략 선택 가능성이 커집니다."),
     Rule(("strategy_selection", "calculation_accuracy"), "time_management", 0.18, "전략이 안정되고 계산 실수가 적으면 시간 운용 부담이 줄어듭니다."),
@@ -38,6 +52,7 @@ RULES = [
     Rule(("concept_mastery",), "problem_interpretation", 0.12, "개념 이해는 문제 조건을 읽는 기준점이 됩니다."),
 ]
 
+# Phase Penalty Layer — contradictions / inconsistencies dampened by interference.
 CONFLICTS = [
     ("concept_mastery", "strategy_selection", 0.16, "전략 선택이 개념 이해보다 과도하게 높으면 암기식 풀이 가능성을 점검합니다."),
     ("problem_interpretation", "calculation_accuracy", 0.12, "조건 해석은 낮은데 계산만 높으면 문제 독해 훈련을 우선 확인합니다."),
@@ -52,6 +67,8 @@ DEFAULT_PROFILE = {
     "attention_control": 0.52,
     "time_management": 0.46,
 }
+
+SOURCE_WEIGHTS = {"student": 0.40, "parent": 0.30, "institution": 0.30}
 
 
 def _clamp(value: float, low: float = 0.03, high: float = 0.97) -> float:
@@ -71,37 +88,71 @@ def _normalize_score(value: Any, default: float) -> float:
 
 
 def _phase_mix(probability: float, phase: float) -> float:
+    """Interference step: a phase penalty suppresses inconsistent states."""
     amplitude = math.sqrt(_clamp(probability))
     complement = math.sqrt(_clamp(1 - probability))
     interference = math.cos(phase) * amplitude - math.sin(phase) * complement
     return _clamp(interference * interference)
 
 
-def run_mini_qcrm(profile: dict[str, Any] | None = None, iterations: int = 3) -> dict[str, Any]:
-    raw_profile = profile or {}
-    states = {key: _normalize_score(raw_profile.get(key), default) for key, default in DEFAULT_PROFILE.items()}
+# ── Quantum Reasoning Layer (QRL) — explicit 3-layer reasoning ──
+def qrl_layer(states: dict[str, float], step: int, trace: list[dict]) -> dict[str, float]:
+    """One QRL pass: Entangling Rule → Phase Penalty. Returns next states."""
+    next_states = dict(states)
+    # Entangling Rule Layer
+    for rule in RULES:
+        activation = 1.0
+        for factor in rule.antecedents:
+            activation *= states[factor]
+        before = next_states[rule.consequent]
+        delta = rule.strength * activation * (1 - before)
+        next_states[rule.consequent] = _clamp(before + delta)
+        if step == 0:
+            trace.append({"layer": "rule", "target": rule.consequent, "activation": round(activation, 3), "delta": round(delta, 3), "rationale": rule.rationale})
+    # Phase Penalty Layer
+    for left, right, penalty, rationale in CONFLICTS:
+        gap = states[right] - states[left]
+        if gap > 0.18:
+            phase = penalty * gap * math.pi
+            next_states[right] = _phase_mix(next_states[right], phase)
+            if step == 0:
+                trace.append({"layer": "penalty", "target": right, "gap": round(gap, 3), "rationale": rationale})
+    return next_states
+
+
+def fuse_sources(profiles_by_source: dict[str, dict[str, float]]) -> dict[str, float]:
+    """3소스(학생/학부모/교육기관) 프로파일을 하위척도별로 가중 융합.
+
+    미입력 소스는 가중에서 제외 후 재분배. 입력 없으면 DEFAULT_PROFILE 반환.
+    """
+    if not profiles_by_source:
+        return {k: _normalize_score(None, v) for k, v in DEFAULT_PROFILE.items()}
+    fused: dict[str, float] = {}
+    for factor in DEFAULT_PROFILE:
+        tw, total = 0.0, 0.0
+        for src, prof in profiles_by_source.items():
+            if prof and factor in prof:
+                w = SOURCE_WEIGHTS.get(src, 0)
+                tw += w
+                total += w * _normalize_score(prof.get(factor), DEFAULT_PROFILE[factor])
+        fused[factor] = round(total / tw, 3) if tw > 0 else _normalize_score(None, DEFAULT_PROFILE[factor])
+    return fused
+
+
+def run_mini_qcrm(profile: dict[str, Any] | None = None,
+                  profiles_by_source: dict[str, dict[str, Any]] | None = None,
+                  iterations: int = 3) -> dict[str, Any]:
+    # 입력: 단일 profile(하위호환) 또는 3소스 profiles_by_source
+    if profiles_by_source is not None:
+        states = fuse_sources(profiles_by_source)
+    else:
+        raw_profile = profile or {}
+        states = {key: _normalize_score(raw_profile.get(key), default) for key, default in DEFAULT_PROFILE.items()}
     trace: list[dict[str, Any]] = []
 
+    # Mixing Layer — repeated iterations explore alternative hypotheses.
     for step in range(max(1, min(iterations, 8))):
-        next_states = dict(states)
-        for rule in RULES:
-            activation = 1.0
-            for factor in rule.antecedents:
-                activation *= states[factor]
-            before = next_states[rule.consequent]
-            delta = rule.strength * activation * (1 - before)
-            next_states[rule.consequent] = _clamp(before + delta)
-            if step == 0:
-                trace.append({"type": "rule", "target": rule.consequent, "activation": round(activation, 3), "delta": round(delta, 3), "rationale": rule.rationale})
-
-        for left, right, penalty, rationale in CONFLICTS:
-            gap = states[right] - states[left]
-            if gap > 0.18:
-                phase = penalty * gap * math.pi
-                next_states[right] = _phase_mix(next_states[right], phase)
-                if step == 0:
-                    trace.append({"type": "penalty", "target": right, "gap": round(gap, 3), "rationale": rationale})
-        states = next_states
+        states = qrl_layer(states, step, trace)
 
     ordered = sorted(states.items(), key=lambda item: item[1])
     readiness = round(0.34 * states["concept_mastery"] + 0.24 * states["problem_interpretation"] + 0.22 * states["strategy_selection"] + 0.20 * states["attention_control"], 3)
@@ -115,8 +166,8 @@ def run_mini_qcrm(profile: dict[str, Any] | None = None, iterations: int = 3) ->
         "weakest_links": [{"factor": key, "label": FACTOR_LABELS[key], "score": round(value, 3)} for key, value in ordered[:2]],
         "strongest_links": [{"factor": key, "label": FACTOR_LABELS[key], "score": round(value, 3)} for key, value in ordered[-2:][::-1]],
         "recommendations": _recommend(states),
-        "trace": trace[:6],
-        "method_note": "Mini QCRM은 양자 회로의 중첩, 규칙 게이트, 간섭 penalty를 교육 진단용으로 단순화한 모델입니다. 실제 양자 하드웨어 실행이나 표준화 검사가 아닙니다.",
+        "qrl_trace": trace[:6],
+        "method_note": "Mini QCRM은 Quantum Reasoning Layer(Entangling Rule + Phase Penalty + Mixing)로 양자 추론을 교육 진단용으로 단순화한 모델입니다. 실제 양자 하드웨어 실행이나 표준화 검사가 아닙니다.",
     }
     return result
 
