@@ -62,6 +62,8 @@
     .rti-reftable th { background:var(--surface); color:var(--ink-muted); font-weight:600; }
     .rti-reftable td small { color:var(--ink-faint); font-family:monospace; }
     .rti-refnote { font-size:11.5px; color:var(--ink-faint); margin:10px 0 0; line-height:1.6; }
+    .rti-src-note { font-size:12.5px; color:var(--ink-muted); line-height:1.6; margin:0 0 14px; padding:10px 13px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface-sunken); }
+    .rti-src-note b { color:var(--ink); }
     /* 입력 모드 */
     .rti-modebar { display:flex; gap:8px; margin:4px 0 14px; flex-wrap:wrap; }
     .rti-mode { font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:99px; border:1px solid var(--line); background:var(--surface-sunken); color:var(--ink-muted); cursor:pointer; transition:border-color .15s,color .15s,background .15s; }
@@ -105,60 +107,61 @@
 
     <h2>② 보편적 스크리닝 + 위험도 식별</h2>
     <details class="rti-ref">
-      <summary>용어 · 계량 기준 · 데이터 근거 보기</summary>
+      <summary>진단 모델 · 계량 기준 · 데이터 근거 보기</summary>
       <div class="body">
+        <p class="rti-refnote"><b>진단 데이터 소스(3개, 교사 개입 없음):</b> ① <b>학생 자가보고</b> ② <b>학부모 보고</b> ③ <b>교육기관 공개 자료</b>(성적표·출결·학교생활기록·진로·비교과 공개 항목). 교사 평정은 사기업 모델에서 비활성.</p>
         <table class="rti-reftable">
-          <thead><tr><th>지표</th><th>정의</th><th>단위 / 범위</th><th>위험(계량) 기준</th><th>데이터 근거 (입력 출처)</th></tr></thead>
+          <thead><tr><th>도출 지표</th><th>정의</th><th>위험(계량) 기준</th><th>입력 소스 (학생 / 학부모 / 교육기관)</th></tr></thead>
           <tbody>
-            <tr><td><b>math_percentile_rank</b><br>수학 백분위</td><td>표준화 학업성취도에서의 수학 백분위. 또래 대비 상대 위치.</td><td>백분위 0–100</td><td><small>&lt; 25</small> → 학업 위험 (하위 25%)</td><td>국가/교육청 학업성취도 평가, 표준화 진단(예: K-CT, CBM)의 백분위</td></tr>
-            <tr><td><b>reading_benchmark_score</b><br>읽기 벤치마크</td><td>읽기(국어/영어) 성취 벤치마크 점수. 수학과 동일 계량선 적용.</td><td>점수 0–100</td><td><small>&lt; 25</small> → 학업 위험 (벤치마크 미도달)</td><td>읽기 진단(예: DIBELS/K-CT 읽기), 표준화 읽기 평가 점수</td></tr>
-            <tr><td><b>behavioral_risk_index</b><br>행동 위험지수</td><td>문제행동 빈도·강도·지속을 종합한 지수. 높을수록 위험.</td><td>지수 0–100</td><td><small>&gt; 70</small> → 행동 위험</td><td>교사 평정(SSBD), CICO 일일점수, 사건 로그 빈도 환산</td></tr>
-            <tr><td><b>social_skills_rating</b><br>사회성 기술</td><td>또래관계·협동·자기조절 등 사회성 기술 평정.</td><td>평정 0–100</td><td><small>&lt; 40</small> → 보완 필요</td><td>사회성 평정(예: SSIS, BASC-3) 표준점수 환산</td></tr>
+            <tr><td><b>math_percentile_rank</b><br>수학 백분위</td><td>수학 학업 성취의 또래 대비 상대 위치(0–100).</td><td><small>&lt; 25</small> → 학업 위험</td><td>학생: 수학 자신감·숙제 빈도·개념 이해 문항 / 학부모: 성적 추이·과외 여부 / 기관: 성적표 수학 석차백분위·수행평가</td></tr>
+            <tr><td><b>reading_benchmark_score</b><br>읽기 벤치마크</td><td>읽기(국어/영어) 성취 벤치마크(0–100). 수학과 동일 계량선.</td><td><small>&lt; 25</small> → 학업 위험</td><td>학생: 독해·요약·어휘 문항 / 학부모: 독서량·과목 어려움 / 기관: 국어·영어 성적·독서 기록</td></tr>
+            <tr><td><b>behavioral_risk_index</b><br>행동 위험지수</td><td>규칙준수·충동·과제지속·휴대전화 등 종합 지수(0–100, 높을수록 위험).</td><td><small>&gt; 70</small> → 행동 위험</td><td>학생: 준법·집중·스크린 사용 문항 / 학부모: 규칙·생활패턴·수면 / 기관: 출결·지각·봉사·비교과</td></tr>
+            <tr><td><b>social_skills_rating</b><br>사회성 기술</td><td>또래관계·협동·자기조절 등 사회성(0–100, 높을수록 양호).</td><td><small>&lt; 40</small> → 보완 필요</td><td>학생: 교우·협력·갈등조절 문항 / 학부모: 대인관계·활동 참여 / 기관: 동아리·행사·창의체험</td></tr>
           </tbody>
         </table>
-        <p class="rti-refnote">계량 기준은 미국 RTI/MTSS 보편적 스크리닝 관행(학업 하위 25% 위험선, 행동 고위험 컷)을 참고해 설정한 참고값입니다. 실제 적용 시 학교·지역 표준화 데이터로 재보정 권장. Tier = 학업 또는 행동 위험 영역 수에 따라 1(안전)·2(단일 영역)·3(학업+행동 동시).</p>
+        <p class="rti-refnote">계량 기준은 RTI/MTSS 보편적 스크리닝 관행(학업 하위 25% 위험선, 행동 고위험 컷)을 참고한 참고값. 각 지표는 3소스 응답을 가중 융합(학생 40%·학부모 30%·교육기관 30%)해 산출. Tier = 위험 영역 수에 따라 1(안전)·2(단일)·3(학업+행동 동시).</p>
       </div>
     </details>
 
+    <p class="rti-src-note"><b>진단 입력:</b> 교사 평가 없이 <b>학생·학부모·교육기관</b> 3개 소스만으로 진단합니다. 각 소스의 질문지에 객관적 기준으로 응답하세요. 3소스가 모두 입력되면 더 정밀한 융합 진단이 가능합니다(미입력 소스는 융합 가중에서 제외).</p>
+
     <div class="card">
       <div class="rti-modebar">
-        <button type="button" class="rti-mode is-active" data-mode="survey">① 설문지 (사회성·행동)</button>
-        <button type="button" class="rti-mode" data-mode="data">② 실측치 (수학·읽기 표준화검사)</button>
-        <button type="button" class="rti-mode" data-mode="manual">③ 직접 입력</button>
+        <button type="button" class="rti-mode is-active" data-mode="student">① 학생 자가 진단</button>
+        <button type="button" class="rti-mode" data-mode="parent">② 학부모 보고</button>
+        <button type="button" class="rti-mode" data-mode="institution">③ 교육기관 공개 자료</button>
+        <button type="button" class="rti-mode" data-mode="manual">④ 직접 입력 (지표값)</button>
       </div>
 
-      <!-- ① 설문지 -->
-      <div class="rti-intake" id="rti-survey">
-        <p class="rti-intake-h">사회성(SSIS/BASC형)·행동 위험(SSBD형) 자기/교사 평정 문항입니다. 각 문항의 객관적 기준 중 본인 상황과 가장 가까운 것을 선택하세요(1~5 → 0~100 환산).</p>
-        <div class="rti-qgrid" id="rti-qgrid"></div>
-        <div class="rti-intake-actions">
-          <button type="button" class="btn ghost" id="rti-apply-survey">설문 응답을 지표로 반영</button>
-          <span class="rti-intake-hint">미응답 문항은 현재 값(직접 입력)으로 유지됩니다.</span>
-        </div>
+      <!-- ① 학생 -->
+      <div class="rti-intake" id="rti-student">
+        <p class="rti-intake-h">학생 본인이 평가합니다. 각 문항의 객관적 기준 중 본인 상황과 가장 가까운 것을 선택하세요(1~5 → 0~100 환산).</p>
+        <div class="rti-qgrid" id="rti-qgrid-student"></div>
       </div>
 
-      <!-- ② 실측치 -->
-      <div class="rti-intake" id="rti-data" hidden>
-        <p class="rti-intake-h">표준화 검사 결과를 붙여넣으면 4지표로 환산합니다. 모르는 항목은 비워두세요.</p>
-        <div class="grid2">
-          <div><label>수학 백분위 (0~100)</label><input id="rd_math" type="number" placeholder="예: 18"></div>
-          <div><label>읽기 벤치마크 점수 (0~100)</label><input id="rd_read" type="number" placeholder="예: 22"></div>
-          <div><label>행동 위험지수 (0~100, 높을수록 위험)</label><input id="rd_risk" type="number" placeholder="예: 74"></div>
-          <div><label>사회성 표준점수 (0~100)</label><input id="rd_social" type="number" placeholder="예: 35"></div>
-        </div>
-        <div class="rti-intake-actions">
-          <button type="button" class="btn ghost" id="rti-apply-data">실측치를 지표로 반영</button>
-          <span class="rti-intake-hint">미입력 항목은 현재 값(직접 입력)으로 유지됩니다.</span>
-        </div>
+      <!-- ② 학부모 -->
+      <div class="rti-intake" id="rti-parent" hidden>
+        <p class="rti-intake-h">학부모가 자녀를 관찰해 평가합니다. 각 문항의 객관적 기준 중 가장 가까운 것을 선택하세요(1~5 → 0~100 환산).</p>
+        <div class="rti-qgrid" id="rti-qgrid-parent"></div>
       </div>
 
-      <!-- ③ 직접 입력 -->
-      <div class="grid2" id="rti-manual">
+      <!-- ③ 교육기관 -->
+      <div class="rti-intake" id="rti-institution" hidden>
+        <p class="rti-intake-h">학교·학원 등 교육기관이 공개한 자료(성적표·출결·학교생활기록·진로·비교과)에서 확인 가능한 항목입니다. 각 기준 중 가장 가까운 것을 선택하세요(1~5 → 0~100 환산).</p>
+        <div class="rti-qgrid" id="rti-qgrid-institution"></div>
+      </div>
+
+      <!-- ④ 직접 입력 -->
+      <div class="grid2" id="rti-manual" hidden>
         <div><label>student_id</label><input id="sc_id" value="STU-001"></div>
         <div><label>math_percentile_rank (위험&lt;25)</label><input id="sc_math" type="number" value="18"></div>
         <div><label>reading_benchmark_score (위험&lt;25)</label><input id="sc_read" type="number" value="22"></div>
         <div><label>social_skills_rating (&lt;40 보완)</label><input id="sc_social" type="number" value="35"></div>
         <div><label>behavioral_risk_index (&gt;70 위험)</label><input id="sc_risk" type="number" value="74"></div>
+      </div>
+      <div class="rti-intake-actions">
+        <button type="button" class="btn ghost" id="rti-apply">입력한 소스 응답을 지표로 융합·반영</button>
+        <span class="rti-intake-hint">미입력 소스는 융합에서 제외(가중 재분배). 직접 입력 모드 선택 시 그 값을 그대로 사용.</span>
       </div>
       <button class="btn" data-action="screening">스크리닝 등록</button>
       <div class="result" id="r-screening"></div>
@@ -277,65 +280,78 @@
     const studentBody = function(){ return {student_id:v('s_id'), school_id:v('s_school'), grade_level:+v('s_grade'), classroom:v('s_class'), demographics:v('s_demo')}; };
     const screeningBody = function(){ return {student_id:v('sc_id'), math_percentile_rank:+v('sc_math'), reading_benchmark_score:+v('sc_read'), social_skills_rating:+v('sc_social'), behavioral_risk_index:+v('sc_risk')}; };
 
-    // ── ② 스크리닝 입력 모드 (설문지 / 실측치 / 직접입력) ──
-    const RTI_SET_BY = {
-      behavioral_risk_index: ['sq1', 'rd_risk'],
-      social_skills_rating:  ['sq2', 'rd_social'],
-      math_percentile_rank:  ['rd_math'],
-      reading_benchmark_score: ['rd_read']
-    };
+    // ── ② 스크리닝 입력 (학생/학부모/교육기관 3소스 다면적 질문지 + 융합) ──
     const rclamp = (n) => Math.max(0, Math.min(100, Math.round(n)));
     const setRti = (f, val) => {
       const el = document.getElementById('sc_' + (f === 'behavioral_risk_index' ? 'risk' : f.replace('_score','').replace('math_percentile_rank','math').replace('social_skills_rating','social').replace('reading_benchmark','read')));
       if (el) { el.value = rclamp(val); }
     };
-    // ① 설문지 — 사회성(sq1, 역산: 점수 높을수록 사회성 좋음) / 행동위험(sq2, 정산)
-    const RTI_SURVEY = [
-      { id:'sq1', head:'사회성 기술 (SSIS/BASC형 평정)', criteria:[
-        '또래와 원활히 어울리고 갈등을 잘 조율한다',
-        '대부분 상황에서 협동적이나 가끔 다툼이 있다',
-        '보통 수준의 사회성, 도움받으면 협동한다',
-        '또래 관계가 어색하고 충돌이 잦다',
-        '또래와의 상호작용이 매우 어렵다' ] },
-      { id:'sq2', head:'행동 위험 (SSBD형 평정)', criteria:[
-        '문제행동이 거의 없고 규칙을 잘 지킨다',
-        '가끔 규칙을 어기나 크게 문제되지 않는다',
-        '간혹 충동·따돌림 등 문제행동이 관찰된다',
-        '자주 문제행동이 있고 주의가 필요하다',
-        '심각·지속적 문제행동으로 일상지장이 크다' ] }
-    ];
-    const rqg = document.getElementById('rti-qgrid');
-    RTI_SURVEY.forEach((q) => {
-      const wrap = document.createElement('div'); wrap.className = 'rti-q';
-      wrap.innerHTML = `<div class="q-head">${q.head}</div>`;
-      const opts = document.createElement('div'); opts.className = 'q-opts';
-      q.criteria.forEach((c, idx) => {
-        const rank = idx + 1;
-        const b = document.createElement('button');
-        b.type = 'button'; b.dataset.q = q.id; b.dataset.v = rank;
-        b.innerHTML = `<span class="q-rank">${rank}</span><span class="q-crit">${c}</span>`;
-        b.addEventListener('click', () => {
-          opts.querySelectorAll('button').forEach((x) => x.classList.remove('is-sel'));
-          b.classList.add('is-sel');
+    // 3소스 × 지표별 객관 질문지. dir: true=높을수록 양호(역산), false=높을수록 위험(정산)
+    const RTI_SRC = {
+      student: {
+        title: '학생 자가 진단',
+        qs: [
+          { id:'s_math',  f:'math_percentile_rank',     dir:true,  q:'수학 개념을 혼자 이해하고 숙제를 끝내는 정도', c:['거의 항상 다 한다','자주 한다','절반 정도 한다','가끔 한다','거의 못 한다'] },
+          { id:'s_read',  f:'reading_benchmark_score',  dir:true,  q:'교과서·지문을 읽고 핵심을 요약하는 정도', c:['매우 잘한다','잘한다','보통이다','어렵다','매우 어렵다'] },
+          { id:'s_beh',   f:'behavioral_risk_index',    dir:false, q:'수업 중 규칙을 지키고 집중하는 정도', c:['항상 지킨다','잘 지킨다','가끔 흐트러진다','자주 흐트러진다','거의 못 지킨다'] },
+          { id:'s_social',f:'social_skills_rating',     dir:true,  q:'친구와 협력하고 갈등을 조절하는 정도', c:['매우 잘한다','잘한다','보통이다','서툴다','매우 서툴다'] }
+        ]
+      },
+      parent: {
+        title: '학부모 보고',
+        qs: [
+          { id:'p_math',  f:'math_percentile_rank',     dir:true,  q:'최근 수학 성적 추이(성적표/과외 기준)', c:['오르고 있다','유지된다','조금 떨어진다','떨어진다','크게 떨어진다'] },
+          { id:'p_read',  f:'reading_benchmark_score',  dir:true,  q:'하루 자유독서량(교과 외)', c:['30분 이상','20분 정도','10분 정도','5분 미만','거의 없음'] },
+          { id:'p_beh',   f:'behavioral_risk_index',    dir:false, q:'규칙 준수 및 생활 패턴(수면·스크린)', c:['매우 안정적','안정적','보통','불규칙 잦음','매우 불규칙'] },
+          { id:'p_social',f:'social_skills_rating',     dir:true,  q:'친구·모임 등 대인활동 참여', c:['활발히 한다','자주 한다','가끔 한다','드물다','거의 없다'] }
+        ]
+      },
+      institution: {
+        title: '교육기관 공개 자료',
+        qs: [
+          { id:'i_math',  f:'math_percentile_rank',     dir:true,  q:'성적표 수학 석차백분위(또는 수행평가)', c:['상위 25%','상위 50%','중위','하위 50%','하위 25%'] },
+          { id:'i_read',  f:'reading_benchmark_score',  dir:true,  q:'국어·영어 성적 / 독서(책쓰기) 기록', c:['상위권','중상위','중위','하위권','최하위권'] },
+          { id:'i_beh',   f:'behavioral_risk_index',    dir:false, q:'출결·지각·봉사·비교과 공개 기록', c:['우수(무단결석0)','양호','보통','미흡(지각잦음)','부족(결석많음)'] },
+          { id:'i_social',f:'social_skills_rating',     dir:true,  q:'동아리·행사·창의체험 참여 기록', c:['다수 참여','자주 참여','가끔 참여','드뭄','없음'] }
+        ]
+      }
+    };
+    // 질문지 동적 렌더
+    Object.keys(RTI_SRC).forEach((src) => {
+      const grid = document.getElementById('rti-qgrid-' + src);
+      RTI_SRC[src].qs.forEach((qi) => {
+        const wrap = document.createElement('div'); wrap.className = 'rti-q';
+        wrap.innerHTML = `<div class="q-head">${RTI_SRC[src].title} · ${qi.q}</div>`;
+        const opts = document.createElement('div'); opts.className = 'q-opts';
+        qi.c.forEach((c, idx) => {
+          const rank = idx + 1;
+          const b = document.createElement('button');
+          b.type = 'button'; b.dataset.src = src; b.dataset.f = qi.f; b.dataset.dir = qi.dir ? '1' : '0'; b.dataset.v = rank;
+          b.innerHTML = `<span class="q-rank">${rank}</span><span class="q-crit">${c}</span>`;
+          b.addEventListener('click', () => {
+            opts.querySelectorAll('button').forEach((x) => x.classList.remove('is-sel'));
+            b.classList.add('is-sel');
+            // 기본 매핑: 선택 즉시 해당 소스 단독 점수를 미리보기(융합은 적용 버튼)
+            const f = qi.f; const v = rank;
+            const raw = qi.dir ? (5 - v) * 25 : (v - 1) * 25;
+            SRC_RAW[src][f] = raw;
+          });
+          opts.appendChild(b);
         });
-        opts.appendChild(b);
+        wrap.appendChild(opts); grid.appendChild(wrap);
       });
-      wrap.appendChild(opts); rqg.appendChild(wrap);
     });
-    document.getElementById('rti-apply-survey').addEventListener('click', () => {
-      // sq1: 1순위(매우 좋음)→100, 5순위(매우 어려움)→0  /  sq2: 1순위(안전)→0, 5순위(위험)→100
-      const s1 = rqg.querySelector('button[data-q="sq1"].is-sel');
-      if (s1) setRti('social_skills_rating', (5 - Number(s1.dataset.v)) * 25);
-      const s2 = rqg.querySelector('button[data-q="sq2"].is-sel');
-      if (s2) setRti('behavioral_risk_index', (Number(s2.dataset.v) - 1) * 25);
-    });
-    document.getElementById('rti-apply-data').addEventListener('click', () => {
-      const num = (id) => { const x = document.getElementById(id); return x.value === '' ? null : Number(x.value); };
-      const m = num('rd_math'), r = num('rd_read'), risk = num('rd_risk'), soc = num('rd_social');
-      if (m != null) setRti('math_percentile_rank', m);
-      if (r != null) setRti('reading_benchmark_score', r);
-      if (risk != null) setRti('behavioral_risk_index', risk);
-      if (soc != null) setRti('social_skills_rating', soc);
+    const SRC_RAW = { student:{}, parent:{}, institution:{} };
+    const SRC_W = { student:0.40, parent:0.30, institution:0.30 };
+    document.getElementById('rti-apply').addEventListener('click', () => {
+      // 4지표별로 입력된 소스만 가중 융합(미입력 소스는 가중에서 제외 후 재분배)
+      ['math_percentile_rank','reading_benchmark_score','behavioral_risk_index','social_skills_rating'].forEach((f) => {
+        let tw = 0, sum = 0;
+        Object.keys(SRC_RAW).forEach((src) => {
+          if (SRC_RAW[src][f] != null) { tw += SRC_W[src]; sum += SRC_W[src] * SRC_RAW[src][f]; }
+        });
+        if (tw > 0) setRti(f, sum / tw);
+      });
     });
     // 모드 전환
     const rtiModes = document.querySelectorAll('.rti-mode');
@@ -344,9 +360,10 @@
         rtiModes.forEach((x) => x.classList.remove('is-active'));
         m.classList.add('is-active');
         const mode = m.dataset.mode;
-        document.getElementById('rti-survey').hidden = mode !== 'survey';
-        document.getElementById('rti-data').hidden = mode !== 'data';
-        document.getElementById('rti-manual').style.display = (mode === 'manual') ? '' : 'none';
+        ['student','parent','institution','manual'].forEach((s) => {
+          const el = document.getElementById('rti-' + s);
+          if (el) el.hidden = (mode !== s);
+        });
       });
     });
     const interventionBody = function(){ return {student_id:v('iv_sid'), intervention_id:v('iv_type'), tier:+v('iv_tier'), status:v('iv_status'), delivery_details:v('iv_del')}; };
