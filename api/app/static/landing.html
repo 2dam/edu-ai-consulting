@@ -204,6 +204,23 @@
   .qcrm-recs { margin: 0; padding-left: 18px; font-size: 13.5px; color: var(--ink-muted); }
   .qcrm-recs li { margin-bottom: 6px; }
   .qcrm-decision { font-size: 13px; color: var(--ink-muted); }
+  /* 정밀 분석 (precision analysis) */
+  .qcrm-analysis { margin-top: 18px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; }
+  .qcrm-analysis .an-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .qcrm-analysis .an-head .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .qcrm-analysis .an-head .t { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .qcrm-analysis .an-head .s { font-size: 11px; color: var(--ink-faint); margin-left: auto; }
+  .qcrm-analysis .an-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+  .an-block .an-label { font-size: 11px; font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent2); margin-bottom: 6px; }
+  .an-case { border-left: 3px solid var(--accent); padding: 8px 12px; background: var(--sunken); border-radius: 0 6px 6px 0; margin-bottom: 8px; }
+  .an-case .an-q { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+  .an-case .an-a { font-size: 12.5px; color: var(--ink-muted); line-height: 1.6; }
+  .an-case .an-a b { color: var(--ink); font-weight: 700; }
+  .an-sig { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+  .an-sig .tag { font-size: 11.5px; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--line); color: var(--ink-muted); }
+  .an-sig .tag.risk { border-color: color-mix(in srgb, var(--accent2) 45%, var(--line)); color: var(--accent2); }
+  .an-sig .tag.beh { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); color: var(--accent); }
+  .an-foot { font-size: 11px; color: var(--ink-faint); line-height: 1.6; border-top: 1px dashed var(--line); padding-top: 10px; }
   @media (max-width: 600px) { .qcrm-sliders { grid-template-columns: 1fr; } }
 
   .roster { display: flex; gap: 10px; flex-wrap: wrap; margin: 22px 0 28px; }
@@ -964,6 +981,123 @@
 
   const QCRM_LEVEL_COLOR = { stable:'#3FCB93', developing:'#eab308', needs_support:'#FF8A80' };
   const QCRM_LEVEL_LABEL = { stable:'안정', developing:'발전 중', needs_support:'지원 필요' };
+
+  // ── 정밀 분석 라이브러리: 인지요인 → 행동신호·학력성과·연결 심리척도 ──
+  const CAUSE_LIB = {
+    concept_mastery: {
+      beh:'새 단원을 혼자 이해하지 못하고 강의/설명에 의존함. 예시 없이 문제를 보면 막막해함.',
+      risk:'개념 기초가 약해 응용·서술형 문항에서 점수가 무너짐 (내신/모의고사 개념 문항 약세)',
+      psy:['sdt_competence','srl_planning'],
+      link:'유능성·계획 하위척도와 연결 — "못한다"는 믿음 + 준비 부재가 겹치면 학습 회피로 이어짐'
+    },
+    problem_interpretation: {
+      beh:'문제 조건을 빠뜨리거나 함정 조건을 놓침. 무엇을 구하는지 파악하는 데 시간이 걸림.',
+      risk:'조건형·함정형·서술형에서 오답률 상승, 시험에서 "푸는 법은 아는데 틀림" 반복',
+      psy:['srl_monitoring','sdt_autonomy'],
+      link:'점검(SRL) 약하면 문제 읽기 단계에서 자기점검이 안 일어남'
+    },
+    strategy_selection: {
+      beh:'풀이 접근법을 무작정 바꾸거나 한 가지 방법만 고집함. 유형별 선택지 비교를 안 함.',
+      risk:'고난도 문항에서 시간 낭비·연계 오답, 전략 전이(한 과목→다른 과목) 실패',
+      psy:['srl_evaluation','pp_strengths'],
+      link:'평가(SRL) 약하면 "왜 이 방법인가"를 설명·조정하지 못함'
+    },
+    calculation_accuracy: {
+      beh:'계산 실수가 잦고, 끝까지 검산하지 않음. 소수점·부호·단위 실수가 반복됨.',
+      risk:'실수로 인한 점수 손실이 누적 — 실력 대비 성적이 낮게 측정됨',
+      psy:['srl_monitoring','attention_control'],
+      link:'집중+점검이 동시에 약하면 실수율이 급상승'
+    },
+    attention_control: {
+      beh:'한 과목에 20분도 못 몰입, 자주 딴짓. 공부 시간은 길어도 산출이 적음.',
+      risk:'학습량 대비 성취가 낮음(시간 투입 대비 효율 저하), 시험 중 집중 이탈',
+      psy:['pp_wellbeing','eco_home','srl_monitoring'],
+      link:'안녕감·가정지원·점검이 약하면 집중 유지 자원이 부족'
+    },
+    time_management: {
+      beh:'세운 계획을 지키지 못함. 마감 직전에 몰아서 하고 우선순위가 꼬임.',
+      risk:'과제·비교과 누락, 시험 직전 벼락치기 → 장기 기억 형성 실패',
+      psy:['srl_planning','eco_home'],
+      link:'계획(SRL)·가정지원 약하면 주간 루틴이 붕괴'
+    }
+  };
+  const PSY_LABEL_SHORT = {
+    sdt_competence:'유능성', srl_planning:'계획', srl_monitoring:'점검', srl_evaluation:'평가',
+    sdt_autonomy:'자율성', pp_strengths:'강점인식', pp_wellbeing:'안녕감', eco_home:'가정지원', eco_classroom:'교실적합도'
+  };
+  // 분석 생성: 인지 상태 + 심리 점수를 교차해 원인 가설·행동·학력 연결 도출
+  function buildAnalysis(qdata, pdata) {
+    if (!qdata) return '';
+    const states = qdata.states || {};
+    const weakest = (qdata.weakest_links || []).map((l) => l.factor);
+    const psyScores = {};
+    if (pdata && pdata.scores) {
+      for (const [th, subs] of Object.entries(pdata.scores)) {
+        for (const [sub, info] of Object.entries(subs || {})) psyScores[sub] = info.score;
+      }
+    }
+    const LOW = (v) => v != null && v <= 2.4;       // 심리 척도 1~5, ≤2.4 = 낮음
+    const cases = [];
+    // 1) 취약 인지요인별 원인 가설 (최대 3개)
+    weakest.slice(0, 3).forEach((f) => {
+      const lib = CAUSE_LIB[f]; if (!lib) return;
+      const factorLabel = (qdata.labels && qdata.labels[f]) || f;
+      const sc = Math.round((states[f] || 0) * 100);
+      // 연결된 심리척도 중 낮은 것 찾기
+      const linked = (lib.psy || []).filter((s) => LOW(psyScores[s]));
+      let cause = lib.link;
+      if (linked.length) {
+        const names = linked.map((s) => PSY_LABEL_SHORT[s] || s).join('·');
+        cause = `심리검사에서 <b>${names}</b>이(가) 함께 낮게 나와 인지 약점과 악순환을 이룸. ${lib.link}`;
+      }
+      cases.push({ f, factorLabel, sc, beh:lib.beh, risk:lib.risk, cause, linked });
+    });
+    if (!cases.length) {
+      cases.push({ f:'', factorLabel:'종합 준비도', sc:Math.round((qdata.readiness_score||0)*100),
+        beh:'전 영역이 균형 잡힌 상태입니다.', risk:'특정 영역에 치우친 성과 편차는 적습니다.',
+        cause:'취약 요인이 뚜렷하지 않아 보강보다 유지·심화가 우선입니다.', linked:[] });
+    }
+    // 2) 모순/불일치 가설: 인지 self-report 높은데 관련 심리 낮음
+    const mismatch = [];
+    if (psyScores.sdt_competence != null && states.concept_mastery != null) {
+      if (states.concept_mastery >= 0.6 && psyScores.sdt_competence <= 2.4)
+        mismatch.push('인지 진단은 개념 이해가 나은데 심리검사에선 <b>유능성(자기효능감)</b>이 낮음 → "알긴 하지만 자신은 없다"는 상태. 성적 불안이 실력 발휘를 막을 수 있음');
+    }
+    if (psyScores.eco_home != null && (states.attention_control != null || states.time_management != null)) {
+      if (psyScores.eco_home <= 2.4 && (states.attention_control >= 0.6 || states.time_management >= 0.6))
+        mismatch.push('인지로는 집중·계획이 나은데 <b>가정 지원(환경)</b>이 낮음 → 환경 불일치. 가정 학습 환경 정비가 인지 강점을 살리는 전제임');
+    }
+    let html = `<div class="qcrm-analysis"><div class="an-head"><span class="dot"></span><span class="t">정밀 분석 · 원인·행동·학력 연결</span><span class="s">인지 6요인 × 심리 11척도 교차</span></div><div class="an-body">`;
+    // 원인 가설
+    html += `<div class="an-block"><div class="an-label">① 원인 가설 (취약 요인별)</div>`;
+    cases.forEach((c) => {
+      html += `<div class="an-case"><div class="an-q">${c.factorLabel} ${c.sc} — 왜 약한가?</div>`+
+              `<div class="an-a">${c.cause}</div>`+
+              (c.linked.length ? `<div class="an-sig">${c.linked.map((s)=>`<span class="tag beh">↳ ${PSY_LABEL_SHORT[s]||s} 낮음</span>`).join('')}</div>` : '')+
+              `</div>`;
+    });
+    html += `</div>`;
+    // 행동 신호 + 학력 성과
+    html += `<div class="an-block"><div class="an-label">② 행동 신호 → 학력 성과 영향</div>`;
+    cases.forEach((c) => {
+      if (!c.f) return;
+      html += `<div class="an-case"><div class="an-q">${c.factorLabel}</div>`+
+              `<div class="an-a"><b>행동:</b> ${c.beh}</div>`+
+              `<div class="an-a"><b>성과:</b> ${c.risk}</div>`+
+              `<div class="an-sig"><span class="tag beh">관찰행동</span><span class="tag risk">학력리스크</span></div></div>`;
+    });
+    html += `</div>`;
+    // 모순/불일치
+    if (mismatch.length) {
+      html += `<div class="an-block"><div class="an-label">③ 모순·불일치 신호</div>`;
+      mismatch.forEach((m) => { html += `<div class="an-case"><div class="an-a">${m}</div></div>`; });
+      html += `</div>`;
+    }
+    html += `<div class="an-foot">※ 본 분석은 인지요인(개념·해석·전략·계산·집중·시간)과 표준화 심리척도의 상관 패턴을 통계적으로 교차한 컨설팅 보조 해석이며, 임상 진단이나 학력 예측이 아닙니다.</div>`;
+    html += `</div></div>`;
+    return html;
+  }
+
   const qcrmBtn = document.getElementById('qcrm-submit-btn');
   const qcrmError = document.getElementById('qcrm-error');
   const qcrmResult = document.getElementById('qcrm-result');
@@ -1018,6 +1152,8 @@
         }
         html += `<div class="qcrm-arch" style="margin-top:18px">표준화 심리검사 · 4이론 11하위척도 (3소스 융합)</div>${pblock}`;
       }
+      const analysis = buildAnalysis(qdata, pdata);
+      if (analysis) html += analysis;
       qcrmResult.innerHTML = html;
       qcrmResult.style.display = 'block';
       qcrmResult.scrollIntoView({ behavior:'smooth', block:'nearest' });
