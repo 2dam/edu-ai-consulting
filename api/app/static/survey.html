@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>전문 심리진단 설문 · iChapterwise</title>
+<style>
+  :root{
+    --bg:#0d1117; --surface:#161b22; --surface-2:#1c2230; --sunken:#11161d;
+    --line:#2a3140; --ink:#e6e9ef; --ink-muted:#9aa4b2; --ink-faint:#6b7480;
+    --accent:#9B84FF; --accent-2:#5EEAD4; --err:#FF8A80;
+    --low:#FF8A80; --mid:#eab308; --high:#3FCB93;
+    --radius-md:14px; --radius-sm:10px;
+    --font-mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;line-height:1.6;font-size:15px}
+  .wrap{max-width:840px;margin:0 auto;padding:28px 18px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+  .eyebrow{font-size:12px;letter-spacing:.08em;color:var(--accent);font-weight:700;text-transform:uppercase}
+  h1{font-size:24px;margin:6px 0 4px}
+  .sub{color:var(--ink-muted);font-size:13.5px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 6px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md)}
+  .toolbar .lab{font-size:13px;font-weight:700;color:var(--ink-muted)}
+  .src-btn{font-size:13px;font-weight:600;padding:8px 16px;border-radius:99px;border:1px solid var(--line);background:var(--sunken);color:var(--ink-muted);cursor:pointer}
+  .src-btn.is-active{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+  .progress{margin-left:auto;font-size:12.5px;color:var(--ink-faint);font-family:var(--font-mono)}
+  .cat{margin:26px 0 8px}
+  .cat h2{font-size:17px;margin:0 0 2px;display:flex;align-items:center;gap:10px}
+  .cat .tag{font-size:11px;font-weight:800;color:#fff;background:var(--accent);padding:3px 9px;border-radius:99px}
+  .cat .desc{font-size:12.5px;color:var(--ink-faint);margin:0 0 12px}
+  .subsec{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:12px}
+  .subsec .st{font-size:13px;font-weight:700;color:var(--accent-2);margin:0 0 10px}
+  .qrow{display:flex;flex-direction:column;gap:7px;padding:10px 0;border-top:1px solid var(--line)}
+  .qrow:first-of-type{border-top:none}
+  .qtext{font-size:13.5px}
+  .likert{display:flex;gap:6px}
+  .likert button{flex:1;min-width:0;font-size:12px;font-weight:700;padding:9px 0;border:1px solid var(--line);border-radius:8px;background:var(--sunken);color:var(--ink-muted);cursor:pointer;transition:.12s}
+  .likert button:hover{color:var(--ink)}
+  .likert button.is-sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+  .likert .end{font-size:10px;color:var(--ink-faint);align-self:center;flex:0 0 auto;padding:0 2px}
+  .actions{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding:16px 0 0;margin-top:18px}
+  .btn-primary{width:100%;justify-content:center;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;padding:14px;cursor:pointer}
+  .btn-primary:disabled{opacity:.6;cursor:default}
+  #err{color:var(--err);font-size:13px;margin-top:10px;display:none}
+  #result{margin-top:22px;border-top:2px solid var(--accent);padding-top:18px;display:none}
+  #result h3{font-size:18px;margin:0 0 12px}
+  .score-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;background:var(--surface)}
+  .score-row .nm{font-size:13px;font-weight:600}
+  .score-row .meta{font-family:var(--font-mono);font-size:13px;font-weight:700}
+  .pill{font-size:11px;font-weight:800;padding:2px 9px;border-radius:99px;margin-left:8px}
+  .note{font-size:12px;color:var(--ink-faint);margin-top:16px;line-height:1.7}
+  .home{display:inline-block;margin-bottom:10px;color:var(--accent);font-size:13px;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/landing">← 진단 센터로</a>
+  <header>
+    <div class="eyebrow">Professional Psychological Diagnostic Battery</div>
+    <h1>전문 심리진단 설문</h1>
+    <p class="sub">자기결정성(SDT)·자기조절학습(SRL)·긍정심리·생태학적(PBS) 4개 카테고리 · 11개 하위척도 · 40문항 표준화 리커트(1~5점) 검사</p>
+  </header>
+
+  <div class="toolbar">
+    <span class="lab">응답자 유형</span>
+    <button class="src-btn is-active" data-src="student">학생 자가</button>
+    <button class="src-btn" data-src="parent">학부모 보고</button>
+    <button class="src-btn" data-src="institution">교육기관 자료</button>
+    <span class="progress" id="progress">0 / 40</span>
+  </div>
+
+  <div id="survey-root"></div>
+
+  <div class="actions">
+    <button class="btn-primary" id="submit-btn">진단 채점하기</button>
+    <div id="err"></div>
+  </div>
+
+  <div id="result"></div>
+
+  <p class="note">
+    ※ 본 검사는 교육 컨설팅 보조용 표준화 자가/관찰 평가이며, 임상 진단이나 의학적 판정이 아닙니다.
+    응답은 브라우저를 떠나지 않고 동일 서버의 채점 API(/psych-assessment)에서 3소스 가중 융합(학생40·학부모30·교육기관30)로 산출됩니다.
+    교사 평가는 사기업 모델에서 수집하지 않습니다.
+  </p>
+</div>
+
+<script>
+  const SURVEY = [
+    { cat:'자기결정성 이론 (SDT)', tag:'SDT', desc:'Deci & Ryan — 학습 동기의 세 가지 기본 심리 욕구', subs:[
+      { st:'자율성 (Autonomy)', items:[
+        {id:'sdt_a1', q:'스스로 학습 목표나 방법을 고를 수 있는 느낌이 듭니다.'},
+        {id:'sdt_a2', q:'하고 싶은 과목이나 주제를 스스로 정할 기회가 많습니다.'},
+        {id:'sdt_a3', q:'부모님/선생님이 시키는 대로만 하는 것보다 내 방식으로 해보는 시간이 있습니다.'},
+        {id:'sdt_a4', q:'학습 계획을 세울 때 아이의 의견을 충분히 묻습니다(학부모용).'}
+      ]},
+      { st:'유능성 (Competence)', items:[
+        {id:'sdt_c1', q:'내가 하는 학습이 잘 풀리고 있다는 확신이 있습니다.'},
+        {id:'sdt_c2', q:'어려운 문제도 방법을 찾아내면 해낼 수 있다고 믿습니다.'},
+        {id:'sdt_c3', q:'최근 스스로 해낸 일이 하나 이상 있습니다.'},
+        {id:'sdt_c4', q:'아이가 어떤 과목에서든 "나도 할 수 있다"는 태도를 보입니다(학부모용).'}
+      ]},
+      { st:'관계성 (Relatedness)', items:[
+        {id:'sdt_r1', q:'선생님이나 친구와 마음이 통한다고 느낍니다.'},
+        {id:'sdt_r2', q:'학교/학원에서 도움을 요청하기 편한 사람이 있습니다.'},
+        {id:'sdt_r3', q:'또래 관계에서 외롭거나 소외된 느낌을 자주 받습니다.'},
+        {id:'sdt_r4', q:'아이가 교우 관계나 선생님과의 관계에서 안정적입니다(학부모용).'}
+      ]}
+    ]},
+    { cat:'자기조절학습 (SRL)', tag:'SRL', desc:'Zimmerman — 계획·점검·평가의 메타인지 순환', subs:[
+      { st:'계획 (Planning)', items:[
+        {id:'srl_p1', q:'공부하기 전에 무엇을 언제까지 할지 구체적으로 계획합니다.'},
+        {id:'srl_p2', q:'한 주 단위 학습 목표를 적어두고 따릅니다.'},
+        {id:'srl_p3', q:'시험 일정을 미리 확인하고 공부를 배분합니다.'},
+        {id:'srl_p4', q:'아이가 스스로 주간 학습 계획을 세웁니다(학부모용).'}
+      ]},
+      { st:'점검 (Monitoring)', items:[
+        {id:'srl_m1', q:'공부 중 "지금 집중되고 있는가"를 스스로 체크합니다.'},
+        {id:'srl_m2', q:'잘 모르겠는 부분을 풀이 도중에 스스로 알아챕니다.'},
+        {id:'srl_m3', q:'공부하다 막히면 어디서 틀렸는지 스스로 짚어봅니다.'},
+        {id:'srl_m4', q:'아이가 혼자 공부할 때도 흐름을 스스로 점검합니다(학부모용).'}
+      ]},
+      { st:'평가 (Evaluation)', items:[
+        {id:'srl_e1', q:'시험이나 과제 후에 내 오답 원인을 스스로 정리합니다.'},
+        {id:'srl_e2', q:'공부 방법이 효과 있었는지 돌아보고 고칩니다.'},
+        {id:'srl_e3', q:'성적표를 받고 나만의 부족한 부분을 스스로 파악합니다.'},
+        {id:'srl_e4', q:'아이가 결과를 보고 다음 학습을 스스로 조정합니다(학부모용).'}
+      ]}
+    ]},
+    { cat:'긍정심리학 (Positive Psychology)', tag:'PP', desc:'강점 기반 · 심리적 안녕감', subs:[
+      { st:'강점 인식 (Strengths)', items:[
+        {id:'pp_s1', q:'내가 잘하는 것(강점)이 무엇인지 명확히 압니다.'},
+        {id:'pp_s2', q:'강점을 살릴 수 있는 활동에 자주 참여합니다.'},
+        {id:'pp_s3', q:'아이가 자신의 좋은 점을 스스로 말할 수 있습니다(학부모용).'},
+        {id:'pp_s4', q:'학교생활기록/비교과에서 두드러진 강점 영역이 보입니다(교육기관용).'}
+      ]},
+      { st:'안녕감 (Wellbeing)', items:[
+        {id:'pp_w1', q:'전반적으로 학교/학습 생활에 즐거움이 있습니다.'},
+        {id:'pp_w2', q:'스트레스가 쌓여도 회복하는 나만의 방법이 있습니다.'},
+        {id:'pp_w3', q:'아이가 전반적으로 안정적이고 긍정적인 기분 상태입니다(학부모용).'},
+        {id:'pp_w4', q:'상담/생활기록상 정서 안정 지표가 양호합니다(교육기관용).'}
+      ]}
+    ]},
+    { cat:'생태학적 행동지원 (PBS)', tag:'ECO', desc:'학생 개인 결함이 아닌 환경(교실/가정)과의 불일치 점검 · 역채점(1=매우 불일치)', subs:[
+      { st:'교실 적합도 (Classroom fit)', items:[
+        {id:'eco_cl1', q:'수업 방식이나 평가가 아이에게 맞지 않는 경우가 잦습니다.'},
+        {id:'eco_cl2', q:'교실 분위기나 규칙이 아이에게 부담이 됩니다.'},
+        {id:'eco_cl3', q:'학교생활기록상 교우/수업 참여 불일치 신호가 보입니다(교육기관용).'},
+        {id:'eco_cl4', q:'선생님과의 관계에서 마찰이나 소통 단절이 잦습니다.'}
+      ]},
+      { st:'가정 지원 (Home support)', items:[
+        {id:'eco_h1', q:'집에서 공부할 공간이나 규칙이 자주 바뀌어 불안정합니다.'},
+        {id:'eco_h2', q:'부모님의 기대와 실제 지원 사이에 괴리가 느껴집니다.'},
+        {id:'eco_h3', q:'가정의 학습 지원이 아이 필요에 비해 부족하다고 판단됩니다.'},
+        {id:'eco_h4', q:'학부모 상담 기록상 가정 지지 자원이 제한적입니다(교육기관용).'}
+      ]}
+    ]}
+  ];
+  // 역채점 문항(생태): 1=매우 불일치, 5=매우 적합 → 점수는 6-val 로 환산(높을수록 양호)
+  const REVERS = new Set(['eco_cl1','eco_cl2','eco_cl3','eco_cl4','eco_h1','eco_h2','eco_h3','eco_h4']);
+
+  let currentSrc = 'student';
+  const answers = {}; // answers[itemId] = 1..5
+  const TOTAL = SURVEY.reduce((n, c) => n + c.subs.reduce((m, s) => m + s.items.length, 0), 0);
+
+  function render() {
+    const root = document.getElementById('survey-root');
+    root.innerHTML = '';
+    SURVEY.forEach((c) => {
+      const cat = document.createElement('section');
+      cat.className = 'cat';
+      cat.innerHTML = `<h2><span class="tag">${c.tag}</span>${c.cat}</h2><p class="desc">${c.desc}</p>`;
+      c.subs.forEach((s) => {
+        const sub = document.createElement('div');
+        sub.className = 'subsec';
+        sub.innerHTML = `<div class="st">${s.st}</div>`;
+        s.items.forEach((it) => {
+          const row = document.createElement('div');
+          row.className = 'qrow';
+          const sel = answers[it.id] || 0;
+          row.innerHTML = `<div class="qtext">${it.q}</div>`;
+          const lk = document.createElement('div');
+          lk.className = 'likert';
+          lk.appendChild(Object.assign(document.createElement('span'),{className:'end',textContent:REVERS.has(it.id)?'매우 불일치':''}));
+          for (let n = 1; n <= 5; n++) {
+            const b = document.createElement('button');
+            b.type = 'button'; b.textContent = n;
+            if (sel === n) b.classList.add('is-sel');
+            b.addEventListener('click', () => {
+              lk.querySelectorAll('button').forEach((x) => x.classList.remove('is-sel'));
+              b.classList.add('is-sel');
+              answers[it.id] = n;
+              updateProgress();
+            });
+            lk.appendChild(b);
+          }
+          lk.appendChild(Object.assign(document.createElement('span'),{className:'end',textContent:REVERS.has(it.id)?'매우 적합':''}));
+          row.appendChild(lk);
+          sub.appendChild(row);
+        });
+        cat.appendChild(sub);
+      });
+      root.appendChild(cat);
+    });
+    updateProgress();
+  }
+  function updateProgress() {
+    document.getElementById('progress').textContent = `${Object.keys(answers).length} / ${TOTAL}`;
+  }
+
+  document.querySelectorAll('.src-btn').forEach((btn) => btn.addEventListener('click', () => {
+    document.querySelectorAll('.src-btn').forEach((x) => x.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    currentSrc = btn.dataset.src;
+    // 다른 소스 응답과 섞이지 않도록 현재 소스 응답만 유지(단일 소스 작성 가정)
+    // → 이전 소스 선택 시 작성 중이던 응답은 초기화 안 함(교차검증용 보관). 진행률은 누적 표시.
+  }));
+
+  document.getElementById('submit-btn').addEventListener('click', async () => {
+    const errEl = document.getElementById('err');
+    errEl.style.display = 'none';
+    if (Object.keys(answers).length < TOTAL) {
+      errEl.textContent = `아직 ${TOTAL - Object.keys(answers).length}문항이 응답되지 않았습니다. 모든 문항에 응답해 주세요.`;
+      errEl.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = '채점 중...';
+    const payload = { answers_by_source: { [currentSrc]: answers } };
+    try {
+      const res = await fetch('/psych-assessment', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      });
+      if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.detail || '요청 실패('+res.status+')'); }
+      const data = await res.json();
+      renderResult(data.scores);
+    } catch (e) {
+      errEl.textContent = '오류: ' + e.message; errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false; btn.textContent = '진단 채점하기';
+    }
+  });
+
+  function colorFor(level) {
+    if (level === '높음') return 'var(--high)';
+    if (level === '보통') return 'var(--mid)';
+    return 'var(--low)';
+  }
+  function renderResult(scores) {
+    const THEORY_ORDER = [
+      ['self_determination','자기결정성(SDT)'],
+      ['self_regulated_learning','자기조절학습(SRL)'],
+      ['positive_psychology','긍정심리학'],
+      ['ecological_fit','생태학적(PBS)']
+    ];
+    const SUB_LABEL = {
+      sdt_autonomy:'자율성', sdt_competence:'유능성', sdt_relatedness:'관계성',
+      srl_planning:'계획', srl_monitoring:'점검', srl_evaluation:'평가',
+      pp_strengths:'강점 인식', pp_wellbeing:'안녕감',
+      eco_classroom:'교실 적합도', eco_home:'가정 지원'
+    };
+    let html = `<h3>진단 결과 · ${currentSrc === 'student' ? '학생 자가' : currentSrc === 'parent' ? '학부모 보고' : '교육기관 자료'}</h3>`;
+    THEORY_ORDER.forEach(([key, label]) => {
+      const subs = scores[key] || {};
+      const entries = Object.entries(subs);
+      if (!entries.length) return;
+      html += `<div class="cat" style="margin:18px 0 4px"><div class="st" style="color:var(--accent-2);font-weight:800;font-size:14px">${label}</div></div>`;
+      entries.forEach(([sub, info]) => {
+        const c = colorFor(info.level);
+        html += `<div class="score-row"><span class="nm">${SUB_LABEL[sub] || sub}</span>`+
+                `<span class="meta" style="color:${c}">${info.score}/5<span class="pill" style="background:${c}22;color:${c}">${info.level}</span></span></div>`;
+      });
+    });
+    const el = document.getElementById('result');
+    el.innerHTML = html;
+    el.style.display = 'block';
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  render();
+</script>
+</body>
+</html>

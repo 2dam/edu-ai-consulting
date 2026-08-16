@@ -168,6 +168,11 @@ def landing():
     return FileResponse(STATIC_DIR / "landing.html")
 
 
+@app.get("/survey")
+def survey():
+    return FileResponse(STATIC_DIR / "survey.html")
+
+
 @app.get("/admin")
 def admin(key: str | None = None):
     # 내부 참고용 지표 대시보드 — 외부 공개 차단
