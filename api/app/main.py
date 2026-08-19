@@ -156,28 +156,31 @@ app.mount("/static", NoCacheStaticFiles(directory=STATIC_DIR), name="static")
 
 
 # ── 정적 페이지 ───────────────────────────────────────────────────────────────
+# Ponytail rung-2: 같은 패턴의 8개 라우트를 하나의 헬퍼로. 동작은 기존과 동일.
+
+def static_page(filename: str, no_store: bool = False):
+    resp = FileResponse(STATIC_DIR / filename)
+    if no_store:
+        resp.headers.update({"Cache-Control": "no-store, max-age=0"})
+    return resp
+
 
 @app.get("/")
+@app.get("/landing")
 def index():
     # 통합된 랜딩 페이지(마케팅 + 리포트 체험 폼)를 기본 페이지로 제공.
-    return FileResponse(STATIC_DIR / "landing.html")
-
-
-@app.get("/landing")
-def landing():
-    return FileResponse(STATIC_DIR / "landing.html")
+    return static_page("landing.html")
 
 
 @app.get("/survey")
 def survey():
-    return FileResponse(STATIC_DIR / "survey.html")
+    return static_page("survey.html")
 
 
 @app.get("/admin")
 def admin(key: str | None = None):
     # 내부 참고용 지표 대시보드 — 외부 공개 차단
     if key != "internal":
-        from fastapi.responses import HTMLResponse
         return HTMLResponse(
             "<!doctype html><meta charset='utf-8'><title>접근 제한</title>"
             "<body style='font-family:sans-serif;background:#0d1117;color:#ddd;display:flex;"
@@ -186,38 +189,32 @@ def admin(key: str | None = None):
             "<p>이 페이지는 내부 참고용입니다. 관리자 키가 필요합니다.</p></div></body>",
             status_code=403,
         )
-    return FileResponse(STATIC_DIR / "admin.html")
+    return static_page("admin.html")
 
 
 @app.get("/education")
 def education_columns():
-    # 교육 데이터 칼럼 (SEO 콘텐츠용, 광고 없음)
-    return FileResponse(STATIC_DIR / "education.html")
+    return static_page("education.html")  # 교육 데이터 칼럼 (SEO 콘텐츠용, 광고 없음)
 
 
 @app.get("/guide")
 def parent_guide():
-    # 학부모 가이드 (SEO 콘텐츠용, 광고 없음)
-    return FileResponse(STATIC_DIR / "guide.html")
+    return static_page("guide.html")  # 학부모 가이드 (SEO 콘텐츠용, 광고 없음)
 
 
 @app.get("/timesfm")
 def timesfm_page():
-    resp = FileResponse(STATIC_DIR / "timesfm.html")
-    resp.headers.update({"Cache-Control": "no-store, max-age=0"})
-    return resp
+    return static_page("timesfm.html", no_store=True)
 
 
 @app.get("/understand")
 def understand_page():
-    return FileResponse(STATIC_DIR / "understand.html")
+    return static_page("understand.html")
 
 
 @app.get("/rti-pbis")
 def rti_pbis_page():
-    resp = FileResponse(STATIC_DIR / "rti_pbis.html")
-    resp.headers.update({"Cache-Control": "no-store, max-age=0"})
-    return resp
+    return static_page("rti_pbis.html", no_store=True)
 
 
 @app.get("/health")
