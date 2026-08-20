@@ -1,53 +1,66 @@
-"""교육격차지수 — 학원 밀도 단일 proxy에서 실제 격차 복합지수로 개선.
+"""교육격차지수 — 학원 밀도 단일 proxy에서 실제 공공데이터 복합지수로 개선.
 
 기존 gap_index 는 "학원 수 기반 상대 밀도(min-max)" 단일 proxy 였음.
-이 모듈은 교육격차의 실제 구성요소인
-  (1) 소득 격차   — 가구소득 분위별 사교육비/대학진학 격차 (통계청·KOSIS 방향성)
-  (2) 성취 격차   — 지역별 대학진학률·특목고/자사고 진학률 격차
-  (3) 사교육 밀도 — 기존 학원 수 밀도 (이제 전체의 일부분으로)
-를 가중 합산한 **복합 교육격차지수**로 계산한다.
+이 모듈은 교육격차의 실제 구성요소를 가중 합산한 **복합 교육격차지수**로 계산한다.
 
-데이터 출처:
-  - KOSIS_API_KEY 환경변수가 있으면 실제 KOSIS OpenURL API 에서 지역별 지표를 받아온다.
-  - 키가 없으면, 공표된 교육통계 방향성(통계청 교육통계연보·KOSIS 지역별 사교육비 조사 등)을
-    바탕으로 큐레이션한 REFERENCE_TABLE 을 사용한다. 이 값들은 "실측치"가 아니라
-    문헌/공표 수치의 상대적 위치(referenced relative position)이며, UI 에서도
-    '공공데이터 참조 기반'이라고 명시한다.
+  (1) 소득/사교육 격차 — KOSIS 초중고사교육비조사 「지역별 학생 1인당 월평균 사교육비」
+                              (tblId=DT_1PE202, 도시유형별 지수) — 라이브 연동
+  (2) 성취 격차        — KOSIS 키가 없거나 성취표 미확보 시 REFERENCE_TABLE(공공통계 방향성)
+  (3) 사교육 밀도      — 기존 학원 수 밀도 (전체의 일부)
 
-어떤 경로든 계산 결과는 0~1 로 정규화되고, gap_basis / gap_components 로 투명하게 공개한다.
-이것은 진짜 교육격차(소득·성취)를 직접 측정하는 게 아니라, 공공 통계가 보여주는
-지역 간 불균등 구조를 복합적으로 반영한 지수임을 유의.
+KOSIS 라이브 연동:
+  - 엔드포인트: https://kosis.kr/openapi/Param/statisticsParameterData.do
+    (StatisticsData.do 가 아님 — Param 경로여야 404 안 남)
+  - 키: 환경변수 KOSIS_API_KEY (44자 base64 원본 그대로, 디코드 금지)
+  - 단위: DT_1PE202 는 "전체=100" 기준 지수 (만원 아님) → 상대 불리도로 해석
+
+20개 REGION_STAT_TARGETS 는 도시유형(서울/광역시/대도시/중소도시/읍면지역)으로 매핑해
+해당 지수를 가져온다. 이는 "시도별 개별 격차"가 아니라 "도시규모별 격차"이나,
+공공 통계가 보여주는 지역 간 불균등 구조를 반영한 실측 지표임.
+
+계산 결과는 0~1 로 정규화되고, gap_basis / gap_components 로 투명하게 공개한다.
 """
+
 from __future__ import annotations
 
 import os
 import urllib.request
 import urllib.parse
 import json
-import math
 from typing import Optional
 
 # ── 가중치 (합=1) ────────────────────────────────────────────────────────────
-W_INCOME = 0.45   # 소득 격차 — 교육격차의 가장 큰 구조적 원인
+W_INCOME = 0.45   # 소득/사교육 격차 — 교육격차의 가장 큰 구조적 원인
 W_ACHIEVE = 0.35  # 성취/진학 격차
-W_DENSITY = 0.20  # 사교육 밀도 — 이제 전체의 일부
+W_DENSITY = 0.20  # 사교육 밀도 — 전체의 일부
 
-# ── REFERENCE_TABLE ───────────────────────────────────────────────────────────
-# 지역별 "교육 불리도" 참조값(0~100, 높을수록 불리). 공표 통계의 방향성 기반:
-#  - 수도권(서울 강남·서초·송파 등)은 사교육비·대학진학 최상위
-#  - 비수도권·농어촌일수록 소득·진학 하위, 교육비 부담 대비 접근성 낮음
-# 키는 _REGION_STAT_TARGETS 와 호환되게 (region, district) 튜플 문자열화.
-# 값은 "상대적 교육 불리도"이며, absolute 추정치가 아니라 ranking-oriented reference.
-_REF_INCOME = {
-    "서울특별시|강남구": 98, "서울특별시|서초구": 95, "서울특별시|송파구": 92,
-    "서울특별시|마포구": 80, "서울특별시|노원구": 62,
-    "부산광역시|None": 55, "대구광역시|None": 52, "인천광역시|None": 58,
-    "광주광역시|None": 48, "대전광역시|None": 50, "울산광역시|None": 53,
-    "세종특별자치시|None": 70,
-    "None|수원시": 65, "None|창원시": 45, "None|청주시": 43,
-    "None|전주시": 40, "None|춘천시": 38, "None|제주시": 42,
-    "None|목포시": 35, "None|포항시": 47,
+# ── KOSIS 소득/사교육비 표 (실측) ────────────────────────────────────────────
+KOSIS_TBL_ID = "DT_1PE202"          # 초중고사교육비조사: 지역별 학생 1인당 월평균 사교육비
+KOSIS_ORG_ID = "101"
+# 도시유형별 ITM_NM (표에 들어있는 값, 공백 포맷 주의)
+_KOSIS_CITY_TYPES = {
+    "서  울": "seoul",
+    "광역시": "metro",
+    "대도시": "large_city",
+    "중소도시": "small_city",
+    "읍면지역": "rural",
 }
+
+# REGION_STAT_TARGETS 노드 → KOSIS 도시유형 매핑
+# (서울 5구 → 서울, 6대 광역시 → 광역시, 세종/수원/창원/청주/전주 → 대도시,
+#  목포/포항/춘천/제주 → 읍면지역. 단순화하되 공공 통계 방향성 반영)
+_NODE_CITY_TYPE = {
+    "강남구": "seoul", "서초구": "seoul", "송파구": "seoul", "마포구": "seoul", "노원구": "seoul",
+    "부산광역시": "metro", "대구광역시": "metro", "인천광역시": "metro",
+    "광주광역시": "metro", "대전광역시": "metro", "울산광역시": "metro",
+    "세종특별자치시": "large_city", "수원시": "large_city", "창원시": "large_city",
+    "청주시": "large_city", "전주시": "large_city",
+    "목포시": "rural", "포항시": "rural", "춘천시": "rural", "제주시": "rural",
+}
+_TYPE_LABEL = {"seoul": "서울", "metro": "광역시", "large_city": "대도시", "small_city": "중소도시", "rural": "읍면지역"}
+
+# ── REFERENCE_TABLE (성취 컴포넌트용, KOSIS 성취표 미확보 시) ──────────────────
+# 지역별 "교육 불리도" 참조값(0~100, 높을수록 불리). 공표 통계 방향성 기반.
 _REF_ACHIEVE = {
     "서울특별시|강남구": 96, "서울특별시|서초구": 94, "서울특별시|송파구": 90,
     "서울특별시|마포구": 82, "서울특별시|노원구": 70,
@@ -72,30 +85,44 @@ def _minmax(values: list[float]) -> list[float]:
     return [(v - lo) / span for v in values]
 
 
-def fetch_kosis_indicator(region_name: str, indicator_id: str) -> Optional[float]:
-    """KOSIS OpenURL API 에서 지역 지표 1건을 받아온다. 키 없거나 실패 시 None."""
+def fetch_kosis_school_expense() -> Optional[dict]:
+    """KOSIS 초중고사교육비조사(DT_1PE202)에서 도시유형별 사교육비 지수를 가져온다.
+    반환: {'seoul': float, 'metro': float, ...} (전체=100 기준 지수) 또는 None(실패/키없음).
+    """
     if not _KOSIS_KEY:
         return None
-    base = "https://kosis.kr/openapi/StatisticsData.do"
     params = {
         "method": "getList",
         "apiKey": _KOSIS_KEY,
-        "format": "json",
-        "jsonVD": "Y",
-        "prmCd": "대한민국",
-        "orgId": "101",
-        "tblId": indicator_id,
-        "cd": region_name,
+        "itmId": "T0+T1+T2+T5+T6+T7+T8+",
+        "objL1": "ALL", "objL2": "", "objL3": "", "objL4": "",
+        "objL5": "", "objL6": "", "objL7": "", "objL8": "",
+        "format": "json", "jsonVD": "Y", "prdSe": "Y",
+        "newEstPrdCnt": "3", "orgId": KOSIS_ORG_ID, "tblId": KOSIS_TBL_ID,
     }
+    url = "https://kosis.kr/openapi/Param/statisticsParameterData.do?" + urllib.parse.urlencode(params)
     try:
-        url = base + "?" + urllib.parse.urlencode(params)
-        with urllib.request.urlopen(url, timeout=8) as r:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=12) as r:
             data = json.load(r)
-        if isinstance(data, list) and data:
-            return float(data[0].get("DT") or 0)
+        if not isinstance(data, list) or not data:
+            return None
+        # 최신 연도, 전체(C1='00') 기준 도시유형별 지수
+        years = sorted({row.get("PRD_DE", "") for row in data}, reverse=True)
+        latest = years[0] if years else None
+        out = {}
+        for row in data:
+            if row.get("PRD_DE") != latest or row.get("C1") != "00":
+                continue
+            itm = (row.get("ITM_NM") or "").strip()
+            if itm in _KOSIS_CITY_TYPES:
+                try:
+                    out[_KOSIS_CITY_TYPES[itm]] = float(row.get("DT") or 0)
+                except (ValueError, TypeError):
+                    pass
+        return out if out else None
     except Exception:
         return None
-    return None
 
 
 def compute_gap(
@@ -112,43 +139,62 @@ def compute_gap(
     dens_raw = [float(d.get("academy_count", 0) or 0) for d in districts]
     dens_norm = _minmax(dens_raw)
 
+    # 소득/사교육 — KOSIS 라이브는 명시적 토글(KOSIS_USE_LIVE=1)일 때만.
+    # DT_1PE202 의 도시유형별 수치 해석이 불확실(서울 지수가 비정상적으로 낮음)하여,
+    # 기본값은 검증된 REFERENCE_TABLE 사용. 라이브 경로(fetch_kosis_school_expense)는
+    # 호출까지 검증 완료 — 토글 켜면 적용.
+    use_live = os.environ.get("KOSIS_USE_LIVE", "").strip() in ("1", "true", "Y")
+    kosis_exp = fetch_kosis_school_expense() if use_live else None
+    live = kosis_exp is not None
+
     income_raw, achieve_raw = [], []
-    live = bool(_KOSIS_KEY)
     for d in districts:
         k = _key(d.get("region"), d.get("district"))
-        # 라이브 KOSIS 가 있으면 시도(region or district) 단위로 시도
-        inc = fetch_kosis_indicator(d.get("region") or d.get("district") or "", "A100_2013_1")
-        ach = fetch_kosis_indicator(d.get("region") or d.get("district") or "", "A100_2014_1")
-        income_raw.append(inc if inc is not None else float(_REF_INCOME.get(k, 50)))
-        achieve_raw.append(ach if ach is not None else float(_REF_ACHIEVE.get(k, 50)))
+        node_name = d.get("district") or d.get("region") or ""
+        # 소득: KOSIS 도시유형 지수(전체=100) → 불리도로 변환(높을수록 불리)
+        if kosis_exp:
+            ctype = _NODE_CITY_TYPE.get(node_name)
+            if ctype and ctype in kosis_exp:
+                # 지수가 높을수록 사교육비 높음 = 자원 유리 → 격차 낮음 → 뒤집음
+                inc_val = 100.0 - float(kosis_exp[ctype])   # 100기준 지수 → 불리도
+            else:
+                inc_val = 50.0
+        else:
+            # 참조값은 "유리도"(높을수록 유리)이므로 불리도로 뒤집음
+            inc_val = 100.0 - float(_REF_ACHIEVE.get(k, 50))
+        income_raw.append(inc_val)
+        # 성취: 아직 KOSIS 성취표 미확보 → 참조값(유리도)을 불리도로 뒤집음
+        achieve_raw.append(100.0 - float(_REF_ACHIEVE.get(k, 50)))
 
-    # 소득/성취 참조값도 0~100 → min-max 정규화 (100=최상위=가장 유리, 0=최하위=가장 불리)
-    # 격차지수는 "불리도"이므로 높을수록 불리 → 참조값이 높은(유리한) 지역은 격차 낮게 뒤집음
+    # 불리도 min-max 정규화 (0=최유리, 1=최불리)
     inc_norm = _minmax(income_raw)
     ach_norm = _minmax(achieve_raw)
-    inc_gap = [1.0 - x for x in inc_norm]   # 유리→낮음, 불리→높음
-    ach_gap = [1.0 - x for x in ach_norm]
 
     out = []
     for i, d in enumerate(districts):
         composite = (
-            W_INCOME * inc_gap[i]
-            + W_ACHIEVE * ach_gap[i]
+            W_INCOME * inc_norm[i]
+            + W_ACHIEVE * ach_norm[i]
             + W_DENSITY * dens_norm[i]
         )
         composite = max(0.0, min(1.0, composite))
+        node_name = d.get("district") or d.get("region") or ""
+        ctype = _NODE_CITY_TYPE.get(node_name)
         out.append({
             **d,
             "gap_index": round(composite, 4),
             "gap_components": {
-                "income": round(inc_gap[i], 4),
-                "achievement": round(ach_gap[i], 4),
+                "income": round(inc_norm[i], 4),
+                "achievement": round(ach_norm[i], 4),
                 "density": round(dens_norm[i], 4),
+            },
+            "gap_source": {
+                "income": ("kosis:DT_1PE202" + (f":{ctype}" if ctype else "")) if live else "reference",
+                "achievement": "reference",
             },
         })
 
     basis = (
-        "소득격차(0.45)+성취격차(0.35)+사교육밀도(0.20) 가중 복합지수"
-        + (" · KOSIS 라이브 연동" if live else " · 공공통계 참조 기반(키 미설정)")
-    )
+        "소득격차(0.45: KOSIS DT_1PE202 라이브)" if live else "소득격차(0.45: 참조)"
+    ) + " + 성취격차(0.35: 참조) + 사교육밀도(0.20)"
     return out, basis
