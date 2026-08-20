@@ -211,6 +211,11 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
             <Row label="학원 수" value={`${selected.academy_count.toLocaleString()}개`} color="#f97316" />
             <Row label="교육격차 지수" value={`${(selected.gap_index * 100).toFixed(0)} / 100`} color={selected.gap_index > 0.7 ? '#ef4444' : '#eab308'} />
             <Row label="등급" value={<span>{tierBadge(selected.tier)}</span>} />
+            {selected.gap_components && (
+              <div style={{ fontSize: 10, color: '#64748b', margin: '2px 0 4px' }}>
+                구성: 소득 {(selected.gap_components.income * 100).toFixed(0)} · 성취 {(selected.gap_components.achievement * 100).toFixed(0)} · 밀도 {(selected.gap_components.density * 100).toFixed(0)}
+              </div>
+            )}
             {(() => {
               const gangnam = regions.find(r => r.id === 'gangnam')
               if (!gangnam || gangnam.id === selected.id) return null
@@ -288,10 +293,10 @@ export default function HUD({ regions, loopStatus, backendCount, activeLayers, o
       {/* ── 범례 ─────────────────────────────────────────────────────── */}
       <div style={{ ...panel, bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 20, padding: '6px 16px' }}>
         {[
-          { label: 'S등급 (강남권)', color: '#f97316' },
+          { label: 'S등급 (격차↑)', color: '#f97316' },
           { label: 'A등급', color: '#eab308' },
           { label: 'B등급', color: '#3b82f6' },
-          { label: 'C등급 (지방)', color: '#64748b' },
+          { label: 'C등급 (격차↓)', color: '#64748b' },
         ].map(({ label, color }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#94a3b8' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />

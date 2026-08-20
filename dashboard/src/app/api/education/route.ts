@@ -63,30 +63,37 @@ const METRO_REGION_NAME: Record<string, string> = {
 function mergeRegionStats(districts: RegionStatDistrict[]) {
   return REGION_NODES.map(node => {
     let academyCount = 0
+    let gapIndex: number | undefined
+    let gapComponents: any
     if (METRO_NODE_IDS.has(node.id)) {
       const normalized = normalizeRegionName(node.region)
-      academyCount = districts
-        .filter(d => normalizeRegionName(d.region).includes(normalized) || normalized.includes(normalizeRegionName(d.region)))
-        .reduce((sum, d) => sum + d.academy_count, 0)
+      const matches = districts.filter(
+        d => normalizeRegionName(d.region).includes(normalized) || normalized.includes(normalizeRegionName(d.region)),
+      )
+      academyCount = matches.reduce((sum, d) => sum + d.academy_count, 0)
+      if (matches.length) gapIndex = matches[0].gap_index
+      gapComponents = matches[0]?.gap_components
     } else {
-      academyCount = districts
-        .filter(d => d.district === node.name)
-        .reduce((sum, d) => sum + d.academy_count, 0)
+      const m = districts.find(d => d.district === node.name)
+      academyCount = m?.academy_count ?? 0
+      gapIndex = m?.gap_index
+      gapComponents = m?.gap_components
     }
-    return { ...node, academy_count: academyCount }
+    // 백엔드 복합 격차지수(소득+성취+밀도)가 있으면 우선 사용, 없으면 폴백 0
+    return { ...node, academy_count: academyCount, gap_index: gapIndex ?? 0, gap_components: gapComponents }
   })
 }
 
-// 실제 academy_count로 min-max 정규화한 gap_index. 백엔드 /region-stats가 이미 전국
-// 시군구 단위로 정규화한 값을 주지만, 여기서는 REGION_NODES 20개로 범위를 좁혀 다시
-// 계산해야 "이 20개 중 상대적 위치"라는 의미가 맞다(전국 250개 시군구 기준으로 정규화하면
-// 값이 다 한쪽으로 몰림).
+// 백엔드가 이미 복합 교육격차지수(gap_index)를 0~1 로 계산해 준다.
+// 여기서는 20개 노드 범위로 min-max 를 한 번 더 맞춰 "이 20개 중 상대 위치"를 보정하고,
+// 등급(S/A/B/C)만 사분위로 매긴다. gap_index 값 자체는 백엔드 산출을 그대로 계승.
 function recomputeGapIndexAndTier(nodes: ReturnType<typeof mergeRegionStats>) {
-  const counts = nodes.map(n => n.academy_count)
-  const lo = Math.min(...counts)
-  const hi = Math.max(...counts)
+  const vals = nodes.map(n => n.gap_index)
+  const lo = Math.min(...vals)
+  const hi = Math.max(...vals)
   const span = hi - lo || 1
-  const withGap = nodes.map(n => ({ ...n, gap_index: (n.academy_count - lo) / span }))
+  // 상대 위치 보정(0~1): 백엔드 절대격차를 20개 노드 스케일로 재매핑
+  const withGap = nodes.map(n => ({ ...n, gap_index: (n.gap_index - lo) / span }))
   const sorted = [...withGap].sort((a, b) => b.gap_index - a.gap_index)
   const q = Math.ceil(sorted.length / 4)
   const tierOf = (rank: number) => (rank < q ? 'S' : rank < q * 2 ? 'A' : rank < q * 3 ? 'B' : 'C') as 'S' | 'A' | 'B' | 'C'

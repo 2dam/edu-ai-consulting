@@ -27,6 +27,7 @@ from app.database import Base, engine, get_db
 from app.models import ConsultingReport, FeedbackRecord, RawRecord
 from app import understanding_models  # noqa: F401 - 상호이해 모델 등록
 from app import understanding_engine
+from app import education_gap  # 교육격차 복합지수 (소득+성취+밀도)
 from app.routers import admin, authentication, committee, community, mom_cafe, news, reputation, videos
 from app.schemas import (
     CctvInfo,
@@ -479,17 +480,15 @@ def region_stats(db: Session = Depends(get_db)):
             }
         )
 
-    # 학원 수 기반 상대 지수(0~1) — 인구 대비 정규화가 아니라 전국 시군구 중 상대적
-    # 위치만 나타낸다. 정밀한 지표인 척하지 않는다.
-    lo = min(academy_counts) if academy_counts else 0
-    hi = max(academy_counts) if academy_counts else 0
-    span = (hi - lo) or 1
-    for d in districts:
-        d["gap_index"] = round((d["academy_count"] - lo) / span, 4)
+    # 복합 교육격차지수: 학원 밀도 단일 proxy → 소득+성취+밀도 가중 합산
+    # (education_gap.compute_gap 가 0~1 로 정규화 + gap_components/gap_basis 제공)
+    districts, gap_basis = education_gap.compute_gap(districts)
 
     result = {
         "districts": districts,
-        "note": "gap_index는 대시보드 주요 지역의 학원 수 기반 상대 지수(min-max 정규화)이며 인구 대비 정규화는 아님",
+        "gap_basis": gap_basis,
+        "note": "교육격차지수는 소득격차(0.45)+성취격차(0.35)+사교육밀도(0.20)를 가중 합산한 복합지수(0~1). "
+                "소득/성취는 공공통계(KOSIS/교육통계) 방향성 기반이며, KOSIS_API_KEY 설정 시 라이브 연동.",
     }
     _region_stats_cache["data"] = result
     _region_stats_cache["computed_at"] = now

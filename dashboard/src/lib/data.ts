@@ -19,8 +19,13 @@ export interface AcademyNode {
   lat: number
   lng: number
   academy_count: number       // 해당 구·시 학원 수 — /region-stats(실제 크롤링 집계)로 런타임에 덮어써짐
-  gap_index: number           // 교육격차지수 (0~1, 높을수록 격차 큼) — 마찬가지로 런타임에 실제값으로 대체
+  gap_index: number           // 교육격차지수 (0~1, 높을수록 격차 큼) — 소득+성취+밀도 복합, 런타임에 실제값으로 대체
   tier: 'S' | 'A' | 'B' | 'C'
+  gap_components?: {          // 복합지수 구성 요소 (0~1) — 선택적
+    income: number
+    achievement: number
+    density: number
+  }
 }
 
 // 전국 주요 지역의 이름·좌표(실제) 시드 목록. academy_count/gap_index/tier는 여기 적힌 값이
